@@ -1,3 +1,3 @@
-package users
+package settings
 
 type Handler struct{ service *Service }

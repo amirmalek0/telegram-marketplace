@@ -1,3 +1,3 @@
-package users
+package settings
 
 type Service struct{ repo Repository }
