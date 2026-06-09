@@ -1,0 +1,3 @@
+package orders
+
+func RegisterRoutes(){}

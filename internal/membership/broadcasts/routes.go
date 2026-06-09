@@ -1,0 +1,3 @@
+package broadcasts
+
+func RegisterRoutes(){}

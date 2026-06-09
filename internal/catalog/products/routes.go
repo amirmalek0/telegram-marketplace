@@ -1,0 +1,3 @@
+package products
+
+func RegisterRoutes(){}

@@ -1,0 +1,3 @@
+package vip
+
+func RegisterRoutes(){}
