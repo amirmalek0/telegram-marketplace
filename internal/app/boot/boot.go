@@ -12,8 +12,12 @@ import (
 
 // Start is the application entry point after config is loaded.
 func Start(cfg config.Config) {
-	db := database.Connect(context.Background(), cfg.DatabaseURL)
+	ctx := context.Background()
+
+	db := database.Connect(ctx, cfg.DatabaseURL)
 	defer database.MustClose(db)
+
+	database.Migrate(ctx, db)
 
 	handlers := dependencies.Wire(db)
 	r := router.New(cfg.BotToken, handlers)
