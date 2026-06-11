@@ -13,7 +13,7 @@ type User struct {
 	ActivePlanID  *string    `db:"active_plan_id"`
 	WalletBalance float64    `db:"wallet_balance"`
 	PlanExpireAt  *time.Time `db:"plan_expire_at"`
-	ReferredBy    *string    `db:"referred_by"`
+	ReferredBy    *int64     `db:"referred_by"`
 	IsBanned      bool       `db:"is_banned"`
 	CreatedAt     time.Time  `db:"created_at"`
 }

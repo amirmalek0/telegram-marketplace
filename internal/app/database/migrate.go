@@ -30,7 +30,7 @@ var migrations = []string{
 		active_plan_id  TEXT,
 		wallet_balance  DOUBLE PRECISION NOT NULL DEFAULT 0,
 		plan_expire_at  TIMESTAMPTZ,
-		referred_by     TEXT,
+		referred_by     BIGINT,
 		is_banned       BOOLEAN NOT NULL DEFAULT false,
 		created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 	)`,

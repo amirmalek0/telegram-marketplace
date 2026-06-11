@@ -22,8 +22,8 @@ func (s *Service) Create(ctx context.Context, req CreateUserRequest) (*User, err
 		return nil, fmt.Errorf("user with telegram_id %d already exists", req.TelegramID)
 	}
 
-	var referredBy *string
-	if req.ReferredBy != "" {
+	var referredBy *int64
+	if req.ReferredBy != 0 {
 		referredBy = &req.ReferredBy
 	}
 

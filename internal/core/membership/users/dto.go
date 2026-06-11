@@ -10,7 +10,7 @@ type CreateUserRequest struct {
 	Username    string `json:"username"`
 	TelegramID  int64  `json:"telegram_id" binding:"required"`
 	PhoneNumber string `json:"phone_number"`
-	ReferredBy  string `json:"referred_by"`
+	ReferredBy  int64  `json:"referred_by"`
 }
 
 type UpdateUserRequest struct {
@@ -37,7 +37,7 @@ type UserResponse struct {
 	ActivePlanID  *string    `json:"active_plan_id,omitempty"`
 	WalletBalance float64    `json:"wallet_balance"`
 	PlanExpireAt  *time.Time `json:"plan_expire_at,omitempty"`
-	ReferredBy    *string    `json:"referred_by,omitempty"`
+	ReferredBy    *int64     `json:"referred_by,omitempty"`
 	IsBanned      bool       `json:"is_banned"`
 	CreatedAt     time.Time  `json:"created_at"`
 }
