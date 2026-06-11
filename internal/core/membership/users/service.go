@@ -3,6 +3,7 @@ package users
 import (
 	"context"
 	"fmt"
+	"time"
 )
 
 // Service holds the business logic for the users domain.
@@ -35,6 +36,7 @@ func (s *Service) Create(ctx context.Context, req CreateUserRequest) (*User, err
 		TelegramID:  req.TelegramID,
 		PhoneNumber: req.PhoneNumber,
 		ReferredBy:  referredBy,
+		CreatedAt:   time.Now(),
 	}
 
 	if err := s.repo.Create(ctx, u); err != nil {

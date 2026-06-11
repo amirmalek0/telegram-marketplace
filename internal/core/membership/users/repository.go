@@ -3,6 +3,7 @@ package users
 import (
 	"context"
 	"fmt"
+	"telegram-marketplace/pkg/pgconv"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -68,8 +69,8 @@ func (r *postgresRepository) Create(ctx context.Context, u *User) error {
 			$11, $12, $13
 		)`,
 		u.ID, u.FirstName, u.LastName, u.Username, u.TelegramID, u.PhoneNumber,
-		u.HasActivePlan, u.ActivePlanID, u.WalletBalance, u.PlanExpireAt,
-		u.ReferredBy, u.IsBanned, u.CreatedAt,
+		u.HasActivePlan, pgconv.TextPtr(u.ActivePlanID), u.WalletBalance, pgconv.TimestamptzPtr(u.PlanExpireAt),
+		pgconv.Int8Ptr(u.ReferredBy), u.IsBanned, u.CreatedAt,
 	)
 	if err != nil {
 		return fmt.Errorf("users.repository.Create: %w", err)
