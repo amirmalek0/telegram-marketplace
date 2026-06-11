@@ -1,6 +1,9 @@
 package users
 
-import "time"
+import (
+	"telegram-marketplace/internal/core/membership/users/model"
+	"time"
+)
 
 // --- Request DTOs ---
 
@@ -42,7 +45,7 @@ type UserResponse struct {
 	CreatedAt     time.Time  `json:"created_at"`
 }
 
-func toResponse(u *User) UserResponse {
+func toResponse(u *model.User) UserResponse {
 	return UserResponse{
 		ID:            u.ID,
 		FirstName:     u.FirstName,

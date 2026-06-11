@@ -3,21 +3,23 @@ package users
 import (
 	"context"
 	"fmt"
+	"telegram-marketplace/internal/core/membership/users/model"
+	"telegram-marketplace/internal/core/membership/users/repository"
 	"time"
 )
 
 // Service holds the business logic for the users domain.
 type Service struct {
-	repo Repository
+	repo repository.Repository
 }
 
 // NewService constructs a Service with the given Repository (plain DI).
-func NewService(repo Repository) *Service {
+func NewService(repo repository.Repository) *Service {
 	return &Service{repo: repo}
 }
 
 // Create registers a new user. Prevents duplicate Telegram IDs.
-func (s *Service) Create(ctx context.Context, req CreateUserRequest) (*User, error) {
+func (s *Service) Create(ctx context.Context, req CreateUserRequest) (*model.User, error) {
 	existing, err := s.repo.GetByTelegramID(ctx, req.TelegramID)
 	if err == nil && existing != nil {
 		return nil, fmt.Errorf("user with telegram_id %d already exists", req.TelegramID)
@@ -28,7 +30,7 @@ func (s *Service) Create(ctx context.Context, req CreateUserRequest) (*User, err
 		referredBy = &req.ReferredBy
 	}
 
-	u := &User{
+	u := &model.User{
 		FirstName:   req.FirstName,
 		LastName:    req.LastName,
 		Username:    req.Username,
@@ -45,7 +47,7 @@ func (s *Service) Create(ctx context.Context, req CreateUserRequest) (*User, err
 }
 
 // GetByID returns a user by its internal ID.
-func (s *Service) GetByID(ctx context.Context, id string) (*User, error) {
+func (s *Service) GetByID(ctx context.Context, id string) (*model.User, error) {
 	u, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("users.service.GetByID: %w", err)
@@ -54,7 +56,7 @@ func (s *Service) GetByID(ctx context.Context, id string) (*User, error) {
 }
 
 // GetByTelegramID returns a user by their Telegram ID.
-func (s *Service) GetByTelegramID(ctx context.Context, telegramID int64) (*User, error) {
+func (s *Service) GetByTelegramID(ctx context.Context, telegramID int64) (*model.User, error) {
 	u, err := s.repo.GetByTelegramID(ctx, telegramID)
 	if err != nil {
 		return nil, fmt.Errorf("users.service.GetByTelegramID: %w", err)
@@ -63,7 +65,7 @@ func (s *Service) GetByTelegramID(ctx context.Context, telegramID int64) (*User,
 }
 
 // List returns a paginated list of users.
-func (s *Service) List(ctx context.Context, limit, offset int) ([]*User, error) {
+func (s *Service) List(ctx context.Context, limit, offset int) ([]*model.User, error) {
 	if limit <= 0 || limit > 100 {
 		limit = 20
 	}
@@ -75,7 +77,7 @@ func (s *Service) List(ctx context.Context, limit, offset int) ([]*User, error) 
 }
 
 // Update applies profile changes to an existing user.
-func (s *Service) Update(ctx context.Context, id string, req UpdateUserRequest) (*User, error) {
+func (s *Service) Update(ctx context.Context, id string, req UpdateUserRequest) (*model.User, error) {
 	u, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("users.service.Update: %w", err)

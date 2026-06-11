@@ -1,9 +1,12 @@
-package users
+package router
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+	"telegram-marketplace/internal/core/membership/users"
+)
 
 // RegisterRoutes mounts all user endpoints onto the provided RouterGroup.
-func RegisterRoutes(rg *gin.RouterGroup, h *Handler) {
+func RegisterRoutes(rg *gin.RouterGroup, h *users.Handler) {
 	g := rg.Group("/users")
 	{
 		g.POST("", h.Create)

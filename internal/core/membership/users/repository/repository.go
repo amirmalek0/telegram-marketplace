@@ -1,8 +1,9 @@
-package users
+package repository
 
 import (
 	"context"
 	"fmt"
+	"telegram-marketplace/internal/core/membership/users/model"
 	"telegram-marketplace/pkg/pgconv"
 
 	"github.com/jackc/pgx/v5"
@@ -20,17 +21,17 @@ var ErrNotFound = fmt.Errorf("user not found")
 //   - Many    : List
 type Repository interface {
 	// --- Writes ---
-	Create(ctx context.Context, u *User) error
-	Update(ctx context.Context, u *User) error
+	Create(ctx context.Context, u *model.User) error
+	Update(ctx context.Context, u *model.User) error
 	SetBanned(ctx context.Context, id string, banned bool) error
 	Delete(ctx context.Context, id string) error
 
 	// --- Single reads ---
-	GetByID(ctx context.Context, id string) (*User, error)
-	GetByTelegramID(ctx context.Context, telegramID int64) (*User, error)
+	GetByID(ctx context.Context, id string) (*model.User, error)
+	GetByTelegramID(ctx context.Context, telegramID int64) (*model.User, error)
 
 	// --- Collection reads ---
-	List(ctx context.Context, limit, offset int) ([]*User, error)
+	List(ctx context.Context, limit, offset int) ([]*model.User, error)
 }
 
 // postgresRepository is the Postgres implementation of Repository.
@@ -50,7 +51,7 @@ var _ Repository = (*postgresRepository)(nil)
 // Writes
 // ============================================================
 
-func (r *postgresRepository) Create(ctx context.Context, u *User) error {
+func (r *postgresRepository) Create(ctx context.Context, u *model.User) error {
 	err := r.db.QueryRow(ctx, queryCreateUser,
 		u.FirstName, u.LastName, u.Username, u.TelegramID, u.PhoneNumber,
 		u.HasActivePlan, pgconv.TextPtr(u.ActivePlanID), u.WalletBalance, pgconv.TimestamptzPtr(u.PlanExpireAt),
@@ -62,7 +63,7 @@ func (r *postgresRepository) Create(ctx context.Context, u *User) error {
 	return nil
 }
 
-func (r *postgresRepository) Update(ctx context.Context, u *User) error {
+func (r *postgresRepository) Update(ctx context.Context, u *model.User) error {
 	_, err := r.db.Exec(ctx, queryUpdateUser,
 		u.FirstName, u.LastName, u.Username, u.PhoneNumber, u.ID,
 	)
@@ -92,26 +93,26 @@ func (r *postgresRepository) Delete(ctx context.Context, id string) error {
 // Single reads
 // ============================================================
 
-func (r *postgresRepository) GetByID(ctx context.Context, id string) (*User, error) {
+func (r *postgresRepository) GetByID(ctx context.Context, id string) (*model.User, error) {
 	rows, err := r.db.Query(ctx, queryGetUserByID, id)
 	if err != nil {
 		return nil, fmt.Errorf("users.repository.GetByID: %w", err)
 	}
 
-	u, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[User])
+	u, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[model.User])
 	if err != nil {
 		return nil, fmt.Errorf("users.repository.GetByID: %w", err)
 	}
 	return &u, nil
 }
 
-func (r *postgresRepository) GetByTelegramID(ctx context.Context, telegramID int64) (*User, error) {
+func (r *postgresRepository) GetByTelegramID(ctx context.Context, telegramID int64) (*model.User, error) {
 	rows, err := r.db.Query(ctx, queryGetUserByTelegramID, telegramID)
 	if err != nil {
 		return nil, fmt.Errorf("users.repository.GetByTelegramID: %w", err)
 	}
 
-	u, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[User])
+	u, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[model.User])
 	if err != nil {
 		return nil, fmt.Errorf("users.repository.GetByTelegramID: %w", err)
 	}
@@ -122,19 +123,19 @@ func (r *postgresRepository) GetByTelegramID(ctx context.Context, telegramID int
 // Collection reads
 // ============================================================
 
-func (r *postgresRepository) List(ctx context.Context, limit, offset int) ([]*User, error) {
+func (r *postgresRepository) List(ctx context.Context, limit, offset int) ([]*model.User, error) {
 	rows, err := r.db.Query(ctx, queryListUsers, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("users.repository.List: %w", err)
 	}
 
-	users, err := pgx.CollectRows(rows, pgx.RowToStructByName[User])
+	users, err := pgx.CollectRows(rows, pgx.RowToStructByName[model.User])
 	if err != nil {
 		return nil, fmt.Errorf("users.repository.List: %w", err)
 	}
 
 	// Convert []User to []*User
-	result := make([]*User, len(users))
+	result := make([]*model.User, len(users))
 	for i := range users {
 		result[i] = &users[i]
 	}

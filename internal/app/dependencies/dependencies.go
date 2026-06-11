@@ -2,6 +2,7 @@ package dependencies
 
 import (
 	"github.com/jackc/pgx/v5/pgxpool"
+	"telegram-marketplace/internal/core/membership/users/repository"
 
 	"telegram-marketplace/internal/app/router"
 	"telegram-marketplace/internal/core/membership/users"
@@ -16,7 +17,7 @@ import (
 //  3. Mount its routes in internal/app/router/router.go.
 func Wire(db *pgxpool.Pool) router.Handlers {
 	// membership/users
-	userRepo    := users.NewPostgresRepository(db)
+	userRepo := repository.NewPostgresRepository(db)
 	userService := users.NewService(userRepo)
 	userHandler := users.NewHandler(userService)
 

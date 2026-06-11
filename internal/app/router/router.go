@@ -2,6 +2,7 @@ package router
 
 import (
 	"net/http"
+	"telegram-marketplace/internal/core/membership/users/router"
 
 	"github.com/gin-gonic/gin"
 
@@ -35,7 +36,7 @@ func New(botToken string, h Handlers) *gin.Engine {
 	v1 := r.Group("/api/v1")
 	//v1.Use(middleware.TelegramAuth(botToken))
 	{
-		users.RegisterRoutes(v1, h.Users)
+		router.RegisterRoutes(v1, h.Users)
 		// products.RegisterRoutes(v1, h.Products)
 		// orders.RegisterRoutes(v1, h.Orders)
 	}

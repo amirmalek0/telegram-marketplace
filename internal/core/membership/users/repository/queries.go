@@ -1,4 +1,4 @@
-package users
+package repository
 
 // SQL query constants for the users repository.
 // Separating queries from repository logic improves maintainability and readability.
