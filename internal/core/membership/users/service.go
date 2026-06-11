@@ -29,7 +29,6 @@ func (s *Service) Create(ctx context.Context, req CreateUserRequest) (*User, err
 	}
 
 	u := &User{
-		ID:          newID(),
 		FirstName:   req.FirstName,
 		LastName:    req.LastName,
 		Username:    req.Username,

@@ -2,6 +2,6 @@ package products
 
 import "context"
 
-type Repository interface{
- Create(ctx context.Context,m *Model) error
+type Repository interface {
+	Create(ctx context.Context, m *Product) error
 }

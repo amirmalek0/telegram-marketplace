@@ -4,17 +4,10 @@ import (
 	"context"
 	"fmt"
 	"telegram-marketplace/pkg/pgconv"
-	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
-
-// newID generates a simple time-based unique string ID.
-// Replace with a UUID library (e.g. github.com/google/uuid) for production use.
-func newID() string {
-	return fmt.Sprintf("%d", time.Now().UnixNano())
-}
 
 // ErrNotFound is returned when a requested user does not exist.
 var ErrNotFound = fmt.Errorf("user not found")
@@ -58,20 +51,21 @@ var _ Repository = (*postgresRepository)(nil)
 // ============================================================
 
 func (r *postgresRepository) Create(ctx context.Context, u *User) error {
-	_, err := r.db.Exec(ctx, `
+	err := r.db.QueryRow(ctx, `
 		INSERT INTO users (
-			id, first_name, last_name, username, telegram_id, phone_number,
+			first_name, last_name, username, telegram_id, phone_number,
 			has_active_plan, active_plan_id, wallet_balance, plan_expire_at,
 			referred_by, is_banned, created_at
 		) VALUES (
-			$1, $2, $3, $4, $5, $6,
-			$7, $8, $9, $10,
-			$11, $12, $13
-		)`,
-		u.ID, u.FirstName, u.LastName, u.Username, u.TelegramID, u.PhoneNumber,
+			$1, $2, $3, $4, $5,
+			$6, $7, $8, $9,
+			$10, $11, $12
+		)
+		RETURNING id`,
+		u.FirstName, u.LastName, u.Username, u.TelegramID, u.PhoneNumber,
 		u.HasActivePlan, pgconv.TextPtr(u.ActivePlanID), u.WalletBalance, pgconv.TimestamptzPtr(u.PlanExpireAt),
 		pgconv.Int8Ptr(u.ReferredBy), u.IsBanned, u.CreatedAt,
-	)
+	).Scan(&u.ID)
 	if err != nil {
 		return fmt.Errorf("users.repository.Create: %w", err)
 	}

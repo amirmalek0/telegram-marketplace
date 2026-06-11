@@ -19,8 +19,10 @@ func Migrate(ctx context.Context, db *pgxpool.Pool) {
 }
 
 var migrations = []string{
+	`CREATE EXTENSION IF NOT EXISTS pgcrypto`,
+
 	`CREATE TABLE IF NOT EXISTS users (
-		id              TEXT PRIMARY KEY,
+		id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 		first_name      TEXT NOT NULL DEFAULT '',
 		last_name       TEXT NOT NULL DEFAULT '',
 		username        TEXT NOT NULL DEFAULT '',
@@ -36,50 +38,50 @@ var migrations = []string{
 	)`,
 
 	`CREATE TABLE IF NOT EXISTS admins (
-		id TEXT PRIMARY KEY
+		id UUID PRIMARY KEY DEFAULT gen_random_uuid()
 	)`,
 
 	`CREATE TABLE IF NOT EXISTS tickets (
-		id TEXT PRIMARY KEY
+		id UUID PRIMARY KEY DEFAULT gen_random_uuid()
 	)`,
 
 	`CREATE TABLE IF NOT EXISTS referrals (
-		id TEXT PRIMARY KEY
+		id UUID PRIMARY KEY DEFAULT gen_random_uuid()
 	)`,
 
 	`CREATE TABLE IF NOT EXISTS broadcasts (
-		id TEXT PRIMARY KEY
+		id UUID PRIMARY KEY DEFAULT gen_random_uuid()
 	)`,
 
 	`CREATE TABLE IF NOT EXISTS vip_plans (
-		id TEXT PRIMARY KEY
+		id UUID PRIMARY KEY DEFAULT gen_random_uuid()
 	)`,
 
 	`CREATE TABLE IF NOT EXISTS categories (
-		id TEXT PRIMARY KEY
+		id UUID PRIMARY KEY DEFAULT gen_random_uuid()
 	)`,
 
 	`CREATE TABLE IF NOT EXISTS products (
-		id            TEXT PRIMARY KEY
+		id UUID PRIMARY KEY DEFAULT gen_random_uuid()
 	)`,
 
 	`CREATE TABLE IF NOT EXISTS inventory (
-		id TEXT PRIMARY KEY
+		id UUID PRIMARY KEY DEFAULT gen_random_uuid()
 	)`,
 
 	`CREATE TABLE IF NOT EXISTS files (
-		id TEXT PRIMARY KEY
+		id UUID PRIMARY KEY DEFAULT gen_random_uuid()
 	)`,
 
 	`CREATE TABLE IF NOT EXISTS search_index (
-		id TEXT PRIMARY KEY
+		id UUID PRIMARY KEY DEFAULT gen_random_uuid()
 	)`,
 
 	`CREATE TABLE IF NOT EXISTS orders (
-		id         TEXT PRIMARY KEY
+		id UUID PRIMARY KEY DEFAULT gen_random_uuid()
 	)`,
 
 	`CREATE TABLE IF NOT EXISTS settings (
-		id TEXT PRIMARY KEY
+		id UUID PRIMARY KEY DEFAULT gen_random_uuid()
 	)`,
 }
