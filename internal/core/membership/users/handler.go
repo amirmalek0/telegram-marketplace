@@ -2,6 +2,7 @@ package users
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"telegram-marketplace/pkg/pagination"
@@ -41,6 +42,26 @@ func (h *Handler) GetByID(c *gin.Context) {
 	id := c.Param("id")
 
 	user, err := h.service.GetByID(c.Request.Context(), id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, toResponse(user))
+}
+
+// GetByTelegramID godoc
+// GET /users/t/:id
+func (h *Handler) GetByTelegramID(c *gin.Context) {
+	rawID := c.Param("id")
+
+	telegramID, err := strconv.ParseInt(rawID, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "telegram_id must be a valid integer"})
+		return
+	}
+
+	user, err := h.service.GetByTelegramID(c.Request.Context(), telegramID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return

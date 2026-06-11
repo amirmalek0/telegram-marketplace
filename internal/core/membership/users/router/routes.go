@@ -12,6 +12,7 @@ func RegisterRoutes(rg *gin.RouterGroup, h *users.Handler) {
 		g.POST("", h.Create)
 		g.GET("", h.List)
 		g.GET("/:id", h.GetByID)
+		g.GET("/t/:id", h.GetByTelegramID)
 		g.PATCH("/:id", h.Update)
 		g.PATCH("/:id/ban", h.SetBanned)
 		g.DELETE("/:id", h.Delete)
