@@ -51,17 +51,7 @@ var _ Repository = (*postgresRepository)(nil)
 // ============================================================
 
 func (r *postgresRepository) Create(ctx context.Context, u *User) error {
-	err := r.db.QueryRow(ctx, `
-		INSERT INTO users (
-			first_name, last_name, username, telegram_id, phone_number,
-			has_active_plan, active_plan_id, wallet_balance, plan_expire_at,
-			referred_by, is_banned, created_at
-		) VALUES (
-			$1, $2, $3, $4, $5,
-			$6, $7, $8, $9,
-			$10, $11, $12
-		)
-		RETURNING id`,
+	err := r.db.QueryRow(ctx, queryCreateUser,
 		u.FirstName, u.LastName, u.Username, u.TelegramID, u.PhoneNumber,
 		u.HasActivePlan, pgconv.TextPtr(u.ActivePlanID), u.WalletBalance, pgconv.TimestamptzPtr(u.PlanExpireAt),
 		pgconv.Int8Ptr(u.ReferredBy), u.IsBanned, u.CreatedAt,
@@ -73,13 +63,7 @@ func (r *postgresRepository) Create(ctx context.Context, u *User) error {
 }
 
 func (r *postgresRepository) Update(ctx context.Context, u *User) error {
-	_, err := r.db.Exec(ctx, `
-		UPDATE users SET
-			first_name   = $1,
-			last_name    = $2,
-			username     = $3,
-			phone_number = $4
-		WHERE id = $5`,
+	_, err := r.db.Exec(ctx, queryUpdateUser,
 		u.FirstName, u.LastName, u.Username, u.PhoneNumber, u.ID,
 	)
 	if err != nil {
@@ -89,10 +73,7 @@ func (r *postgresRepository) Update(ctx context.Context, u *User) error {
 }
 
 func (r *postgresRepository) SetBanned(ctx context.Context, id string, banned bool) error {
-	_, err := r.db.Exec(ctx,
-		`UPDATE users SET is_banned = $1 WHERE id = $2`,
-		banned, id,
-	)
+	_, err := r.db.Exec(ctx, querySetBanned, banned, id)
 	if err != nil {
 		return fmt.Errorf("users.repository.SetBanned: %w", err)
 	}
@@ -100,7 +81,7 @@ func (r *postgresRepository) SetBanned(ctx context.Context, id string, banned bo
 }
 
 func (r *postgresRepository) Delete(ctx context.Context, id string) error {
-	_, err := r.db.Exec(ctx, `DELETE FROM users WHERE id = $1`, id)
+	_, err := r.db.Exec(ctx, queryDeleteUser, id)
 	if err != nil {
 		return fmt.Errorf("users.repository.Delete: %w", err)
 	}
@@ -112,11 +93,7 @@ func (r *postgresRepository) Delete(ctx context.Context, id string) error {
 // ============================================================
 
 func (r *postgresRepository) GetByID(ctx context.Context, id string) (*User, error) {
-	rows, err := r.db.Query(ctx, `
-		SELECT id, first_name, last_name, username, telegram_id, phone_number,
-		       has_active_plan, active_plan_id, wallet_balance, plan_expire_at,
-		       referred_by, is_banned, created_at
-		FROM users WHERE id = $1`, id)
+	rows, err := r.db.Query(ctx, queryGetUserByID, id)
 	if err != nil {
 		return nil, fmt.Errorf("users.repository.GetByID: %w", err)
 	}
@@ -129,11 +106,7 @@ func (r *postgresRepository) GetByID(ctx context.Context, id string) (*User, err
 }
 
 func (r *postgresRepository) GetByTelegramID(ctx context.Context, telegramID int64) (*User, error) {
-	rows, err := r.db.Query(ctx, `
-		SELECT id, first_name, last_name, username, telegram_id, phone_number,
-		       has_active_plan, active_plan_id, wallet_balance, plan_expire_at,
-		       referred_by, is_banned, created_at
-		FROM users WHERE telegram_id = $1`, telegramID)
+	rows, err := r.db.Query(ctx, queryGetUserByTelegramID, telegramID)
 	if err != nil {
 		return nil, fmt.Errorf("users.repository.GetByTelegramID: %w", err)
 	}
@@ -150,13 +123,7 @@ func (r *postgresRepository) GetByTelegramID(ctx context.Context, telegramID int
 // ============================================================
 
 func (r *postgresRepository) List(ctx context.Context, limit, offset int) ([]*User, error) {
-	rows, err := r.db.Query(ctx, `
-		SELECT id, first_name, last_name, username, telegram_id, phone_number,
-		       has_active_plan, active_plan_id, wallet_balance, plan_expire_at,
-		       referred_by, is_banned, created_at
-		FROM users
-		ORDER BY created_at DESC
-		LIMIT $1 OFFSET $2`, limit, offset)
+	rows, err := r.db.Query(ctx, queryListUsers, limit, offset)
 	if err != nil {
 		return nil, fmt.Errorf("users.repository.List: %w", err)
 	}
