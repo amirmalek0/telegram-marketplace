@@ -32,6 +32,7 @@ type Repository interface {
 
 	// --- Collection reads ---
 	List(ctx context.Context, limit, offset int) ([]*model.User, error)
+	Count(ctx context.Context) (int64, error)
 }
 
 // postgresRepository is the Postgres implementation of Repository.
@@ -140,4 +141,13 @@ func (r *postgresRepository) List(ctx context.Context, limit, offset int) ([]*mo
 		result[i] = &users[i]
 	}
 	return result, nil
+}
+
+func (r *postgresRepository) Count(ctx context.Context) (int64, error) {
+	var total int64
+	err := r.db.QueryRow(ctx, queryCountUsers).Scan(&total)
+	if err != nil {
+		return 0, fmt.Errorf("users.repository.Count: %w", err)
+	}
+	return total, nil
 }

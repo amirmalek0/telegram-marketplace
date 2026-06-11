@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"telegram-marketplace/internal/core/membership/users/model"
 	"telegram-marketplace/internal/core/membership/users/repository"
+	"telegram-marketplace/pkg/pagination"
 	"time"
 )
 
@@ -30,7 +31,7 @@ func (s *Service) Create(ctx context.Context, req CreateUserRequest) (*model.Use
 		referredBy = &req.ReferredBy
 	}
 
-	u := &model.User{
+	user := &model.User{
 		FirstName:   req.FirstName,
 		LastName:    req.LastName,
 		Username:    req.Username,
@@ -40,66 +41,75 @@ func (s *Service) Create(ctx context.Context, req CreateUserRequest) (*model.Use
 		CreatedAt:   time.Now(),
 	}
 
-	if err := s.repo.Create(ctx, u); err != nil {
+	if err := s.repo.Create(ctx, user); err != nil {
 		return nil, fmt.Errorf("users.service.Create: %w", err)
 	}
-	return u, nil
+	return user, nil
 }
 
 // GetByID returns a user by its internal ID.
 func (s *Service) GetByID(ctx context.Context, id string) (*model.User, error) {
-	u, err := s.repo.GetByID(ctx, id)
+	user, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("users.service.GetByID: %w", err)
 	}
-	return u, nil
+	return user, nil
 }
 
 // GetByTelegramID returns a user by their Telegram ID.
 func (s *Service) GetByTelegramID(ctx context.Context, telegramID int64) (*model.User, error) {
-	u, err := s.repo.GetByTelegramID(ctx, telegramID)
+	user, err := s.repo.GetByTelegramID(ctx, telegramID)
 	if err != nil {
 		return nil, fmt.Errorf("users.service.GetByTelegramID: %w", err)
 	}
-	return u, nil
+	return user, nil
 }
 
-// List returns a paginated list of users.
-func (s *Service) List(ctx context.Context, limit, offset int) ([]*model.User, error) {
-	if limit <= 0 || limit > 100 {
-		limit = 20
-	}
-	users, err := s.repo.List(ctx, limit, offset)
+// List returns a paginated list of users with metadata.
+func (s *Service) List(ctx context.Context, paginationParams pagination.Params) (*PaginatedResponse, error) {
+	userList, err := s.repo.List(ctx, paginationParams.PerPage, paginationParams.Offset())
 	if err != nil {
 		return nil, fmt.Errorf("users.service.List: %w", err)
 	}
-	return users, nil
+
+	total, err := s.repo.Count(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("users.service.List count: %w", err)
+	}
+
+	data := make([]Response, 0, len(userList))
+	for _, userModel := range userList {
+		data = append(data, toResponse(userModel))
+	}
+
+	paginatedResult := pagination.NewResponse(data, total, paginationParams)
+	return &paginatedResult, nil
 }
 
 // Update applies profile changes to an existing user.
 func (s *Service) Update(ctx context.Context, id string, req UpdateUserRequest) (*model.User, error) {
-	u, err := s.repo.GetByID(ctx, id)
+	user, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("users.service.Update: %w", err)
 	}
 
 	if req.FirstName != nil {
-		u.FirstName = *req.FirstName
+		user.FirstName = *req.FirstName
 	}
 	if req.LastName != nil {
-		u.LastName = *req.LastName
+		user.LastName = *req.LastName
 	}
 	if req.Username != nil {
-		u.Username = *req.Username
+		user.Username = *req.Username
 	}
 	if req.PhoneNumber != nil {
-		u.PhoneNumber = *req.PhoneNumber
+		user.PhoneNumber = *req.PhoneNumber
 	}
 
-	if err := s.repo.Update(ctx, u); err != nil {
+	if err := s.repo.Update(ctx, user); err != nil {
 		return nil, fmt.Errorf("users.service.Update: %w", err)
 	}
-	return u, nil
+	return user, nil
 }
 
 // SetBanned bans or unbans a user.

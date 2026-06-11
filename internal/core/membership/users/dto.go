@@ -2,6 +2,7 @@ package users
 
 import (
 	"telegram-marketplace/internal/core/membership/users/model"
+	"telegram-marketplace/pkg/pagination"
 	"time"
 )
 
@@ -29,7 +30,10 @@ type BanUserRequest struct {
 
 // --- Response DTOs ---
 
-type UserResponse struct {
+// PaginatedResponse is the paginated envelope for the user list endpoint.
+type PaginatedResponse = pagination.Response[Response]
+
+type Response struct {
 	ID            string     `json:"id"`
 	FirstName     string     `json:"first_name"`
 	LastName      string     `json:"last_name"`
@@ -45,20 +49,20 @@ type UserResponse struct {
 	CreatedAt     time.Time  `json:"created_at"`
 }
 
-func toResponse(u *model.User) UserResponse {
-	return UserResponse{
-		ID:            u.ID,
-		FirstName:     u.FirstName,
-		LastName:      u.LastName,
-		Username:      u.Username,
-		TelegramID:    u.TelegramID,
-		PhoneNumber:   u.PhoneNumber,
-		HasActivePlan: u.HasActivePlan,
-		ActivePlanID:  u.ActivePlanID,
-		WalletBalance: u.WalletBalance,
-		PlanExpireAt:  u.PlanExpireAt,
-		ReferredBy:    u.ReferredBy,
-		IsBanned:      u.IsBanned,
-		CreatedAt:     u.CreatedAt,
+func toResponse(user *model.User) Response {
+	return Response{
+		ID:            user.ID,
+		FirstName:     user.FirstName,
+		LastName:      user.LastName,
+		Username:      user.Username,
+		TelegramID:    user.TelegramID,
+		PhoneNumber:   user.PhoneNumber,
+		HasActivePlan: user.HasActivePlan,
+		ActivePlanID:  user.ActivePlanID,
+		WalletBalance: user.WalletBalance,
+		PlanExpireAt:  user.PlanExpireAt,
+		ReferredBy:    user.ReferredBy,
+		IsBanned:      user.IsBanned,
+		CreatedAt:     user.CreatedAt,
 	}
 }

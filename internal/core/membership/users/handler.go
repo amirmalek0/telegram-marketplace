@@ -2,9 +2,9 @@ package users
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"telegram-marketplace/pkg/pagination"
 )
 
 // Handler wires HTTP concerns to the Service layer.
@@ -50,22 +50,17 @@ func (h *Handler) GetByID(c *gin.Context) {
 }
 
 // List godoc
-// GET /users?limit=20&offset=0
+// GET /users?page=1&per_page=20
 func (h *Handler) List(c *gin.Context) {
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
-	offset, _ := strconv.Atoi(c.DefaultQuery("offset", "0"))
+	paginationParams := pagination.FromQuery(c)
 
-	users, err := h.service.List(c.Request.Context(), limit, offset)
+	result, err := h.service.List(c.Request.Context(), paginationParams)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	resp := make([]UserResponse, 0, len(users))
-	for _, u := range users {
-		resp = append(resp, toResponse(u))
-	}
-	c.JSON(http.StatusOK, resp)
+	c.JSON(http.StatusOK, result)
 }
 
 // Update godoc
