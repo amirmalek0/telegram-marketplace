@@ -60,7 +60,7 @@ var migrations = []string{
 	)`,
 
 	`CREATE TABLE IF NOT EXISTS products (
-		id            TEXT PRIMARY KEY,
+		id            TEXT PRIMARY KEY
 	)`,
 
 	`CREATE TABLE IF NOT EXISTS inventory (
@@ -76,7 +76,7 @@ var migrations = []string{
 	)`,
 
 	`CREATE TABLE IF NOT EXISTS orders (
-		id         TEXT PRIMARY KEY,
+		id         TEXT PRIMARY KEY
 	)`,
 
 	`CREATE TABLE IF NOT EXISTS settings (

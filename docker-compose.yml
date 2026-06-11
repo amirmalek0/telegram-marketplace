@@ -20,7 +20,7 @@ services:
     depends_on:
       - postgres
 
-  app:
+  backend:
     build: .
     depends_on:
       - postgres
