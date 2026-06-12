@@ -18,8 +18,7 @@ func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
 }
 
-// Create godoc
-// POST /users
+// Create registers a new user from the JSON body.
 func (h *Handler) Create(c *gin.Context) {
 	var req CreateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -36,8 +35,7 @@ func (h *Handler) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, toResponse(user))
 }
 
-// GetByID godoc
-// GET /users/:id
+// GetByID returns a single user by their internal UUID.
 func (h *Handler) GetByID(c *gin.Context) {
 	id := c.Param("id")
 
@@ -50,8 +48,7 @@ func (h *Handler) GetByID(c *gin.Context) {
 	c.JSON(http.StatusOK, toResponse(user))
 }
 
-// GetByTelegramID godoc
-// GET /users/t/:id
+// GetByTelegramID returns a single user by their Telegram numeric ID.
 func (h *Handler) GetByTelegramID(c *gin.Context) {
 	rawID := c.Param("id")
 
@@ -70,8 +67,7 @@ func (h *Handler) GetByTelegramID(c *gin.Context) {
 	c.JSON(http.StatusOK, toResponse(user))
 }
 
-// List godoc
-// GET /users?page=1&per_page=20
+// List returns a paginated list of users ordered by creation date.
 func (h *Handler) List(c *gin.Context) {
 	paginationParams := pagination.FromQuery(c)
 
@@ -84,8 +80,7 @@ func (h *Handler) List(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-// Update godoc
-// PATCH /users/:id
+// Update applies partial profile changes to an existing user.
 func (h *Handler) Update(c *gin.Context) {
 	id := c.Param("id")
 
@@ -104,8 +99,7 @@ func (h *Handler) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, toResponse(user))
 }
 
-// SetBanned godoc
-// PATCH /users/:id/ban
+// SetBanned bans or unbans a user by toggling the is_banned flag.
 func (h *Handler) SetBanned(c *gin.Context) {
 	id := c.Param("id")
 
@@ -123,8 +117,7 @@ func (h *Handler) SetBanned(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"is_banned": req.IsBanned})
 }
 
-// Delete godoc
-// DELETE /users/:id
+// Delete permanently removes a user by their internal UUID.
 func (h *Handler) Delete(c *gin.Context) {
 	id := c.Param("id")
 
