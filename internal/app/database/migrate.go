@@ -58,7 +58,13 @@ var migrations = []string{
 	)`,
 
 	`CREATE TABLE IF NOT EXISTS categories (
-		id UUID PRIMARY KEY DEFAULT gen_random_uuid()
+		id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+		title      TEXT        NOT NULL,
+		slug       TEXT        NOT NULL UNIQUE,
+		storage_id TEXT        NOT NULL DEFAULT '',
+		active     BOOLEAN     NOT NULL DEFAULT true,
+		sort_order INTEGER     NOT NULL DEFAULT 0,
+		created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 	)`,
 
 	`CREATE TABLE IF NOT EXISTS products (

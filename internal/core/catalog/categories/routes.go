@@ -1,3 +1,0 @@
-package categories
-
-func RegisterRoutes(){}

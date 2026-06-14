@@ -2,19 +2,20 @@ package router
 
 import (
 	"net/http"
-	"telegram-marketplace/internal/core/membership/users/router"
 
 	"github.com/gin-gonic/gin"
 
+	"telegram-marketplace/internal/core/catalog/categories"
+	categoryrouter "telegram-marketplace/internal/core/catalog/categories/router"
 	"telegram-marketplace/internal/core/membership/users"
+	userrouter "telegram-marketplace/internal/core/membership/users/router"
 )
 
 // Handlers groups all domain handlers that the router needs.
 // Add a new field here when a new module is introduced.
 type Handlers struct {
-	Users *users.Handler
-	// Products *products.Handler
-	// Orders   *orders.Handler
+	Users      *users.Handler
+	Categories *categories.Handler
 }
 
 // New creates and configures the gin.Engine:
@@ -36,9 +37,8 @@ func New(botToken string, h Handlers) *gin.Engine {
 	v1 := r.Group("/api/v1")
 	//v1.Use(middleware.TelegramAuth(botToken))
 	{
-		router.RegisterRoutes(v1, h.Users)
-		// products.RegisterRoutes(v1, h.Products)
-		// orders.RegisterRoutes(v1, h.Orders)
+		userrouter.RegisterRoutes(v1, h.Users)
+		categoryrouter.RegisterRoutes(v1, h.Categories)
 	}
 
 	return r

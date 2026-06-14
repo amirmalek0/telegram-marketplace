@@ -1,11 +1,16 @@
 package dependencies
 
 import (
-	"github.com/jackc/pgx/v5/pgxpool"
-	"telegram-marketplace/internal/core/membership/users/repository"
+	"log"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+	"telegram-marketplace/internal/app/config"
 	"telegram-marketplace/internal/app/router"
+	"telegram-marketplace/internal/core/catalog/categories"
+	categoryrepo "telegram-marketplace/internal/core/catalog/categories/repository"
 	"telegram-marketplace/internal/core/membership/users"
+	userrepo "telegram-marketplace/internal/core/membership/users/repository"
+	"telegram-marketplace/pkg/storage"
 )
 
 // Wire constructs all repositories, services, and handlers and returns
@@ -15,19 +20,35 @@ import (
 //  1. Instantiate its repo, service, and handler here.
 //  2. Add the handler field to router.Handlers.
 //  3. Mount its routes in internal/app/router/router.go.
-func Wire(db *pgxpool.Pool) router.Handlers {
-	// membership/users
-	userRepo := repository.NewPostgresRepository(db)
+func Wire(db *pgxpool.Pool, cfg config.Config) router.Handlers {
+	// --- Infrastructure: storage client (connection-level factory) ---
+	storageClient, err := storage.New(storage.Config{
+		Provider:  storage.Provider(cfg.StorageProvider),
+		Endpoint:  cfg.StorageEndpoint,
+		AccessKey: cfg.StorageAccessKey,
+		SecretKey: cfg.StorageSecretKey,
+		Region:    cfg.StorageRegion,
+	})
+	if err != nil {
+		log.Fatalf("storage: %v", err)
+	}
+
+	// Per-entity bucket-scoped Storage instances.
+	categoryIconsStore := storageClient.Bucket(cfg.CategoryIconsBucket, cfg.CategoryIconsPublicURL)
+	_ = storageClient.Bucket(cfg.ProductFilesBucket, cfg.ProductFilesPublicURL) // reserved for products module
+
+	// --- membership/users ---
+	userRepo := userrepo.NewPostgresRepository(db)
 	userService := users.NewService(userRepo)
 	userHandler := users.NewHandler(userService)
 
-	// catalog/products — uncomment when ready
-	// productRepo    := products.NewPostgresRepository(db)
-	// productService := products.NewService(productRepo)
-	// productHandler := products.NewHandler(productService)
+	// --- catalog/categories ---
+	categoryRepo := categoryrepo.NewPostgresRepository(db)
+	categoryService := categories.NewService(categoryRepo, categoryIconsStore)
+	categoryHandler := categories.NewHandler(categoryService)
 
 	return router.Handlers{
-		Users: userHandler,
-		// Products: productHandler,
+		Users:      userHandler,
+		Categories: categoryHandler,
 	}
 }

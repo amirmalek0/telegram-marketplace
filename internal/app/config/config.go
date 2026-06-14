@@ -13,6 +13,20 @@ type Config struct {
 	DatabaseURL string
 	BotToken    string
 	Addr        string
+
+	// Object storage — connection
+	StorageProvider  string // "s3" or "minio" (default: "minio")
+	StorageEndpoint  string // e.g. http://localhost:9000
+	StorageAccessKey string
+	StorageSecretKey string
+	StorageRegion    string
+
+	// Per-entity buckets (name + public base URL)
+	CategoryIconsBucket    string // e.g. "categories-icons"
+	CategoryIconsPublicURL string // e.g. "http://localhost:9000/categories-icons"
+
+	ProductFilesBucket    string // e.g. "product-files"
+	ProductFilesPublicURL string // e.g. "http://localhost:9000/product-files"
 }
 
 // Load reads configuration from environment variables and returns a Config.
@@ -25,6 +39,18 @@ func Load() Config {
 		DatabaseURL: mustEnv("DATABASE_URL"),
 		BotToken:    mustEnv("BOT_TOKEN"),
 		Addr:        getEnv("ADDR", ":8080"),
+
+		StorageProvider:  getEnv("STORAGE_PROVIDER", "minio"),
+		StorageEndpoint:  mustEnv("STORAGE_ENDPOINT"),
+		StorageAccessKey: mustEnv("MINIO_ACCESS_KEY"),
+		StorageSecretKey: mustEnv("MINIO_SECRET_KEY"),
+		StorageRegion:    getEnv("STORAGE_REGION", "us-east-1"),
+
+		CategoryIconsBucket:    getEnv("CATEGORY_ICONS_BUCKET", "categories-icons"),
+		CategoryIconsPublicURL: mustEnv("CATEGORY_ICONS_PUBLIC_URL"),
+
+		ProductFilesBucket:    getEnv("PRODUCT_FILES_BUCKET", "product-files"),
+		ProductFilesPublicURL: mustEnv("PRODUCT_FILES_PUBLIC_URL"),
 	}
 }
 

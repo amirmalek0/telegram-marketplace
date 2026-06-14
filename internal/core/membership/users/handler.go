@@ -13,7 +13,7 @@ type Handler struct {
 	service *Service
 }
 
-// NewHandler constructs a Handler with the given Service (plain DI).
+// NewHandler constructs a Handler with the given Service.
 func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
 }

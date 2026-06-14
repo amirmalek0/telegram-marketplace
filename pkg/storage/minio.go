@@ -12,16 +12,16 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
-// S3Client is a Storage implementation backed by any S3-compatible store
-type S3Client struct {
+// Client is a connection-level factory backed by any S3-compatible store.
+// It holds the underlying AWS S3 client but is not tied to any bucket.
+// Call Bucket to obtain a bucket-scoped Storage instance.
+type Client struct {
 	client    *s3.Client
 	presigner *s3.PresignClient
-	bucket    string
-	publicURL string // base URL, e.g. "http://localhost:9000/marketplace"
 }
 
-// NewS3Client constructs an S3Client pointed at the given endpoint.
-func NewS3Client(endpoint, accessKey, secretKey, bucket, region, publicURL string) *S3Client {
+// NewClient constructs a Client pointed at the given endpoint.
+func NewClient(endpoint, accessKey, secretKey, region string) *Client {
 	cfg := aws.Config{
 		Region:      region,
 		Credentials: credentials.NewStaticCredentialsProvider(accessKey, secretKey, ""),
@@ -32,12 +32,30 @@ func NewS3Client(endpoint, accessKey, secretKey, bucket, region, publicURL strin
 		o.UsePathStyle = true
 	})
 
-	return &S3Client{
+	return &Client{
 		client:    client,
 		presigner: s3.NewPresignClient(client),
-		bucket:    bucket,
+	}
+}
+
+// Bucket returns a Storage scoped to the given bucket name.
+// publicURL is the base URL used to build public object URLs,
+// e.g. "http://localhost:9000/categories-icons".
+func (c *Client) Bucket(name, publicURL string) Storage {
+	return &S3Client{
+		client:    c.client,
+		presigner: c.presigner,
+		bucket:    name,
 		publicURL: strings.TrimRight(publicURL, "/"),
 	}
+}
+
+// S3Client is a Storage implementation scoped to a single bucket.
+type S3Client struct {
+	client    *s3.Client
+	presigner *s3.PresignClient
+	bucket    string
+	publicURL string // base URL, e.g. "http://localhost:9000/categories-icons"
 }
 
 var _ Storage = (*S3Client)(nil)
