@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Telegram Marketplace — Project Structure</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0d1117;
+      color: #c9d1d9;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+    }
+
+    #toolbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 48px;
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 12px;
+      z-index: 100;
+      user-select: none;
+    }
+
+    #toolbar h1 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #58a6ff;
+      letter-spacing: 0.5px;
+      flex: 1;
+    }
+
+    .tb-btn {
+      background: #21262d;
+      border: 1px solid #30363d;
+      color: #c9d1d9;
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .tb-btn:hover { background: #30363d; }
+
+    #zoom-label {
+      font-size: 12px;
+      color: #8b949e;
+      min-width: 44px;
+      text-align: center;
+    }
+
+    #legend {
+      position: fixed;
+      bottom: 16px;
+      left: 16px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 11px;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    #legend .leg-title { font-weight: 600; color: #8b949e; margin-bottom: 2px; }
+    .leg-item { display: flex; align-items: center; gap: 8px; }
+    .leg-dot {
+      width: 12px; height: 12px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    #hint {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 11px;
+      color: #8b949e;
+      z-index: 100;
+      line-height: 1.7;
+    }
+
+    canvas {
+      display: block;
+      margin-top: 48px;
+      cursor: grab;
+    }
+    canvas.grabbing { cursor: grabbing; }
+  </style>
+</head>
+<body>
+
+<div id="toolbar">
+  <h1>🛒 Telegram Marketplace — Project Structure</h1>
+  <button class="tb-btn" id="btn-fit">Fit All</button>
+  <button class="tb-btn" id="btn-zoom-in">＋</button>
+  <span id="zoom-label">100%</span>
+  <button class="tb-btn" id="btn-zoom-out">－</button>
+  <button class="tb-btn" id="btn-reset">Reset</button>
+</div>
+
+<div id="legend">
+  <div class="leg-title">Legend</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#1f6feb"></div> App / Infra</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#388bfd"></div> Module Group</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#2ea043"></div> Entity</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#9e6a03"></div> Payment Provider</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#6e40c9"></div> Bot / Process</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#58a6ff"></div> Highlighted Relation</div>
+</div>
+
+<div id="hint">
+  🖱 Drag to pan &nbsp;|&nbsp; Scroll to zoom<br>
+  Click a node to highlight its relations
+</div>
+
+<canvas id="c"></canvas>
+
+<script>
+// ─── DATA ────────────────────────────────────────────────────────────────────
+
+const COLORS = {
+  infra:   { bg: '#0d419d', border: '#1f6feb', text: '#cae8ff', header: '#1f6feb' },
+  group:   { bg: '#0c2d6b', border: '#388bfd', text: '#a5d3ff', header: '#388bfd' },
+  entity:  { bg: '#0d2b1a', border: '#2ea043', text: '#aff5b4', header: '#2ea043' },
+  payment: { bg: '#2b1d00', border: '#d29922', text: '#ffd680', header: '#9e6a03' },
+  bot:     { bg: '#1e0a3c', border: '#8957e5', text: '#d2b4fe', header: '#6e40c9' },
+  connLine:   '#30363d',
+  connLineHL: '#58a6ff',
+};
+
+const nodes = [
+  // ── APP INFRA ──────────────────────────────────────────────────────────────
+  {
+    id: 'app', label: 'App Bootstrap', type: 'infra', x: 60, y: 80,
+    fields: ['cmd/api/main.go', 'boot.go', 'config.go', 'server.go', 'router.go', 'middleware/telegram_auth']
+  },
+  {
+    id: 'db', label: 'Database', type: 'infra', x: 60, y: 320,
+    fields: ['PostgreSQL', 'database.go', 'migrate.go']
+  },
+  {
+    id: 'storage', label: 'Storage', type: 'infra', x: 60, y: 480,
+    fields: ['MinIO / S3', 'storage.go', 'minio.go']
+  },
+  {
+    id: 'deps', label: 'Dependencies', type: 'infra', x: 60, y: 620,
+    fields: ['dependencies.go', 'Injects repos/services', 'into handlers']
+  },
+
+  // ── BOT ───────────────────────────────────────────────────────────────────
+  {
+    id: 'bot', label: 'Telegram Bot', type: 'bot', x: 60, y: 760,
+    fields: ['bot/router.go', 'bot/keyboard_builder.go', 'bot/state_manager.go']
+  },
+
+  // ── MEMBERSHIP ────────────────────────────────────────────────────────────
+  {
+    id: 'user', label: 'User', type: 'entity', x: 420, y: 60,
+    fields: [
+      'id', 'first_name', 'last_name', 'username',
+      'telegram_id', 'phone_number', 'has_active_plan',
+      'active_plan_id', 'wallet_balance', 'plan_expire_at',
+      'referred_by', 'is_banned', 'created_at'
+    ]
+  },
+  {
+    id: 'admin', label: 'Admin', type: 'entity', x: 420, y: 380,
+    fields: ['id', 'user_id → User', 'role', 'permissions', 'created_at']
+  },
+  {
+    id: 'vip_plan', label: 'VIP Plan', type: 'entity', x: 420, y: 560,
+    fields: ['id', 'title', 'price', 'duration (days)', 'status']
+  },
+  {
+    id: 'subscription', label: 'Subscription', type: 'entity', x: 420, y: 730,
+    fields: ['id', 'user_id → User', 'plan_id → VIP Plan', 'start_date', 'end_date']
+  },
+  {
+    id: 'referral', label: 'Referral', type: 'entity', x: 420, y: 910,
+    fields: ['id', 'referrer_user_id → User', 'referred_user_id → User', 'reward_amount', 'created_at']
+  },
+  {
+    id: 'ticket', label: 'Ticket', type: 'entity', x: 420, y: 1090,
+    fields: ['id', 'user_id → User', 'subject', 'status', 'priority', 'created_at']
+  },
+  {
+    id: 'ticket_msg', label: 'Ticket Message', type: 'entity', x: 420, y: 1270,
+    fields: ['id', 'ticket_id → Ticket', 'sender_type (user/admin)', 'sender_id', 'message', 'created_at']
+  },
+  {
+    id: 'broadcast', label: 'Broadcast', type: 'entity', x: 420, y: 1460,
+    fields: ['id', 'title', 'message', 'status', 'sent_count', 'failed_count', 'created_at']
+  },
+
+  // ── CATALOG ───────────────────────────────────────────────────────────────
+  {
+    id: 'category', label: 'Category', type: 'entity', x: 860, y: 60,
+    fields: ['id', 'title', 'slug', 'storage_id → File', 'active', 'sort_order', 'created_at']
+  },
+  {
+    id: 'product', label: 'Product', type: 'entity', x: 860, y: 280,
+    fields: [
+      'id', 'title', 'description', 'price',
+      'category_id → Category', 'delivery_type',
+      'file_id → File', 'message_id → Message',
+      'inventory_id → Inventory', 'bundle_id → Bundle',
+      'api_id → External API', 'demo_url',
+      'vip_only', 'views_count', 'status', 'created_at'
+    ]
+  },
+  {
+    id: 'file', label: 'File', type: 'entity', x: 860, y: 660,
+    fields: ['id', 'name', 'size', 'mime_type', 'storage_provider', 'bucket', 'object_key']
+  },
+  {
+    id: 'message_entity', label: 'Message', type: 'entity', x: 860, y: 860,
+    fields: ['id', 'content']
+  },
+  {
+    id: 'inventory', label: 'Inventory', type: 'entity', x: 860, y: 990,
+    fields: ['id', 'items[] → Inventory Item']
+  },
+  {
+    id: 'inventory_item', label: 'Inventory Item', type: 'entity', x: 860, y: 1120,
+    fields: ['id', 'inventory_id → Inventory', 'value', 'status (available/sold)']
+  },
+  {
+    id: 'bundle', label: 'Bundle', type: 'entity', x: 860, y: 1270,
+    fields: ['id', 'config (file + message)']
+  },
+  {
+    id: 'api_entity', label: 'External API', type: 'entity', x: 860, y: 1390,
+    fields: ['id', 'method', 'headers[] → API Header', 'body', 'response']
+  },
+  {
+    id: 'api_header', label: 'API Header', type: 'entity', x: 860, y: 1560,
+    fields: ['id', 'api_id → External API', 'key', 'value']
+  },
+  {
+    id: 'settings', label: 'Bot Settings', type: 'entity', x: 860, y: 1710,
+    fields: [
+      'key (TEXT)', 'value (JSONB)', 'updated_at',
+      '— shop_mode', '— show_views', '— enable_referrals',
+      '— enable_vip', '— enable_support', '— payment_methods[]'
+    ]
+  },
+
+  // ── COMMERCE ──────────────────────────────────────────────────────────────
+  {
+    id: 'order', label: 'Order', type: 'entity', x: 1300, y: 60,
+    fields: ['id', 'user_id → User', 'product_id → Product', 'amount', 'payment_method', 'status', 'paid_at', 'created_at']
+  },
+  {
+    id: 'payment', label: 'Payment', type: 'entity', x: 1300, y: 290,
+    fields: ['id', 'order_id → Order', 'provider', 'gateway_trx_id', 'amount', 'status']
+  },
+  {
+    id: 'coupon', label: 'Coupon', type: 'entity', x: 1300, y: 490,
+    fields: ['id', 'code', 'discount_type (static/percentage)', 'discount_value', 'usage_limit', 'expires_at']
+  },
+  {
+    id: 'wallet', label: 'Wallet', type: 'entity', x: 1300, y: 680,
+    fields: ['id', 'user_id → User', 'balance', 'created_at', 'updated_at']
+  },
+  {
+    id: 'wallet_tx', label: 'Wallet Transaction', type: 'entity', x: 1300, y: 860,
+    fields: ['id', 'user_id → User', 'type (purchase/pay/reward)', 'amount', 'balance_before', 'balance_after', 'created_at']
+  },
+
+  // ── PAYMENT PROVIDERS ─────────────────────────────────────────────────────
+  { id: 'pay_zarinpal', label: 'Zarinpal',      type: 'payment', x: 1300, y: 1080, fields: ['provider: zarinpal',  'payments/zarinpal.go'] },
+  { id: 'pay_zibal',    label: 'Zibal',          type: 'payment', x: 1300, y: 1180, fields: ['provider: zibal',     'payments/zibal.go'] },
+  { id: 'pay_idpay',    label: 'IDPay',          type: 'payment', x: 1300, y: 1280, fields: ['provider: idpay',     'payments/idpay.go'] },
+  { id: 'pay_payping',  label: 'PayPing',        type: 'payment', x: 1300, y: 1380, fields: ['provider: payping',   'payments/payping.go'] },
+  { id: 'pay_crypto',   label: 'Crypto',         type: 'payment', x: 1300, y: 1480, fields: ['provider: crypto',    'payments/crypto.go'] },
+  { id: 'pay_ton',      label: 'TON',            type: 'payment', x: 1300, y: 1580, fields: ['provider: ton',       'payments/ton.go'] },
+  { id: 'pay_stars',    label: 'Telegram Stars', type: 'payment', x: 1300, y: 1680, fields: ['provider: stars',     'payments/telegram_stars.go'] },
+  { id: 'pay_manual',   label: 'Manual Card',    type: 'payment', x: 1300, y: 1780, fields: ['provider: manual_card','payments/manual_card.go'] },
+];
+
+const relations = [
+  // infra
+  ['app', 'db'],
+  ['app', 'storage'],
+  ['app', 'deps'],
+  ['deps', 'user'],
+  ['deps', 'order'],
+  ['deps', 'product'],
+  ['bot', 'user'],
+
+  // membership
+  ['user', 'subscription'],
+  ['vip_plan', 'subscription'],
+  ['user', 'referral'],
+  ['user', 'ticket'],
+  ['ticket', 'ticket_msg'],
+  ['admin', 'ticket_msg'],
+  ['user', 'wallet'],
+  ['user', 'wallet_tx'],
+
+  // catalog
+  ['category', 'product'],
+  ['file', 'product'],
+  ['file', 'category'],
+  ['message_entity', 'product'],
+  ['inventory', 'product'],
+  ['inventory_item', 'inventory'],
+  ['bundle', 'product'],
+  ['api_entity', 'product'],
+  ['api_header', 'api_entity'],
+
+  // commerce
+  ['user', 'order'],
+  ['product', 'order'],
+  ['order', 'payment'],
+  ['payment', 'pay_zarinpal'],
+  ['payment', 'pay_zibal'],
+  ['payment', 'pay_idpay'],
+  ['payment', 'pay_payping'],
+  ['payment', 'pay_crypto'],
+  ['payment', 'pay_ton'],
+  ['payment', 'pay_stars'],
+  ['payment', 'pay_manual'],
+];
+
+// ─── CANVAS SETUP ────────────────────────────────────────────────────────────
+
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
+
+let W, H;
+function resize() {
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight - 48;
+}
+resize();
+window.addEventListener('resize', () => { resize(); draw(); });
+
+// ─── VIEWPORT ────────────────────────────────────────────────────────────────
+
+let vx = 0, vy = 0, vz = 1;
+
+function toWorld(sx, sy) {
+  return { x: (sx - vx) / vz, y: (sy - vy) / vz };
+}
+
+// ─── NODE GEOMETRY ───────────────────────────────────────────────────────────
+
+const NODE_W    = 220;
+const HEADER_H  = 32;
+const FIELD_H   = 18;
+const FIELD_PAD = 8;
+const CORNER    = 8;
+
+function nodeHeight(node) {
+  return HEADER_H + (node.fields ? node.fields.length : 0) * FIELD_H + FIELD_PAD * 2;
+}
+
+function nodeBounds(node) {
+  return { x: node.x, y: node.y, w: NODE_W, h: nodeHeight(node) };
+}
+
+function nodeCenter(node) {
+  const b = nodeBounds(node);
+  return { x: b.x + b.w / 2, y: b.y + b.h / 2 };
+}
+
+// ─── HIT TEST ────────────────────────────────────────────────────────────────
+
+function hitNode(wx, wy) {
+  for (const n of nodes) {
+    const b = nodeBounds(n);
+    if (wx >= b.x && wx <= b.x + b.w && wy >= b.y && wy <= b.y + b.h) return n;
+  }
+  return null;
+}
+
+// ─── SELECTION ───────────────────────────────────────────────────────────────
+
+let selected = null;
+
+function relatedIds(nodeId) {
+  const ids = new Set([nodeId]);
+  for (const [a, b] of relations) {
+    if (a === nodeId) ids.add(b);
+    if (b === nodeId) ids.add(a);
+  }
+  return ids;
+}
+
+// ─── DRAW HELPERS ────────────────────────────────────────────────────────────
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.arcTo(x + w, y,     x + w, y + r,     r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+  ctx.lineTo(x + r, y + h);
+  ctx.arcTo(x,     y + h, x,     y + h - r, r);
+  ctx.lineTo(x, y + r);
+  ctx.arcTo(x,     y,     x + r, y,         r);
+  ctx.closePath();
+}
+
+function drawNode(node, highlighted) {
+  const b  = nodeBounds(node);
+  const c  = COLORS[node.type];
+  const sx = b.x * vz + vx,  sy = b.y * vz + vy;
+  const sw = b.w * vz,        sh = b.h * vz;
+  const sr = CORNER * vz,     hh = HEADER_H * vz;
+
+  ctx.globalAlpha = selected ? (highlighted ? 1 : 0.22) : 1;
+
+  // glow
+  ctx.shadowColor = highlighted ? c.border : 'transparent';
+  ctx.shadowBlur  = highlighted ? 20 * vz : 0;
+
+  // body
+  roundRect(sx, sy, sw, sh, sr);
+  ctx.fillStyle   = c.bg;
+  ctx.fill();
+  ctx.strokeStyle = highlighted ? c.border : c.border + '99';
+  ctx.lineWidth   = (highlighted ? 2 : 1) * vz;
+  ctx.stroke();
+
+  // header fill
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(sx + sr, sy);
+  ctx.lineTo(sx + sw - sr, sy);
+  ctx.arcTo(sx + sw, sy, sx + sw, sy + sr, sr);
+  ctx.lineTo(sx + sw, sy + hh);
+  ctx.lineTo(sx, sy + hh);
+  ctx.lineTo(sx, sy + sr);
+  ctx.arcTo(sx, sy, sx + sr, sy, sr);
+  ctx.closePath();
+  ctx.fillStyle = c.header;
+  ctx.fill();
+  ctx.restore();
+
+  ctx.shadowBlur = 0;
+
+  // header text
+  ctx.fillStyle    = '#ffffff';
+  ctx.font         = `bold ${Math.max(9, 12 * vz)}px "Segoe UI", system-ui, sans-serif`;
+  ctx.textAlign    = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(node.label, sx + 10 * vz, sy + hh / 2, sw - 16 * vz);
+
+  // fields
+  if (node.fields && vz > 0.3) {
+    ctx.font      = `${Math.max(8, 11 * vz)}px "Segoe UI Mono", monospace`;
+    ctx.fillStyle = c.text;
+    node.fields.forEach((f, i) => {
+      const fy = sy + hh + (FIELD_PAD + i * FIELD_H + FIELD_H / 2) * vz;
+      ctx.fillText(f, sx + 10 * vz, fy, sw - 16 * vz);
+    });
+  }
+
+  ctx.globalAlpha = 1;
+}
+
+function edgePoints(a, b) {
+  const ab = nodeBounds(a), bb = nodeBounds(b);
+  const acx = ab.x + ab.w / 2, acy = ab.y + ab.h / 2;
+  const bcx = bb.x + bb.w / 2, bcy = bb.y + bb.h / 2;
+  const dx = bcx - acx, dy = bcy - acy;
+  let ax, ay, bx, by;
+  if (Math.abs(dx) > Math.abs(dy)) {
+    ax = dx > 0 ? ab.x + ab.w : ab.x;  ay = acy;
+    bx = dx > 0 ? bb.x : bb.x + bb.w;  by = bcy;
+  } else {
+    ax = acx; ay = dy > 0 ? ab.y + ab.h : ab.y;
+    bx = bcx; by = dy > 0 ? bb.y : bb.y + bb.h;
+  }
+  return { ax, ay, bx, by };
+}
+
+function drawRelation(a, b, highlighted) {
+  const { ax, ay, bx, by } = edgePoints(a, b);
+  const sax = ax * vz + vx, say = ay * vz + vy;
+  const sbx = bx * vz + vx, sby = by * vz + vy;
+
+  ctx.globalAlpha = selected ? (highlighted ? 0.9 : 0.05) : 0.3;
+  ctx.strokeStyle = highlighted ? COLORS.connLineHL : COLORS.connLine;
+  ctx.lineWidth   = (highlighted ? 2 : 1) * vz;
+  ctx.setLineDash(highlighted ? [] : [4 * vz, 4 * vz]);
+
+  const cx = (sax + sbx) / 2;
+  ctx.beginPath();
+  ctx.moveTo(sax, say);
+  ctx.bezierCurveTo(cx, say, cx, sby, sbx, sby);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // arrowhead on highlighted
+  if (highlighted) {
+    const angle = Math.atan2(sby - say, sbx - sax);
+    const al = 9 * vz;
+    ctx.beginPath();
+    ctx.moveTo(sbx, sby);
+    ctx.lineTo(sbx - al * Math.cos(angle - 0.4), sby - al * Math.sin(angle - 0.4));
+    ctx.lineTo(sbx - al * Math.cos(angle + 0.4), sby - al * Math.sin(angle + 0.4));
+    ctx.closePath();
+    ctx.fillStyle   = COLORS.connLineHL;
+    ctx.globalAlpha = 0.9;
+    ctx.fill();
+  }
+
+  ctx.globalAlpha = 1;
+}
+
+// ─── GROUP BACKGROUNDS ───────────────────────────────────────────────────────
+
+const groups = [
+  { label: 'App / Infrastructure', x: 30,   y: 50,  w: 290, h: 840,  color: '#1f6feb' },
+  { label: 'Membership',           x: 390,  y: 30,  w: 280, h: 1570, color: '#388bfd' },
+  { label: 'Catalog',              x: 830,  y: 30,  w: 280, h: 1840, color: '#2ea043' },
+  { label: 'Commerce',             x: 1270, y: 30,  w: 280, h: 1880, color: '#d29922' },
+];
+
+function drawGroups() {
+  groups.forEach(g => {
+    const sx = g.x * vz + vx, sy = g.y * vz + vy;
+    const sw = g.w * vz,       sh = g.h * vz;
+    ctx.globalAlpha = 0.07;
+    ctx.fillStyle   = g.color;
+    roundRect(sx, sy, sw, sh, 12 * vz);
+    ctx.fill();
+    ctx.globalAlpha = 0.25;
+    ctx.strokeStyle = g.color;
+    ctx.lineWidth   = 1 * vz;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    if (vz > 0.18) {
+      ctx.fillStyle    = g.color + 'cc';
+      ctx.font         = `bold ${Math.max(10, 13 * vz)}px "Segoe UI", system-ui, sans-serif`;
+      ctx.textAlign    = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText(g.label, sx + sw / 2, sy + 6 * vz);
+    }
+  });
+}
+
+// ─── MAIN DRAW ───────────────────────────────────────────────────────────────
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+
+  // dot grid
+  const gs = 40 * vz;
+  const ox = ((vx % gs) + gs) % gs;
+  const oy = ((vy % gs) + gs) % gs;
+  ctx.fillStyle = '#21262d';
+  for (let x = ox; x < W; x += gs)
+    for (let y = oy; y < H; y += gs)
+      ctx.fillRect(x - 1, y - 1, 2, 2);
+
+  drawGroups();
+
+  const nodeMap = {};
+  nodes.forEach(n => (nodeMap[n.id] = n));
+
+  const hlIds = selected ? relatedIds(selected.id) : null;
+
+  // relations behind nodes
+  for (const [aid, bid] of relations) {
+    const a = nodeMap[aid], b = nodeMap[bid];
+    if (!a || !b) continue;
+    const hl = hlIds ? hlIds.has(aid) && hlIds.has(bid) : false;
+    drawRelation(a, b, hl);
+  }
+
+  // nodes
+  for (const n of nodes) {
+    const hl = hlIds ? hlIds.has(n.id) : false;
+    drawNode(n, hl);
+  }
+}
+
+// ─── FIT ALL ─────────────────────────────────────────────────────────────────
+
+function fitAll() {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const n of nodes) {
+    const b = nodeBounds(n);
+    minX = Math.min(minX, b.x);
+    minY = Math.min(minY, b.y);
+    maxX = Math.max(maxX, b.x + b.w);
+    maxY = Math.max(maxY, b.y + b.h);
+  }
+  const pad = 60;
+  const scaleX = (W - pad * 2) / (maxX - minX);
+  const scaleY = (H - pad * 2) / (maxY - minY);
+  vz = Math.min(scaleX, scaleY, 1.5);
+  vx = pad - minX * vz + (W - pad * 2 - (maxX - minX) * vz) / 2;
+  vy = pad - minY * vz + (H - pad * 2 - (maxY - minY) * vz) / 2;
+  updateZoomLabel();
+  draw();
+}
+
+function updateZoomLabel() {
+  document.getElementById('zoom-label').textContent = Math.round(vz * 100) + '%';
+}
+
+// ─── PAN & ZOOM ──────────────────────────────────────────────────────────────
+
+let dragging = false, lastX = 0, lastY = 0, dragMoved = false;
+
+canvas.addEventListener('mousedown', e => {
+  dragging  = true;
+  dragMoved = false;
+  lastX = e.clientX;
+  lastY = e.clientY - 48;
+  canvas.classList.add('grabbing');
+});
+
+canvas.addEventListener('mousemove', e => {
+  if (!dragging) return;
+  const dx = e.clientX - lastX;
+  const dy = (e.clientY - 48) - lastY;
+  if (Math.abs(dx) > 2 || Math.abs(dy) > 2) dragMoved = true;
+  vx += dx; vy += dy;
+  lastX = e.clientX;
+  lastY = e.clientY - 48;
+  draw();
+});
+
+canvas.addEventListener('mouseup', e => {
+  canvas.classList.remove('grabbing');
+  if (!dragMoved) {
+    const w = toWorld(e.clientX, e.clientY - 48);
+    const hit = hitNode(w.x, w.y);
+    if (hit) {
+      selected = (selected && selected.id === hit.id) ? null : hit;
+    } else {
+      selected = null;
+    }
+    draw();
+  }
+  dragging = false;
+});
+
+canvas.addEventListener('mouseleave', () => {
+  dragging = false;
+  canvas.classList.remove('grabbing');
+});
+
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  const factor = e.deltaY < 0 ? 1.1 : 0.9;
+  const mx = e.clientX, my = e.clientY - 48;
+  vx = mx - (mx - vx) * factor;
+  vy = my - (my - vy) * factor;
+  vz *= factor;
+  vz = Math.max(0.1, Math.min(vz, 4));
+  updateZoomLabel();
+  draw();
+}, { passive: false });
+
+// touch pan
+let lastTouches = [];
+canvas.addEventListener('touchstart', e => {
+  lastTouches = Array.from(e.touches).map(t => ({ x: t.clientX, y: t.clientY }));
+});
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  const touches = Array.from(e.touches).map(t => ({ x: t.clientX, y: t.clientY }));
+  if (touches.length === 1 && lastTouches.length === 1) {
+    vx += touches[0].x - lastTouches[0].x;
+    vy += touches[0].y - lastTouches[0].y;
+    draw();
+  } else if (touches.length === 2 && lastTouches.length === 2) {
+    const d0 = Math.hypot(lastTouches[1].x - lastTouches[0].x, lastTouches[1].y - lastTouches[0].y);
+    const d1 = Math.hypot(touches[1].x - touches[0].x, touches[1].y - touches[0].y);
+    const factor = d1 / d0;
+    const cx = (touches[0].x + touches[1].x) / 2;
+    const cy = (touches[0].y + touches[1].y) / 2 - 48;
+    vx = cx - (cx - vx) * factor;
+    vy = cy - (cy - vy) * factor;
+    vz = Math.max(0.1, Math.min(vz * factor, 4));
+    updateZoomLabel();
+    draw();
+  }
+  lastTouches = touches;
+}, { passive: false });
+
+// ─── TOOLBAR BUTTONS ─────────────────────────────────────────────────────────
+
+document.getElementById('btn-fit').addEventListener('click', fitAll);
+
+document.getElementById('btn-zoom-in').addEventListener('click', () => {
+  const cx = W / 2, cy = H / 2;
+  vx = cx - (cx - vx) * 1.2;
+  vy = cy - (cy - vy) * 1.2;
+  vz = Math.min(vz * 1.2, 4);
+  updateZoomLabel(); draw();
+});
+
+document.getElementById('btn-zoom-out').addEventListener('click', () => {
+  const cx = W / 2, cy = H / 2;
+  vx = cx - (cx - vx) * (1 / 1.2);
+  vy = cy - (cy - vy) * (1 / 1.2);
+  vz = Math.max(vz / 1.2, 0.1);
+  updateZoomLabel(); draw();
+});
+
+document.getElementById('btn-reset').addEventListener('click', () => {
+  selected = null;
+  vx = 0; vy = 0; vz = 1;
+  updateZoomLabel(); draw();
+});
+
+// ─── INIT ────────────────────────────────────────────────────────────────────
+
+fitAll();
+</script>
+</body>
+</html>
