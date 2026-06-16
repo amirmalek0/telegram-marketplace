@@ -38,7 +38,12 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, toResponse(cat, h.service.Store()))
+	resp, err := toResponse(c.Request.Context(), cat, h.service.Store())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, resp)
 }
 
 // List returns a paginated list of categories ordered by sort_order.
@@ -64,7 +69,12 @@ func (h *Handler) GetByID(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, toResponse(cat, h.service.Store()))
+	resp, err := toResponse(c.Request.Context(), cat, h.service.Store())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, resp)
 }
 
 // GetBySlug returns a single category by its unique slug.
@@ -77,7 +87,12 @@ func (h *Handler) GetBySlug(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, toResponse(cat, h.service.Store()))
+	resp, err := toResponse(c.Request.Context(), cat, h.service.Store())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, resp)
 }
 
 // Update applies partial changes to an existing category.
@@ -96,7 +111,12 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, toResponse(cat, h.service.Store()))
+	resp, err := toResponse(c.Request.Context(), cat, h.service.Store())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, resp)
 }
 
 // SetActive enables or disables a category.
@@ -149,7 +169,12 @@ func (h *Handler) UploadIcon(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, toResponse(cat, h.service.Store()))
+	resp, err := toResponse(c.Request.Context(), cat, h.service.Store())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, resp)
 }
 
 // Delete permanently removes a category and its icon from storage.

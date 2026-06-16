@@ -101,7 +101,11 @@ func (s *Service) List(ctx context.Context, paginationParams pagination.Params) 
 
 	data := make([]Response, 0, len(cats))
 	for _, cat := range cats {
-		data = append(data, toResponse(cat, s.store))
+		resp, err := toResponse(ctx, cat, s.store)
+		if err != nil {
+			return nil, fmt.Errorf("categories.service.List: %w", err)
+		}
+		data = append(data, resp)
 	}
 
 	result := pagination.NewResponse(data, total, paginationParams)

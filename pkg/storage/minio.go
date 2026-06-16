@@ -88,7 +88,7 @@ type S3Client struct {
 	client    *s3.Client
 	presigner *s3.PresignClient
 	bucket    string
-	publicURL string // base URL, e.g. "http://localhost:9000/categories-icons"
+	publicURL string
 }
 
 var _ Storage = (*S3Client)(nil)
@@ -118,14 +118,6 @@ func (c *S3Client) Delete(ctx context.Context, key string) error {
 		return fmt.Errorf("storage.Delete: %w", err)
 	}
 	return nil
-}
-
-// PublicURL resolves a stored key to a full public-facing URL.
-func (c *S3Client) PublicURL(key string) string {
-	if key == "" {
-		return ""
-	}
-	return c.publicURL + "/" + strings.TrimLeft(key, "/")
 }
 
 // PresignedURL generates a time-limited pre-signed GET URL for the given key.

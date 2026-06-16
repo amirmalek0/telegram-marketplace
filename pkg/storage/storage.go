@@ -47,6 +47,5 @@ func New(cfg Config) (*Client, error) {
 type Storage interface {
 	Upload(ctx context.Context, key string, r io.Reader, size int64, contentType string) (string, error)
 	Delete(ctx context.Context, key string) error
-	PublicURL(key string) string
 	PresignedURL(ctx context.Context, key string, ttl time.Duration) (string, error)
 }

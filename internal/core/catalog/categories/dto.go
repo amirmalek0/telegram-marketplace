@@ -1,11 +1,15 @@
 package categories
 
 import (
+	"context"
 	"telegram-marketplace/internal/core/catalog/categories/model"
 	"telegram-marketplace/pkg/pagination"
 	"telegram-marketplace/pkg/storage"
 	"time"
 )
+
+// presignedURLTTL is the default expiration time for presigned URLs.
+const presignedURLTTL = 12 * time.Hour
 
 // --- Request DTOs ---
 
@@ -57,15 +61,23 @@ type Response struct {
 }
 
 // toResponse converts a model.Category to a Response, resolving the icon key
-// to a full public URL using the provided Storage instance.
-func toResponse(cat *model.Category, store storage.Storage) Response {
+// to a presigned URL using the provided Storage instance.
+func toResponse(ctx context.Context, cat *model.Category, store storage.Storage) (Response, error) {
+	iconURL := ""
+	if cat.StorageID != "" {
+		var err error
+		iconURL, err = store.PresignedURL(ctx, cat.StorageID, presignedURLTTL)
+		if err != nil {
+			return Response{}, err
+		}
+	}
 	return Response{
 		ID:        cat.ID,
 		Title:     cat.Title,
 		Slug:      cat.Slug,
-		IconURL:   store.PublicURL(cat.StorageID),
+		IconURL:   iconURL,
 		Active:    cat.Active,
 		SortOrder: cat.SortOrder,
 		CreatedAt: cat.CreatedAt,
-	}
+	}, nil
 }
