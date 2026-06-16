@@ -13,11 +13,8 @@ func RegisterRoutes(rg *gin.RouterGroup, h *categories.Handler) {
 	{
 		g.POST("", h.Create)
 		g.GET("", h.List)
-
-		// Static-path routes must come before the wildcard /:id
 		g.PATCH("/reorder", h.Reorder)
 		g.GET("/s/:slug", h.GetBySlug)
-
 		g.GET("/:id", h.GetByID)
 		g.PATCH("/:id", h.Update)
 		g.POST("/:id/icon", h.UploadIcon)

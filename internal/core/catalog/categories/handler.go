@@ -38,7 +38,7 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	resp, err := toResponse(c.Request.Context(), cat, h.service.Store())
+	resp, err := h.service.toResponse(c.Request.Context(), cat)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -69,7 +69,7 @@ func (h *Handler) GetByID(c *gin.Context) {
 		return
 	}
 
-	resp, err := toResponse(c.Request.Context(), cat, h.service.Store())
+	resp, err := h.service.toResponse(c.Request.Context(), cat)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -87,7 +87,7 @@ func (h *Handler) GetBySlug(c *gin.Context) {
 		return
 	}
 
-	resp, err := toResponse(c.Request.Context(), cat, h.service.Store())
+	resp, err := h.service.toResponse(c.Request.Context(), cat)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -111,7 +111,7 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
-	resp, err := toResponse(c.Request.Context(), cat, h.service.Store())
+	resp, err := h.service.toResponse(c.Request.Context(), cat)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -151,7 +151,7 @@ func (h *Handler) UploadIcon(c *gin.Context) {
 		return
 	}
 
-	resp, err := toResponse(c.Request.Context(), cat, h.service.Store())
+	resp, err := h.service.toResponse(c.Request.Context(), cat)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

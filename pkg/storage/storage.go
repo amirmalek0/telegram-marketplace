@@ -14,6 +14,9 @@ const (
 	ProviderMinIO Provider = "minio"
 )
 
+// PresignedURLTTL is the default expiration time for presigned URLs.
+const PresignedURLTTL = 12 * time.Hour
+
 // Config holds the provider selection and credentials needed to connect to the
 // object-storage backend. Bucket names are intentionally absent here; each
 // domain (categories icons, product files, …) obtains its own bucket-scoped

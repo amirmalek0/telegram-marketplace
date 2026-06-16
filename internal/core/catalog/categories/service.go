@@ -4,56 +4,36 @@ import (
 	"context"
 	"fmt"
 	"mime/multipart"
-	"regexp"
-	"strings"
 	"telegram-marketplace/internal/core/catalog/categories/model"
 	"telegram-marketplace/internal/core/catalog/categories/repository"
 	"telegram-marketplace/pkg/pagination"
 	"telegram-marketplace/pkg/storage"
+	"telegram-marketplace/pkg/util"
 	"time"
 )
 
-// slugNonAlnum matches any character that is not a letter, digit, or space.
-var slugNonAlnum = regexp.MustCompile(`[^\p{L}\p{N}\s-]`)
-
-// slugSpaces matches one or more whitespace characters (used to replace with dash).
-var slugSpaces = regexp.MustCompile(`\s+`)
-
-// generateSlug converts a human-readable title into a URL-safe slug.
-// Example: "Hello World!" → "hello-world"
-func generateSlug(title string) string {
-	s := strings.ToLower(title)
-	s = slugNonAlnum.ReplaceAllString(s, "")
-	s = slugSpaces.ReplaceAllString(strings.TrimSpace(s), "-")
-	return s
-}
-
 // Service holds the business logic for the categories domain.
 type Service struct {
-	repo  repository.Repository
-	store storage.Storage
+	repo    repository.Repository
+	storage storage.Storage
 }
 
 // NewService constructs a Service with the given Repository and Storage (plain DI).
 func NewService(repo repository.Repository, store storage.Storage) *Service {
-	return &Service{repo: repo, store: store}
+	return &Service{repo: repo, storage: store}
 }
 
 // Create registers a new category.
-// Slug is auto-generated from Title; SortOrder defaults to 0 and is managed via Reorder.
-// Slug uniqueness is enforced by the DB UNIQUE constraint.
-// If icon is non-nil it is uploaded to object storage first; the resulting storage ID
-// is included in the single INSERT so only one DB round-trip is needed.
 func (s *Service) Create(ctx context.Context, req CreateCategoryRequest, icon *multipart.FileHeader) (*model.Category, error) {
 	cat := &model.Category{
 		Title:     req.Title,
-		Slug:      generateSlug(req.Title),
+		Slug:      util.GenerateSlug(req.Title),
 		Active:    true,
 		CreatedAt: time.Now(),
 	}
 
 	if icon != nil {
-		storageID, err := storage.UploadFile(ctx, s.store, icon)
+		storageID, err := storage.UploadFile(ctx, s.storage, icon)
 		if err != nil {
 			return nil, fmt.Errorf("categories.service.Create: %w", err)
 		}
@@ -62,7 +42,7 @@ func (s *Service) Create(ctx context.Context, req CreateCategoryRequest, icon *m
 
 	if err := s.repo.Create(ctx, cat); err != nil {
 		// clean up the uploaded file if the DB insert fails.
-		_ = storage.DeleteFile(ctx, s.store, cat.StorageID)
+		_ = storage.DeleteFile(ctx, s.storage, cat.StorageID)
 		return nil, fmt.Errorf("categories.service.Create: %w", err)
 	}
 
@@ -101,7 +81,7 @@ func (s *Service) List(ctx context.Context, paginationParams pagination.Params) 
 
 	data := make([]Response, 0, len(cats))
 	for _, cat := range cats {
-		resp, err := toResponse(ctx, cat, s.store)
+		resp, err := s.toResponse(ctx, cat)
 		if err != nil {
 			return nil, fmt.Errorf("categories.service.List: %w", err)
 		}
@@ -113,7 +93,6 @@ func (s *Service) List(ctx context.Context, paginationParams pagination.Params) 
 }
 
 // Update applies partial changes to an existing category.
-// If Title is provided, Slug is auto-generated from it.
 func (s *Service) Update(ctx context.Context, id string, req UpdateCategoryRequest) (*model.Category, error) {
 	cat, err := s.repo.GetByID(ctx, id)
 	if err != nil {
@@ -122,7 +101,7 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateCategoryReque
 
 	if req.Title != nil {
 		cat.Title = *req.Title
-		cat.Slug = generateSlug(*req.Title)
+		cat.Slug = util.GenerateSlug(*req.Title)
 	}
 	if req.Active != nil {
 		cat.Active = *req.Active
@@ -152,15 +131,13 @@ func (s *Service) Reorder(ctx context.Context, req ReorderRequest) error {
 }
 
 // UploadIcon replaces the icon for an existing category.
-// A new UUID key is generated for the upload; the previous icon is deleted best-effort.
-// Returns the updated category.
 func (s *Service) UploadIcon(ctx context.Context, id string, icon *multipart.FileHeader) (*model.Category, error) {
 	cat, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("categories.service.UploadIcon: %w", err)
 	}
 
-	storageID, err := storage.UploadFile(ctx, s.store, icon)
+	storageID, err := storage.UploadFile(ctx, s.storage, icon)
 	if err != nil {
 		return nil, fmt.Errorf("categories.service.UploadIcon: %w", err)
 	}
@@ -170,7 +147,7 @@ func (s *Service) UploadIcon(ctx context.Context, id string, icon *multipart.Fil
 	}
 
 	// Best-effort: remove the previous icon after the DB is updated.
-	_ = storage.DeleteFile(ctx, s.store, cat.StorageID)
+	_ = storage.DeleteFile(ctx, s.storage, cat.StorageID)
 
 	cat.StorageID = storageID
 	return cat, nil
@@ -181,16 +158,11 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 	// Best-effort: remove icon from storage before deleting the record.
 	cat, err := s.repo.GetByID(ctx, id)
 	if err == nil {
-		_ = storage.DeleteFile(ctx, s.store, cat.StorageID)
+		_ = storage.DeleteFile(ctx, s.storage, cat.StorageID)
 	}
 
 	if err := s.repo.Delete(ctx, id); err != nil {
 		return fmt.Errorf("categories.service.Delete: %w", err)
 	}
 	return nil
-}
-
-// Store returns the underlying Storage so handlers can resolve public URLs.
-func (s *Service) Store() storage.Storage {
-	return s.store
 }
