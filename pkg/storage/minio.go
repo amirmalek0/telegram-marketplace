@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
 // Client is a connection-level factory backed by any S3-compatible store.
@@ -48,6 +50,37 @@ func (c *Client) Bucket(name, publicURL string) Storage {
 		bucket:    name,
 		publicURL: strings.TrimRight(publicURL, "/"),
 	}
+}
+
+// EnsureBucket creates the bucket if it doesn't already exist.
+// This is called automatically during application startup to ensure
+// all required buckets are available.
+func (c *Client) EnsureBucket(ctx context.Context, name string) error {
+	// Check if bucket exists
+	_, err := c.client.HeadBucket(ctx, &s3.HeadBucketInput{
+		Bucket: aws.String(name),
+	})
+	if err == nil {
+		// Bucket exists
+		return nil
+	}
+
+	// Check if error is "bucket not found" (NoSuchBucket or NotFound)
+	var notFoundErr *s3types.NotFound
+	if !errors.As(err, &notFoundErr) {
+		// Some other error occurred
+		return fmt.Errorf("storage.EnsureBucket: failed to check bucket %q: %w", name, err)
+	}
+
+	// Create the bucket
+	_, err = c.client.CreateBucket(ctx, &s3.CreateBucketInput{
+		Bucket: aws.String(name),
+	})
+	if err != nil {
+		return fmt.Errorf("storage.EnsureBucket: failed to create bucket %q: %w", name, err)
+	}
+
+	return nil
 }
 
 // S3Client is a Storage implementation scoped to a single bucket.

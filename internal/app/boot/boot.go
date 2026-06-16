@@ -19,7 +19,7 @@ func Start(cfg config.Config) {
 
 	database.Migrate(ctx, db)
 
-	handlers := dependencies.Wire(db, cfg)
+	handlers := dependencies.Wire(ctx, db, cfg)
 	r := router.New(cfg.BotToken, handlers)
 	server.Run(cfg.Addr, r)
 }
