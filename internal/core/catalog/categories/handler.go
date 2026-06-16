@@ -1,9 +1,11 @@
 package categories
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"telegram-marketplace/internal/core/catalog/categories/repository"
 	"telegram-marketplace/pkg/pagination"
 )
 
@@ -28,6 +30,10 @@ func (h *Handler) Create(c *gin.Context) {
 
 	cat, err := h.service.Create(c.Request.Context(), req, icon)
 	if err != nil {
+		if errors.Is(err, repository.ErrDuplicate) {
+			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
+			return
+		}
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
 		return
 	}

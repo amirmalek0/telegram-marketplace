@@ -2,15 +2,20 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"telegram-marketplace/internal/core/catalog/categories/model"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // ErrNotFound is returned when a requested category does not exist.
 var ErrNotFound = fmt.Errorf("category not found")
+
+// ErrDuplicate is returned when a category with the same slug already exists.
+var ErrDuplicate = fmt.Errorf("duplicate category is not allowed")
 
 // Repository defines the data-access contract for the categories domain.
 //
@@ -58,6 +63,10 @@ func (r *postgresRepository) Create(ctx context.Context, c *model.Category) erro
 		c.Title, c.Slug, c.StorageID, c.Active, c.SortOrder, c.CreatedAt,
 	).Scan(&c.ID)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return ErrDuplicate
+		}
 		return fmt.Errorf("categories.repository.Create: %w", err)
 	}
 	return nil
