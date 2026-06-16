@@ -20,14 +20,13 @@ var ErrDuplicate = fmt.Errorf("duplicate category is not allowed")
 // Repository defines the data-access contract for the categories domain.
 //
 // Methods are grouped by concern:
-//   - Writes  : Create, Update, SetActive, UpdateStorageID, BulkUpdateSortOrder, Delete
+//   - Writes  : Create, Update, UpdateStorageID, BulkUpdateSortOrder, Delete
 //   - Single  : GetByID, GetBySlug
 //   - Many    : List, Count
 type Repository interface {
 	// --- Writes ---
 	Create(ctx context.Context, c *model.Category) error
 	Update(ctx context.Context, c *model.Category) error
-	SetActive(ctx context.Context, id string, active bool) error
 	UpdateStorageID(ctx context.Context, id, storageID string) error
 	BulkUpdateSortOrder(ctx context.Context, ids []string, orders []int) error
 	Delete(ctx context.Context, id string) error
@@ -74,18 +73,10 @@ func (r *postgresRepository) Create(ctx context.Context, c *model.Category) erro
 
 func (r *postgresRepository) Update(ctx context.Context, c *model.Category) error {
 	_, err := r.db.Exec(ctx, queryUpdateCategory,
-		c.Title, c.Slug, c.SortOrder, c.ID,
+		c.Title, c.Slug, c.Active, c.SortOrder, c.ID,
 	)
 	if err != nil {
 		return fmt.Errorf("categories.repository.Update: %w", err)
-	}
-	return nil
-}
-
-func (r *postgresRepository) SetActive(ctx context.Context, id string, active bool) error {
-	_, err := r.db.Exec(ctx, querySetActive, active, id)
-	if err != nil {
-		return fmt.Errorf("categories.repository.SetActive: %w", err)
 	}
 	return nil
 }

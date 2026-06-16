@@ -36,11 +36,9 @@ const (
 		UPDATE categories SET
 			title      = $1,
 			slug       = $2,
-			sort_order = $3
-		WHERE id = $4`
-
-	// querySetActive toggles the active flag of a category.
-	querySetActive = `UPDATE categories SET active = $1 WHERE id = $2`
+			active     = $3,
+			sort_order = $4
+		WHERE id = $5`
 
 	// queryUpdateStorageID stores the object-storage key for the category icon.
 	queryUpdateStorageID = `UPDATE categories SET storage_id = $1 WHERE id = $2`

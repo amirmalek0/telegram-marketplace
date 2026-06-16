@@ -113,6 +113,7 @@ func (s *Service) List(ctx context.Context, paginationParams pagination.Params) 
 }
 
 // Update applies partial changes to an existing category.
+// If Title is provided, Slug is auto-generated from it.
 func (s *Service) Update(ctx context.Context, id string, req UpdateCategoryRequest) (*model.Category, error) {
 	cat, err := s.repo.GetByID(ctx, id)
 	if err != nil {
@@ -121,9 +122,10 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateCategoryReque
 
 	if req.Title != nil {
 		cat.Title = *req.Title
+		cat.Slug = generateSlug(*req.Title)
 	}
-	if req.Slug != nil {
-		cat.Slug = *req.Slug
+	if req.Active != nil {
+		cat.Active = *req.Active
 	}
 	if req.SortOrder != nil {
 		cat.SortOrder = *req.SortOrder
@@ -133,14 +135,6 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateCategoryReque
 		return nil, fmt.Errorf("categories.service.Update: %w", err)
 	}
 	return cat, nil
-}
-
-// SetActive enables or disables a category.
-func (s *Service) SetActive(ctx context.Context, id string, active bool) error {
-	if err := s.repo.SetActive(ctx, id, active); err != nil {
-		return fmt.Errorf("categories.service.SetActive: %w", err)
-	}
-	return nil
 }
 
 // Reorder bulk-updates sort_order for multiple categories in a single DB round-trip.

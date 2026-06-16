@@ -119,24 +119,6 @@ func (h *Handler) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// SetActive enables or disables a category.
-func (h *Handler) SetActive(c *gin.Context) {
-	id := c.Param("id")
-
-	var req SetActiveRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	if err := h.service.SetActive(c.Request.Context(), id, req.Active); err != nil {
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"active": req.Active})
-}
-
 // Reorder bulk-updates sort_order for multiple categories.
 func (h *Handler) Reorder(c *gin.Context) {
 	var req ReorderRequest

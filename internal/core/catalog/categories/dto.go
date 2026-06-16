@@ -21,15 +21,11 @@ type CreateCategoryRequest struct {
 
 // UpdateCategoryRequest is the body for PATCH /categories/:id.
 // All fields are optional; only non-nil values are applied.
+// Slug is auto-generated from Title when Title is provided.
 type UpdateCategoryRequest struct {
 	Title     *string `json:"title"`
-	Slug      *string `json:"slug"`
+	Active    *bool   `json:"active"`
 	SortOrder *int    `json:"sort_order"`
-}
-
-// SetActiveRequest is the body for PATCH /categories/:id/active.
-type SetActiveRequest struct {
-	Active bool `json:"active"`
 }
 
 // ReorderItem represents a single category's new sort position.

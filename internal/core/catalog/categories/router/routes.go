@@ -20,7 +20,6 @@ func RegisterRoutes(rg *gin.RouterGroup, h *categories.Handler) {
 
 		g.GET("/:id", h.GetByID)
 		g.PATCH("/:id", h.Update)
-		g.PATCH("/:id/active", h.SetActive)
 		g.POST("/:id/icon", h.UploadIcon)
 		g.DELETE("/:id", h.Delete)
 	}
