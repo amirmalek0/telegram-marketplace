@@ -1,3 +1,0 @@
-package inventory
-
-func RegisterRoutes(){}
