@@ -72,7 +72,7 @@ var migrations = []string{
 		name        TEXT        NOT NULL,
 		size        BIGINT      NOT NULL,
 		mime_type   TEXT        NOT NULL,
-		object_key  TEXT        NOT NULL,
+		storage_id  TEXT        NOT NULL,
 		created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 	)`,
 

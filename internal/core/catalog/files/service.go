@@ -2,8 +2,10 @@ package files
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"mime/multipart"
+	bundlesrepo "telegram-marketplace/internal/core/catalog/bundles/repository"
 	"telegram-marketplace/internal/core/catalog/files/model"
 	"telegram-marketplace/internal/core/catalog/files/repository"
 	"telegram-marketplace/pkg/pagination"
@@ -11,15 +13,19 @@ import (
 	"time"
 )
 
+// ErrReferencedByBundle is returned when a file is referenced by a bundle and cannot be deleted.
+var ErrReferencedByBundle = errors.New("file is referenced by a bundle and cannot be deleted")
+
 // Service holds the business logic for the files domain.
 type Service struct {
-	repo    repository.Repository
-	storage storage.Storage
+	repo        repository.Repository
+	storage     storage.Storage
+	bundlesRepo bundlesrepo.Repository
 }
 
 // NewService constructs a Service with the given Repository and Storage.
-func NewService(repo repository.Repository, store storage.Storage) *Service {
-	return &Service{repo: repo, storage: store}
+func NewService(repo repository.Repository, store storage.Storage, bundlesRepo bundlesrepo.Repository) *Service {
+	return &Service{repo: repo, storage: store, bundlesRepo: bundlesRepo}
 }
 
 // Upload stores a new file in object storage and saves its metadata.
@@ -81,6 +87,15 @@ func (s *Service) List(ctx context.Context, params pagination.Params) (*Paginate
 
 // Delete removes a file from storage and the database.
 func (s *Service) Delete(ctx context.Context, id string) error {
+	// Check if file is referenced by any bundle
+	referenced, err := s.bundlesRepo.IsFileReferenced(ctx, id)
+	if err != nil {
+		return fmt.Errorf("files.service.Delete: %w", err)
+	}
+	if referenced {
+		return ErrReferencedByBundle
+	}
+
 	file, err := s.repo.GetByID(ctx, id)
 	if err == nil {
 		_ = storage.DeleteFile(ctx, s.storage, file.StorageID)

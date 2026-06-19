@@ -2,21 +2,27 @@ package messages
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	bundlesrepo "telegram-marketplace/internal/core/catalog/bundles/repository"
 	"telegram-marketplace/internal/core/catalog/messages/model"
 	"telegram-marketplace/internal/core/catalog/messages/repository"
 	"telegram-marketplace/pkg/pagination"
 	"time"
 )
 
+// ErrReferencedByBundle is returned when a message is referenced by a bundle and cannot be deleted.
+var ErrReferencedByBundle = errors.New("message is referenced by a bundle and cannot be deleted")
+
 // Service holds the business logic for the messages domain.
 type Service struct {
-	repo repository.Repository
+	repo        repository.Repository
+	bundlesRepo bundlesrepo.Repository
 }
 
 // NewService constructs a Service with the given Repository.
-func NewService(repo repository.Repository) *Service {
-	return &Service{repo: repo}
+func NewService(repo repository.Repository, bundlesRepo bundlesrepo.Repository) *Service {
+	return &Service{repo: repo, bundlesRepo: bundlesRepo}
 }
 
 // Create stores a new delivery message.
@@ -83,6 +89,15 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) (*mo
 
 // Delete removes a message from the database.
 func (s *Service) Delete(ctx context.Context, id string) error {
+	// Check if message is referenced by any bundle
+	referenced, err := s.bundlesRepo.IsMessageReferenced(ctx, id)
+	if err != nil {
+		return fmt.Errorf("messages.service.Delete: %w", err)
+	}
+	if referenced {
+		return ErrReferencedByBundle
+	}
+
 	if err := s.repo.Delete(ctx, id); err != nil {
 		return fmt.Errorf("messages.service.Delete: %w", err)
 	}
