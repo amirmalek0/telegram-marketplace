@@ -11,6 +11,7 @@ type Header struct {
 // API represents an external API call configuration for product delivery.
 type API struct {
 	ID           string    `db:"id"`
+	Name         string    `db:"name"`
 	URL          string    `db:"url"`
 	Method       string    `db:"method"`
 	Body         *string   `db:"body"`

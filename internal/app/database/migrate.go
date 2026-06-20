@@ -104,6 +104,7 @@ var migrations = []string{
 
 	`CREATE TABLE IF NOT EXISTS apis (
 		id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+		name          TEXT NOT NULL DEFAULT '',
 		url           TEXT NOT NULL,
 		method        TEXT NOT NULL CHECK (method IN ('GET', 'POST')),
 		body          TEXT,

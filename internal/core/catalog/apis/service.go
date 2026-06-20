@@ -37,6 +37,7 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (*model.API, er
 	}
 
 	api := &model.API{
+		Name:         req.Name,
 		URL:          req.URL,
 		Method:       req.Method,
 		Body:         req.Body,
@@ -89,6 +90,9 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) (*mo
 		return nil, fmt.Errorf("apis.service.Update: %w", err)
 	}
 
+	if req.Name != nil {
+		api.Name = *req.Name
+	}
 	if req.URL != nil {
 		api.URL = *req.URL
 	}

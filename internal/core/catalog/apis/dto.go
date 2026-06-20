@@ -16,6 +16,7 @@ type HeaderInput struct {
 
 // CreateRequest represents the payload for creating a new API.
 type CreateRequest struct {
+	Name         string        `json:"name" binding:"required"`
 	URL          string        `json:"url" binding:"required"`
 	Method       string        `json:"method" binding:"required,oneof=GET POST"`
 	Body         *string       `json:"body"`
@@ -25,6 +26,7 @@ type CreateRequest struct {
 
 // UpdateRequest represents the payload for updating an API.
 type UpdateRequest struct {
+	Name         *string       `json:"name"`
 	URL          *string       `json:"url"`
 	Method       *string       `json:"method" binding:"omitempty,oneof=GET POST"`
 	Body         *string       `json:"body"`
@@ -40,6 +42,7 @@ type PaginatedResponse = pagination.Response[Response]
 // Response represents an API in API responses.
 type Response struct {
 	ID           string         `json:"id"`
+	Name         string         `json:"name"`
 	URL          string         `json:"url"`
 	Method       string         `json:"method"`
 	Body         *string        `json:"body,omitempty"`
@@ -52,6 +55,7 @@ type Response struct {
 func toResponse(api *model.API) Response {
 	return Response{
 		ID:           api.ID,
+		Name:         api.Name,
 		URL:          api.URL,
 		Method:       api.Method,
 		Body:         api.Body,

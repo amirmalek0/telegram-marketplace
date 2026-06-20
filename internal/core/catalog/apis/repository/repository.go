@@ -44,7 +44,7 @@ func (r *postgresRepository) Create(ctx context.Context, api *model.API) error {
 	}
 
 	err = r.db.QueryRow(ctx, queryCreateAPI,
-		api.URL, api.Method, api.Body, api.ResponsePath, headersJSON, api.CreatedAt,
+		api.Name, api.URL, api.Method, api.Body, api.ResponsePath, headersJSON, api.CreatedAt,
 	).Scan(&api.ID)
 	if err != nil {
 		return fmt.Errorf("apis.repository.Create: %w", err)
@@ -96,7 +96,7 @@ func (r *postgresRepository) Update(ctx context.Context, api *model.API) error {
 	}
 
 	_, err = r.db.Exec(ctx, queryUpdateAPI,
-		api.URL, api.Method, api.Body, api.ResponsePath, headersJSON, api.ID,
+		api.Name, api.URL, api.Method, api.Body, api.ResponsePath, headersJSON, api.ID,
 	)
 	if err != nil {
 		return fmt.Errorf("apis.repository.Update: %w", err)
