@@ -8,7 +8,6 @@ import (
 	"telegram-marketplace/internal/core/catalog/categories/repository"
 	"telegram-marketplace/pkg/pagination"
 	"telegram-marketplace/pkg/storage"
-	"telegram-marketplace/pkg/util"
 	"time"
 )
 
@@ -27,7 +26,6 @@ func NewService(repo repository.Repository, store storage.Storage) *Service {
 func (s *Service) Create(ctx context.Context, req CreateCategoryRequest, icon *multipart.FileHeader) (*model.Category, error) {
 	cat := &model.Category{
 		Title:     req.Title,
-		Slug:      util.GenerateSlug(req.Title),
 		Active:    true,
 		CreatedAt: time.Now(),
 	}
@@ -54,15 +52,6 @@ func (s *Service) GetByID(ctx context.Context, id string) (*model.Category, erro
 	cat, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("categories.service.GetByID: %w", err)
-	}
-	return cat, nil
-}
-
-// GetBySlug returns a category by its unique slug.
-func (s *Service) GetBySlug(ctx context.Context, slug string) (*model.Category, error) {
-	cat, err := s.repo.GetBySlug(ctx, slug)
-	if err != nil {
-		return nil, fmt.Errorf("categories.service.GetBySlug: %w", err)
 	}
 	return cat, nil
 }
@@ -101,7 +90,6 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateCategoryReque
 
 	if req.Title != nil {
 		cat.Title = *req.Title
-		cat.Slug = util.GenerateSlug(*req.Title)
 	}
 	if req.Active != nil {
 		cat.Active = *req.Active

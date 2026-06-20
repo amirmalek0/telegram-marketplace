@@ -6,7 +6,7 @@ import (
 )
 
 // RegisterRoutes mounts all category endpoints onto the provided RouterGroup.
-// Note: static segments (/reorder, /s/:slug) are registered before /:id so
+// Note: static segments (/reorder) are registered before /:id so
 // that gin's router resolves them correctly without ambiguity.
 func RegisterRoutes(rg *gin.RouterGroup, h *categories.Handler) {
 	g := rg.Group("/categories")
@@ -14,7 +14,6 @@ func RegisterRoutes(rg *gin.RouterGroup, h *categories.Handler) {
 		g.POST("", h.Create)
 		g.GET("", h.List)
 		g.PATCH("/reorder", h.Reorder)
-		g.GET("/s/:slug", h.GetBySlug)
 		g.GET("/:id", h.GetByID)
 		g.PATCH("/:id", h.Update)
 		g.POST("/:id/icon", h.UploadIcon)

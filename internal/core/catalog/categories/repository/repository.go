@@ -14,14 +14,14 @@ import (
 // ErrNotFound is returned when a requested category does not exist.
 var ErrNotFound = fmt.Errorf("category not found")
 
-// ErrDuplicate is returned when a category with the same slug already exists.
+// ErrDuplicate is returned when a duplicate category constraint is violated.
 var ErrDuplicate = fmt.Errorf("duplicate category is not allowed")
 
 // Repository defines the data-access contract for the categories domain.
 //
 // Methods are grouped by concern:
 //   - Writes  : Create, Update, UpdateStorageID, BulkUpdateSortOrder, Delete
-//   - Single  : GetByID, GetBySlug
+//   - Single  : GetByID
 //   - Many    : List, Count
 type Repository interface {
 	// --- Writes ---
@@ -33,7 +33,6 @@ type Repository interface {
 
 	// --- Single reads ---
 	GetByID(ctx context.Context, id string) (*model.Category, error)
-	GetBySlug(ctx context.Context, slug string) (*model.Category, error)
 
 	// --- Collection reads ---
 	List(ctx context.Context, limit, offset int) ([]*model.Category, error)
@@ -59,7 +58,7 @@ var _ Repository = (*postgresRepository)(nil)
 
 func (r *postgresRepository) Create(ctx context.Context, c *model.Category) error {
 	err := r.db.QueryRow(ctx, queryCreateCategory,
-		c.Title, c.Slug, c.StorageID, c.Active, c.SortOrder, c.CreatedAt,
+		c.Title, c.StorageID, c.Active, c.SortOrder, c.CreatedAt,
 	).Scan(&c.ID)
 	if err != nil {
 		var pgErr *pgconn.PgError
@@ -73,7 +72,7 @@ func (r *postgresRepository) Create(ctx context.Context, c *model.Category) erro
 
 func (r *postgresRepository) Update(ctx context.Context, c *model.Category) error {
 	_, err := r.db.Exec(ctx, queryUpdateCategory,
-		c.Title, c.Slug, c.Active, c.SortOrder, c.ID,
+		c.Title, c.Active, c.SortOrder, c.ID,
 	)
 	if err != nil {
 		return fmt.Errorf("categories.repository.Update: %w", err)
@@ -122,18 +121,6 @@ func (r *postgresRepository) GetByID(ctx context.Context, id string) (*model.Cat
 	cat, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[model.Category])
 	if err != nil {
 		return nil, fmt.Errorf("categories.repository.GetByID: %w", ErrNotFound)
-	}
-	return &cat, nil
-}
-
-func (r *postgresRepository) GetBySlug(ctx context.Context, slug string) (*model.Category, error) {
-	rows, err := r.db.Query(ctx, queryGetCategoryBySlug, slug)
-	if err != nil {
-		return nil, fmt.Errorf("categories.repository.GetBySlug: %w", err)
-	}
-	cat, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[model.Category])
-	if err != nil {
-		return nil, fmt.Errorf("categories.repository.GetBySlug: %w", ErrNotFound)
 	}
 	return &cat, nil
 }

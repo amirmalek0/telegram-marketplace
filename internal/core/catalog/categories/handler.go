@@ -77,24 +77,6 @@ func (h *Handler) GetByID(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-// GetBySlug returns a single category by its unique slug.
-func (h *Handler) GetBySlug(c *gin.Context) {
-	slug := c.Param("slug")
-
-	cat, err := h.service.GetBySlug(c.Request.Context(), slug)
-	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-		return
-	}
-
-	resp, err := h.service.toResponse(c.Request.Context(), cat)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(http.StatusOK, resp)
-}
-
 // Update applies partial changes to an existing category.
 func (h *Handler) Update(c *gin.Context) {
 	id := c.Param("id")

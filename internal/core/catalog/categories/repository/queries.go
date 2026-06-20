@@ -5,25 +5,19 @@ package repository
 const (
 	// queryCreateCategory inserts a new category and returns the generated UUID.
 	queryCreateCategory = `
-		INSERT INTO categories (title, slug, storage_id, active, sort_order, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO categories (title, storage_id, active, sort_order, created_at)
+		VALUES ($1, $2, $3, $4, $5)
 		RETURNING id`
 
 	// queryGetCategoryByID retrieves a category by its UUID.
 	queryGetCategoryByID = `
-		SELECT id, title, slug, storage_id, active, sort_order, created_at
+		SELECT id, title, storage_id, active, sort_order, created_at
 		FROM categories
 		WHERE id = $1`
 
-	// queryGetCategoryBySlug retrieves a category by its unique slug.
-	queryGetCategoryBySlug = `
-		SELECT id, title, slug, storage_id, active, sort_order, created_at
-		FROM categories
-		WHERE slug = $1`
-
 	// queryListCategories retrieves a paginated list of categories ordered by sort_order.
 	queryListCategories = `
-		SELECT id, title, slug, storage_id, active, sort_order, created_at
+		SELECT id, title, storage_id, active, sort_order, created_at
 		FROM categories
 		ORDER BY sort_order ASC, created_at ASC
 		LIMIT $1 OFFSET $2`
@@ -35,10 +29,9 @@ const (
 	queryUpdateCategory = `
 		UPDATE categories SET
 			title      = $1,
-			slug       = $2,
-			active     = $3,
-			sort_order = $4
-		WHERE id = $5`
+			active     = $2,
+			sort_order = $3
+		WHERE id = $4`
 
 	// queryUpdateStorageID stores the object-storage key for the category icon.
 	queryUpdateStorageID = `UPDATE categories SET storage_id = $1 WHERE id = $2`

@@ -36,7 +36,6 @@ type PaginatedResponse = pagination.Response[Response]
 type Response struct {
 	ID        string    `json:"id"`
 	Title     string    `json:"title"`
-	Slug      string    `json:"slug"`
 	IconURL   string    `json:"icon_url"`
 	Active    bool      `json:"active"`
 	SortOrder int       `json:"sort_order"`
@@ -57,7 +56,6 @@ func (s *Service) toResponse(ctx context.Context, cat *model.Category) (Response
 	return Response{
 		ID:        cat.ID,
 		Title:     cat.Title,
-		Slug:      cat.Slug,
 		IconURL:   iconURL,
 		Active:    cat.Active,
 		SortOrder: cat.SortOrder,

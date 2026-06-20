@@ -6,7 +6,6 @@ import "time"
 type Category struct {
 	ID        string    `db:"id"`
 	Title     string    `db:"title"`
-	Slug      string    `db:"slug"`
 	StorageID string    `db:"storage_id"`
 	Active    bool      `db:"active"`
 	SortOrder int       `db:"sort_order"`
