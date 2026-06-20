@@ -41,7 +41,7 @@ var _ Repository = (*postgresRepository)(nil)
 
 func (r *postgresRepository) Create(ctx context.Context, b *model.Bundle) error {
 	err := r.db.QueryRow(ctx, queryCreateBundle,
-		b.FileID, b.MessageID, b.InventoryID, b.CreatedAt,
+		b.Name, b.FileID, b.MessageID, b.InventoryID, b.CreatedAt,
 	).Scan(&b.ID)
 	if err != nil {
 		return fmt.Errorf("bundles.repository.Create: %w", err)
@@ -88,7 +88,7 @@ func (r *postgresRepository) Count(ctx context.Context) (int64, error) {
 
 func (r *postgresRepository) Update(ctx context.Context, b *model.Bundle) error {
 	_, err := r.db.Exec(ctx, queryUpdateBundle,
-		b.FileID, b.MessageID, b.InventoryID, b.ID,
+		b.Name, b.FileID, b.MessageID, b.InventoryID, b.ID,
 	)
 	if err != nil {
 		return fmt.Errorf("bundles.repository.Update: %w", err)

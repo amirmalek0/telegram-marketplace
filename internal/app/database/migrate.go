@@ -114,6 +114,7 @@ var migrations = []string{
 
 	`CREATE TABLE IF NOT EXISTS bundles (
 		id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+		name          TEXT NOT NULL DEFAULT '',
 		file_id       UUID REFERENCES files(id),
 		message_id    UUID REFERENCES delivery_messages(id),
 		inventory_id  UUID REFERENCES inventories(id),

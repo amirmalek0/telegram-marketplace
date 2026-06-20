@@ -10,6 +10,7 @@ import (
 
 // CreateRequest represents the payload for creating a new bundle.
 type CreateRequest struct {
+	Name        string  `json:"name" binding:"required"`
 	FileID      *string `json:"file_id"`
 	MessageID   *string `json:"message_id"`
 	InventoryID *string `json:"inventory_id"`
@@ -17,6 +18,7 @@ type CreateRequest struct {
 
 // UpdateRequest represents the payload for updating a bundle.
 type UpdateRequest struct {
+	Name        *string `json:"name"`
 	FileID      *string `json:"file_id"`
 	MessageID   *string `json:"message_id"`
 	InventoryID *string `json:"inventory_id"`
@@ -30,6 +32,7 @@ type PaginatedResponse = pagination.Response[Response]
 // Response represents a bundle in API responses.
 type Response struct {
 	ID          string    `json:"id"`
+	Name        string    `json:"name"`
 	FileID      *string   `json:"file_id,omitempty"`
 	MessageID   *string   `json:"message_id,omitempty"`
 	InventoryID *string   `json:"inventory_id,omitempty"`
@@ -40,6 +43,7 @@ type Response struct {
 func toResponse(b *model.Bundle) Response {
 	return Response{
 		ID:          b.ID,
+		Name:        b.Name,
 		FileID:      b.FileID,
 		MessageID:   b.MessageID,
 		InventoryID: b.InventoryID,

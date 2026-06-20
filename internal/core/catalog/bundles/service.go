@@ -61,6 +61,7 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (*model.Bundle,
 	}
 
 	bundle := &model.Bundle{
+		Name:        req.Name,
 		FileID:      req.FileID,
 		MessageID:   req.MessageID,
 		InventoryID: req.InventoryID,
@@ -111,6 +112,9 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) (*mo
 		return nil, fmt.Errorf("bundles.service.Update: %w", err)
 	}
 
+	if req.Name != nil {
+		bundle.Name = *req.Name
+	}
 	if req.FileID != nil {
 		bundle.FileID = req.FileID
 	}
