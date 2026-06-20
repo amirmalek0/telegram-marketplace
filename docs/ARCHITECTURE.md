@@ -21,29 +21,6 @@ Processes:
 
 Entities:
 
-**User** 
-id
-first name
-last name
-username
-telegram id
-phone number
-has active plan
-active plan id
-wallet_balance
-plan expire date
-referred by (user id)
-is banned
-created at
-
-*Categories*
-id
-title
-slug
-icon
-active
-sort order
-
 **Order**
 id
 user id
@@ -159,63 +136,3 @@ status
 sent count
 failed count
 created at
-
-**Product**
-id
-title
-description
-price
-category id
-delivery type -> {file,message,Inventory,bundle(a file + inventory code + message),external API call(like VPNS)}
-file_id
-message_id
-Inventory_id
-bundle_id
-api_id
-demo url
-vip only
-views count
-status
-created at
-(how to handle subscription based? like access only for 30 days to this product. is it even needed?)
-
-
-**File**
-id
-name
-size
-mime type
-storage provider
-bucket
-object key
-
-**message**
-id
-content
-
-**Inventory**
-id
-items[]
-**Inventory items**
-id
-value
-status(available/sold)
-
-**bundle**
-id
-config(file+message)
-
-**api**
-id
-method
-headers[]
-body
-response
-
-**api_headers**
-id
-key
-value
-
-
-
