@@ -108,16 +108,9 @@ var migrations = []string{
 		method        TEXT NOT NULL CHECK (method IN ('GET', 'POST')),
 		body          TEXT,
 		response_path TEXT,
+		headers       JSONB NOT NULL DEFAULT '[]'::jsonb,
 		created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 	)`,
-
-	`CREATE TABLE IF NOT EXISTS api_headers (
-		id      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-		api_id  UUID NOT NULL REFERENCES apis(id) ON DELETE CASCADE,
-		key     TEXT NOT NULL,
-		value   TEXT NOT NULL
-	)`,
-	`CREATE INDEX IF NOT EXISTS idx_api_headers_api_id ON api_headers(api_id)`,
 
 	`CREATE TABLE IF NOT EXISTS bundles (
 		id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
