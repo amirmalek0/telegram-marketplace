@@ -13,6 +13,7 @@ type Config struct {
 	DatabaseURL string
 	BotToken    string
 	Addr        string
+	WebhookURL  string // Optional: webhook URL for bot (empty = polling mode)
 
 	// Object storage — connection
 	StorageProvider  string // "s3" or "minio" (default: "minio")
@@ -39,6 +40,7 @@ func Load() Config {
 		DatabaseURL: mustEnv("DATABASE_URL"),
 		BotToken:    mustEnv("BOT_TOKEN"),
 		Addr:        getEnv("ADDR", ":8080"),
+		WebhookURL:  getEnv("WEBHOOK_URL", ""),
 
 		StorageProvider:  getEnv("STORAGE_PROVIDER", "minio"),
 		StorageEndpoint:  mustEnv("STORAGE_ENDPOINT"),

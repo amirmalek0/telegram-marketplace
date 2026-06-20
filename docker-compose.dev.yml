@@ -1,0 +1,27 @@
+version: '3.8'
+
+# Development overrides — use with:
+# docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  miniapp:
+    build:
+      context: ./miniapp
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./miniapp/src:/app/src
+      - ./miniapp/public:/app/public
+    ports:
+      - "3000:5173"
+    command: npm run dev -- --host
+
+  backoffice:
+    build:
+      context: ./backoffice
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./backoffice/src:/app/src
+      - ./backoffice/public:/app/public
+    ports:
+      - "3001:5173"
+    command: npm run dev -- --host

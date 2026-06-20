@@ -1,4 +1,7 @@
+version: '3.8'
+
 services:
+  # ── Infrastructure ──────────────────────────────────
   postgres:
     image: postgres:16-alpine
     environment:
@@ -9,16 +12,23 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tgmp"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: admin
+  redis:
+    image: redis:7-alpine
     ports:
-      - "5050:80"
-    depends_on:
-      - postgres
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   minio:
     image: minio/minio:latest
@@ -31,24 +41,110 @@ services:
       - "9001:9001"
     volumes:
       - miniodata:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
-  backend:
-    build: .
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
     depends_on:
       - postgres
-      - minio
+
+  # ── Backend Services (core/) ────────────────────────
+  api:
+    build:
+      context: ./core
+      dockerfile: docker/api.Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
     environment:
-      DATABASE_URL: ${DATABASE_URL}
+      SERVICE_NAME: api
+      DATABASE_URL: postgres://tgmp:tgmp@postgres:5432/telegram_marketplace?sslmode=disable
+      REDIS_URL: redis://redis:6379/0
       BOT_TOKEN: ${BOT_TOKEN}
-      STORAGE_ENDPOINT: ${STORAGE_ENDPOINT:-http://minio:9000}
-      STORAGE_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
-      STORAGE_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+      STORAGE_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
       STORAGE_BUCKET: ${STORAGE_BUCKET:-marketplace}
       STORAGE_REGION: ${STORAGE_REGION:-us-east-1}
       STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL:-http://localhost:9000/marketplace}
+      CATEGORY_ICONS_BUCKET: ${CATEGORY_ICONS_BUCKET:-categories-icons}
+      CATEGORY_ICONS_PUBLIC_URL: ${CATEGORY_ICONS_PUBLIC_URL:-http://localhost:9000/categories-icons}
+      PRODUCT_FILES_BUCKET: ${PRODUCT_FILES_BUCKET:-product-files}
+      PRODUCT_FILES_PUBLIC_URL: ${PRODUCT_FILES_PUBLIC_URL:-http://localhost:9000/product-files}
+      ADDR: ":8080"
     ports:
       - "8080:8080"
+    restart: unless-stopped
+
+  bot:
+    build:
+      context: ./core
+      dockerfile: docker/bot.Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    environment:
+      SERVICE_NAME: bot
+      DATABASE_URL: postgres://tgmp:tgmp@postgres:5432/telegram_marketplace?sslmode=disable
+      REDIS_URL: redis://redis:6379/0
+      BOT_TOKEN: ${BOT_TOKEN}
+      WEBHOOK_URL: ${WEBHOOK_URL:-}
+      STORAGE_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+      STORAGE_BUCKET: ${STORAGE_BUCKET:-marketplace}
+      STORAGE_REGION: ${STORAGE_REGION:-us-east-1}
+      STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL:-http://localhost:9000/marketplace}
+      CATEGORY_ICONS_BUCKET: ${CATEGORY_ICONS_BUCKET:-categories-icons}
+      CATEGORY_ICONS_PUBLIC_URL: ${CATEGORY_ICONS_PUBLIC_URL:-http://localhost:9000/categories-icons}
+      PRODUCT_FILES_BUCKET: ${PRODUCT_FILES_BUCKET:-product-files}
+      PRODUCT_FILES_PUBLIC_URL: ${PRODUCT_FILES_PUBLIC_URL:-http://localhost:9000/product-files}
+      ADDR: ":8081"
+    ports:
+      - "8081:8081"
+    restart: unless-stopped
+
+  # ── Frontend Services ───────────────────────────────
+  miniapp:
+    build:
+      context: ./miniapp
+      args:
+        VITE_API_BASE_URL: ${MINIAPP_API_URL:-http://localhost:8080/api/v1}
+    depends_on:
+      - api
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+
+  backoffice:
+    build:
+      context: ./backoffice
+      args:
+        VITE_API_BASE_URL: ${BACKOFFICE_API_URL:-http://localhost:8080/api/admin}
+    depends_on:
+      - api
+    ports:
+      - "3001:80"
+    restart: unless-stopped
 
 volumes:
   pgdata:
+  redisdata:
   miniodata:
