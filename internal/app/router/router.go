@@ -5,8 +5,20 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	"telegram-marketplace/internal/core/catalog/apis"
+	apirouter "telegram-marketplace/internal/core/catalog/apis/router"
+	"telegram-marketplace/internal/core/catalog/bundles"
+	bundlerouter "telegram-marketplace/internal/core/catalog/bundles/router"
 	"telegram-marketplace/internal/core/catalog/categories"
 	categoryrouter "telegram-marketplace/internal/core/catalog/categories/router"
+	"telegram-marketplace/internal/core/catalog/files"
+	filerouter "telegram-marketplace/internal/core/catalog/files/router"
+	"telegram-marketplace/internal/core/catalog/inventory"
+	invrouter "telegram-marketplace/internal/core/catalog/inventory/router"
+	"telegram-marketplace/internal/core/catalog/messages"
+	msgrouter "telegram-marketplace/internal/core/catalog/messages/router"
+	"telegram-marketplace/internal/core/catalog/products"
+	productrouter "telegram-marketplace/internal/core/catalog/products/router"
 	"telegram-marketplace/internal/core/membership/users"
 	userrouter "telegram-marketplace/internal/core/membership/users/router"
 )
@@ -16,6 +28,12 @@ import (
 type Handlers struct {
 	Users      *users.Handler
 	Categories *categories.Handler
+	Files      *files.Handler
+	Messages   *messages.Handler
+	Inventory  *inventory.Handler
+	APIs       *apis.Handler
+	Bundles    *bundles.Handler
+	Products   *products.Handler
 }
 
 // New creates and configures the gin.Engine:
@@ -39,6 +57,12 @@ func New(botToken string, h Handlers) *gin.Engine {
 	{
 		userrouter.RegisterRoutes(v1, h.Users)
 		categoryrouter.RegisterRoutes(v1, h.Categories)
+		filerouter.RegisterRoutes(v1, h.Files)
+		msgrouter.RegisterRoutes(v1, h.Messages)
+		invrouter.RegisterRoutes(v1, h.Inventory)
+		apirouter.RegisterRoutes(v1, h.APIs)
+		bundlerouter.RegisterRoutes(v1, h.Bundles)
+		productrouter.RegisterRoutes(v1, h.Products)
 	}
 
 	return r
