@@ -74,6 +74,9 @@ services:
       DATABASE_URL: postgres://tgmp:tgmp@postgres:5432/telegram_marketplace?sslmode=disable
       REDIS_URL: redis://redis:6379/0
       BOT_TOKEN: ${BOT_TOKEN}
+      JWT_SECRET: ${JWT_SECRET:-qgGm3V/DGE+dobjQh+hiPO1j/r6CsmLa0TkYAdX+/Z4=}
+      ADMIN_SEED_USERNAME: ${ADMIN_SEED_USERNAME:-admin}
+      ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-admin}
       STORAGE_ENDPOINT: http://minio:9000
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
@@ -105,6 +108,9 @@ services:
       DATABASE_URL: postgres://tgmp:tgmp@postgres:5432/telegram_marketplace?sslmode=disable
       REDIS_URL: redis://redis:6379/0
       BOT_TOKEN: ${BOT_TOKEN}
+      JWT_SECRET: ${JWT_SECRET:-qgGm3V/DGE+dobjQh+hiPO1j/r6CsmLa0TkYAdX+/Z4=}
+      ADMIN_SEED_USERNAME: ${ADMIN_SEED_USERNAME:-admin}
+      ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-admin}
       WEBHOOK_URL: ${WEBHOOK_URL:-}
       STORAGE_ENDPOINT: http://minio:9000
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
