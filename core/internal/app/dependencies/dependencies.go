@@ -21,6 +21,9 @@ import (
 	msgrepo "telegram-marketplace/internal/core/catalog/messages/repository"
 	"telegram-marketplace/internal/core/catalog/products"
 	productrepo "telegram-marketplace/internal/core/catalog/products/repository"
+	"telegram-marketplace/internal/core/membership/admins"
+	adminrepo "telegram-marketplace/internal/core/membership/admins/repository"
+	"telegram-marketplace/internal/core/membership/auth"
 	"telegram-marketplace/internal/core/membership/users"
 	userrepo "telegram-marketplace/internal/core/membership/users/repository"
 	"telegram-marketplace/pkg/storage"
@@ -34,6 +37,14 @@ import (
 //  2. Add the handler field to router.Handlers.
 //  3. Mount its routes in internal/app/router/router.go.
 func Wire(ctx context.Context, db *pgxpool.Pool, cfg config.Config) router.Handlers {
+	// --- membership/admins ---
+	adminRepo := adminrepo.NewPostgresRepository(db)
+	adminService := admins.NewService(adminRepo, cfg.JWTSecret)
+	adminHandler := admins.NewHandler(adminService)
+
+	// --- membership/auth ---
+	authHandler := auth.NewHandler(adminService)
+
 	// --- Infrastructure: storage client (connection-level factory) ---
 	storageClient, err := storage.New(storage.Config{
 		Provider:  storage.Provider(cfg.StorageProvider),
@@ -108,13 +119,16 @@ func Wire(ctx context.Context, db *pgxpool.Pool, cfg config.Config) router.Handl
 	productHandler := products.NewHandler(productService)
 
 	return router.Handlers{
-		Users:      userHandler,
-		Categories: categoryHandler,
-		Files:      fileHandler,
-		Messages:   msgHandler,
-		Inventory:  invHandler,
-		APIs:       apiHandler,
-		Bundles:    bundleHandler,
-		Products:   productHandler,
+		Auth:         authHandler,
+		Users:        userHandler,
+		Categories:   categoryHandler,
+		Files:        fileHandler,
+		Messages:     msgHandler,
+		Inventory:    invHandler,
+		APIs:         apiHandler,
+		Bundles:      bundleHandler,
+		Products:     productHandler,
+		Admins:       adminHandler,
+		AdminService: adminService,
 	}
 }
