@@ -2,20 +2,31 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
+	"telegram-marketplace/internal/app/middleware"
 	"telegram-marketplace/internal/core/catalog/inventory"
 )
 
 // RegisterRoutes mounts all inventory endpoints onto the provided RouterGroup.
+// Read operations are accessible to both admins and telegram users.
+// Write operations (create, update, delete, bulk add items, delete item) are admin-only.
 func RegisterRoutes(rg *gin.RouterGroup, h *inventory.Handler) {
 	g := rg.Group("/inventories")
+
+	// Accessible by both admins and telegram users
+	public := g.Group("", middleware.RequireAny())
 	{
-		g.POST("", h.Create)
-		g.GET("", h.List)
-		g.GET("/:id", h.GetByID)
-		g.PATCH("/:id", h.Update)
-		g.DELETE("/:id", h.Delete)
-		g.POST("/:id/items", h.BulkAddItems)
-		g.GET("/:id/items", h.ListItems)
-		g.DELETE("/:id/items/:itemId", h.DeleteItem)
+		public.GET("", h.List)
+		public.GET("/:id", h.GetByID)
+		public.GET("/:id/items", h.ListItems)
+	}
+
+	// Admin-only operations
+	admin := g.Group("", middleware.RequireAdmin())
+	{
+		admin.POST("", h.Create)
+		admin.PATCH("/:id", h.Update)
+		admin.DELETE("/:id", h.Delete)
+		admin.POST("/:id/items", h.BulkAddItems)
+		admin.DELETE("/:id/items/:itemId", h.DeleteItem)
 	}
 }
