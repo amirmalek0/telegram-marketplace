@@ -14,6 +14,11 @@ type Config struct {
 	BotToken    string
 	Addr        string
 	WebhookURL  string // Optional: webhook URL for bot (empty = polling mode)
+	JWTSecret   string // Secret key for signing admin JWT tokens
+
+	// Seed admin credentials (used only on first boot)
+	AdminSeedUsername string // default: "admin"
+	AdminSeedPassword string // default: "admin"
 
 	// Object storage — connection
 	StorageProvider  string // "s3" or "minio" (default: "minio")
@@ -41,6 +46,10 @@ func Load() Config {
 		BotToken:    mustEnv("BOT_TOKEN"),
 		Addr:        getEnv("ADDR", ":8080"),
 		WebhookURL:  getEnv("WEBHOOK_URL", ""),
+		JWTSecret:   mustEnv("JWT_SECRET"),
+
+		AdminSeedUsername: getEnv("ADMIN_SEED_USERNAME", "admin"),
+		AdminSeedPassword: getEnv("ADMIN_SEED_PASSWORD", "admin"),
 
 		StorageProvider:  getEnv("STORAGE_PROVIDER", "minio"),
 		StorageEndpoint:  mustEnv("STORAGE_ENDPOINT"),
