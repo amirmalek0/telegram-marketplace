@@ -1,3 +1,0 @@
-package admins
-
-func RegisterRoutes(){}
