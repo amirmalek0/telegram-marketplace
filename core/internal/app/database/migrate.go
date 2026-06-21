@@ -38,7 +38,13 @@ var migrations = []string{
 	)`,
 
 	`CREATE TABLE IF NOT EXISTS admins (
-		id UUID PRIMARY KEY DEFAULT gen_random_uuid()
+		id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+		username      TEXT        NOT NULL UNIQUE,
+		password_hash TEXT        NOT NULL,
+		is_active     BOOLEAN     NOT NULL DEFAULT true,
+		last_login_at TIMESTAMPTZ,
+		created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+		updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 	)`,
 
 	`CREATE TABLE IF NOT EXISTS tickets (
@@ -157,5 +163,10 @@ var migrations = []string{
 
 	`CREATE TABLE IF NOT EXISTS settings (
 		id UUID PRIMARY KEY DEFAULT gen_random_uuid()
+	)`,
+
+	`CREATE TABLE IF NOT EXISTS seed_markers (
+		seed_name  TEXT        PRIMARY KEY,
+		created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 	)`,
 }

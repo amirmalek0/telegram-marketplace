@@ -18,6 +18,7 @@ func Start(cfg config.Config) {
 	defer database.MustClose(db)
 
 	database.Migrate(ctx, db)
+	database.SeedAdmin(ctx, db, cfg.AdminSeedUsername, cfg.AdminSeedPassword)
 
 	handlers := dependencies.Wire(ctx, db, cfg)
 	r := router.New(cfg.BotToken, handlers)
