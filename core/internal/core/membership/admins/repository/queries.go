@@ -21,10 +21,6 @@ const (
 		FROM admins
 		WHERE id = $1`
 
-	// queryUpdateLastLogin updates the last login timestamp.
-	queryUpdateLastLogin = `
-		UPDATE admins SET last_login_at = $1, updated_at = $1 WHERE id = $2`
-
 	// queryListAdmins retrieves a paginated list of admins ordered by creation date.
 	queryListAdmins = `
 		SELECT id, username, password_hash, is_active, last_login_at, created_at, updated_at

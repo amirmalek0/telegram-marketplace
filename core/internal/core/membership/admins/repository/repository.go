@@ -17,7 +17,6 @@ type Repository interface {
 	Create(ctx context.Context, a *model.Admin) error
 	FindByUsername(ctx context.Context, username string) (*model.Admin, error)
 	FindByID(ctx context.Context, id string) (*model.Admin, error)
-	UpdateLastLogin(ctx context.Context, id string) error
 	Update(ctx context.Context, id string, updates map[string]interface{}) error
 	List(ctx context.Context, limit, offset int) ([]model.Admin, error)
 	Count(ctx context.Context) (int, error)
@@ -69,11 +68,6 @@ func (r *postgresRepository) FindByID(ctx context.Context, id string) (*model.Ad
 		return nil, err
 	}
 	return &a, nil
-}
-
-func (r *postgresRepository) UpdateLastLogin(ctx context.Context, id string) error {
-	_, err := r.db.Exec(ctx, queryUpdateLastLogin, time.Now(), id)
-	return err
 }
 
 func (r *postgresRepository) Update(ctx context.Context, id string, updates map[string]interface{}) error {

@@ -58,7 +58,7 @@ func (s *Service) Login(ctx context.Context, username, password string) (*LoginR
 		return nil, err
 	}
 
-	_ = s.repo.UpdateLastLogin(ctx, admin.ID)
+	_ = s.repo.Update(ctx, admin.ID, map[string]interface{}{"last_login_at": time.Now()})
 
 	return &LoginResponse{
 		AccessToken:  accessToken,
