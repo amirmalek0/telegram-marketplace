@@ -34,4 +34,7 @@ const (
 
 	// queryDeleteAdmin removes an admin by ID.
 	queryDeleteAdmin = `DELETE FROM admins WHERE id = $1`
+
+	// queryCountAdmins returns the total number of admins.
+	queryCountAdmins = `SELECT COUNT(*) FROM admins`
 )

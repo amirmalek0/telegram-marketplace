@@ -20,6 +20,7 @@ type Repository interface {
 	UpdateLastLogin(ctx context.Context, id string) error
 	Update(ctx context.Context, id string, updates map[string]interface{}) error
 	List(ctx context.Context, limit, offset int) ([]model.Admin, error)
+	Count(ctx context.Context) (int, error)
 	Delete(ctx context.Context, id string) error
 }
 
@@ -118,4 +119,10 @@ func (r *postgresRepository) List(ctx context.Context, limit, offset int) ([]mod
 func (r *postgresRepository) Delete(ctx context.Context, id string) error {
 	_, err := r.db.Exec(ctx, queryDeleteAdmin, id)
 	return err
+}
+
+func (r *postgresRepository) Count(ctx context.Context) (int, error) {
+	var count int
+	err := r.db.QueryRow(ctx, queryCountAdmins).Scan(&count)
+	return count, err
 }

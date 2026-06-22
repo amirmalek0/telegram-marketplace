@@ -1,7 +1,9 @@
 package admins
 
 import (
+	"math"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -33,9 +35,22 @@ func (h *Handler) Create(c *gin.Context) {
 }
 
 // List handles GET /api/admin/admins
+// Query params: page (default 1), limit (default 20, max 100)
 func (h *Handler) List(c *gin.Context) {
-	limit := 20
-	offset := 0
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if page < 1 {
+		page = 1
+	}
+
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	if limit < 1 {
+		limit = 1
+	}
+	if limit > 100 {
+		limit = 100
+	}
+
+	offset := (page - 1) * limit
 
 	admins, err := h.service.List(c.Request.Context(), limit, offset)
 	if err != nil {
@@ -43,7 +58,19 @@ func (h *Handler) List(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"admins": admins})
+	total, err := h.service.Count(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"admins":      admins,
+		"page":        page,
+		"limit":       limit,
+		"total":       total,
+		"total_pages": int(math.Ceil(float64(total) / float64(limit))),
+	})
 }
 
 // Get handles GET /api/admin/admins/:id

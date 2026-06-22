@@ -69,6 +69,11 @@ func (s *Service) List(ctx context.Context, limit, offset int) ([]model.Admin, e
 	return s.repo.List(ctx, limit, offset)
 }
 
+// Count returns the total number of admins.
+func (s *Service) Count(ctx context.Context) (int, error) {
+	return s.repo.Count(ctx)
+}
+
 // Update updates an admin's fields.
 func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) error {
 	updates := make(map[string]interface{})
