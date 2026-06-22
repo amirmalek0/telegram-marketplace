@@ -10,7 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"telegram-marketplace/internal/core/membership/admins"
+	"telegram-marketplace/internal/core/membership/auth"
 )
 
 // OptionalAuth returns a Gin middleware that attempts to authenticate the
@@ -19,7 +19,7 @@ import (
 // validation fails, the request continues with no identity in the context.
 // Downstream guard middlewares (RequireAdmin, RequireTelegram, RequireAny)
 // enforce access control per route.
-func OptionalAuth(botToken string, adminService *admins.Service) gin.HandlerFunc {
+func OptionalAuth(botToken string, authService *auth.Service) gin.HandlerFunc {
 	// Pre-derive the TMA secret key once at startup.
 	mac := hmac.New(sha256.New, []byte("WebAppData"))
 	mac.Write([]byte(botToken))
@@ -37,7 +37,7 @@ func OptionalAuth(botToken string, adminService *admins.Service) gin.HandlerFunc
 			tryTelegramAuth(c, strings.TrimPrefix(authHeader, "tma "), tmaSecretKey)
 
 		case strings.HasPrefix(authHeader, "Bearer "):
-			tryAdminAuth(c, strings.TrimPrefix(authHeader, "Bearer "), adminService)
+			tryAdminAuth(c, strings.TrimPrefix(authHeader, "Bearer "), authService)
 		}
 
 		c.Next()
@@ -83,8 +83,8 @@ func tryTelegramAuth(c *gin.Context, rawInitData string, secretKey []byte) {
 
 // tryAdminAuth validates a JWT token and stores the claims in the context
 // under AdminClaimsKey on success. Silently returns on failure (non-rejecting).
-func tryAdminAuth(c *gin.Context, tokenString string, adminService *admins.Service) {
-	claims, err := adminService.ValidateToken(tokenString)
+func tryAdminAuth(c *gin.Context, tokenString string, authService *auth.Service) {
+	claims, err := authService.ValidateToken(tokenString)
 	if err != nil {
 		return
 	}

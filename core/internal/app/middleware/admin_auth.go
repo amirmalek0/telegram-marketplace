@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"telegram-marketplace/internal/core/membership/admins"
+	"telegram-marketplace/internal/core/membership/auth"
 )
 
 const (
@@ -16,7 +16,7 @@ const (
 
 // AdminAuth returns a Gin middleware that validates JWT Bearer tokens
 // for backoffice admin routes.
-func AdminAuth(adminService *admins.Service) gin.HandlerFunc {
+func AdminAuth(authService *auth.Service) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
@@ -31,7 +31,7 @@ func AdminAuth(adminService *admins.Service) gin.HandlerFunc {
 		}
 
 		tokenString := strings.TrimPrefix(authHeader, prefix)
-		claims, err := adminService.ValidateToken(tokenString)
+		claims, err := authService.ValidateToken(tokenString)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid or expired token"})
 			return
@@ -45,10 +45,10 @@ func AdminAuth(adminService *admins.Service) gin.HandlerFunc {
 
 // GetAdminClaims retrieves the validated admin claims from the context.
 // Returns nil if the middleware was not applied or auth failed.
-func GetAdminClaims(c *gin.Context) *admins.Claims {
+func GetAdminClaims(c *gin.Context) *auth.Claims {
 	v, exists := c.Get(AdminClaimsKey)
 	if !exists {
 		return nil
 	}
-	return v.(*admins.Claims)
+	return v.(*auth.Claims)
 }

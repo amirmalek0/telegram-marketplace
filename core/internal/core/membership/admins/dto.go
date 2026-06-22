@@ -1,12 +1,5 @@
 package admins
 
-// LoginResponse contains the JWT tokens after successful login.
-type LoginResponse struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
-	ExpiresIn    int64  `json:"expires_in"` // seconds
-}
-
 // CreateRequest represents the admin creation payload.
 type CreateRequest struct {
 	Username string `json:"username" binding:"required,min=3"`

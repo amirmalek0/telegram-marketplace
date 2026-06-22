@@ -4,17 +4,15 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-
-	"telegram-marketplace/internal/core/membership/admins"
 )
 
 // Handler exposes authentication HTTP endpoints.
 type Handler struct {
-	service *admins.Service
+	service *Service
 }
 
 // NewHandler creates a new auth handler.
-func NewHandler(service *admins.Service) *Handler {
+func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
 }
 
@@ -32,11 +30,7 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, LoginResponse{
-		AccessToken:  resp.AccessToken,
-		RefreshToken: resp.RefreshToken,
-		ExpiresIn:    resp.ExpiresIn,
-	})
+	c.JSON(http.StatusOK, resp)
 }
 
 // Refresh handles POST /api/v1/auth/refresh
@@ -53,9 +47,5 @@ func (h *Handler) Refresh(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, LoginResponse{
-		AccessToken:  resp.AccessToken,
-		RefreshToken: resp.RefreshToken,
-		ExpiresIn:    resp.ExpiresIn,
-	})
+	c.JSON(http.StatusOK, resp)
 }

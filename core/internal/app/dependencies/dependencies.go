@@ -39,11 +39,12 @@ import (
 func Wire(ctx context.Context, db *pgxpool.Pool, cfg config.Config) router.Handlers {
 	// --- membership/admins ---
 	adminRepo := adminrepo.NewPostgresRepository(db)
-	adminService := admins.NewService(adminRepo, cfg.JWTSecret)
+	adminService := admins.NewService(adminRepo)
 	adminHandler := admins.NewHandler(adminService)
 
 	// --- membership/auth ---
-	authHandler := auth.NewHandler(adminService)
+	authService := auth.NewService(adminRepo, cfg.JWTSecret)
+	authHandler := auth.NewHandler(authService)
 
 	// --- Infrastructure: storage client (connection-level factory) ---
 	storageClient, err := storage.New(storage.Config{
@@ -119,16 +120,16 @@ func Wire(ctx context.Context, db *pgxpool.Pool, cfg config.Config) router.Handl
 	productHandler := products.NewHandler(productService)
 
 	return router.Handlers{
-		Auth:         authHandler,
-		Users:        userHandler,
-		Categories:   categoryHandler,
-		Files:        fileHandler,
-		Messages:     msgHandler,
-		Inventory:    invHandler,
-		APIs:         apiHandler,
-		Bundles:      bundleHandler,
-		Products:     productHandler,
-		Admins:       adminHandler,
-		AdminService: adminService,
+		Auth:        authHandler,
+		AuthService: authService,
+		Users:       userHandler,
+		Categories:  categoryHandler,
+		Files:       fileHandler,
+		Messages:    msgHandler,
+		Inventory:   invHandler,
+		APIs:        apiHandler,
+		Bundles:     bundleHandler,
+		Products:    productHandler,
+		Admins:      adminHandler,
 	}
 }

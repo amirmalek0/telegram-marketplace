@@ -31,17 +31,17 @@ import (
 // Handlers groups all domain handlers that the router needs.
 // Add a new field here when a new module is introduced.
 type Handlers struct {
-	Auth         *auth.Handler
-	Users        *users.Handler
-	Categories   *categories.Handler
-	Files        *files.Handler
-	Messages     *messages.Handler
-	Inventory    *inventory.Handler
-	APIs         *apis.Handler
-	Bundles      *bundles.Handler
-	Products     *products.Handler
-	Admins       *admins.Handler
-	AdminService *admins.Service
+	Auth        *auth.Handler
+	AuthService *auth.Service
+	Users       *users.Handler
+	Categories  *categories.Handler
+	Files       *files.Handler
+	Messages    *messages.Handler
+	Inventory   *inventory.Handler
+	APIs        *apis.Handler
+	Bundles     *bundles.Handler
+	Products    *products.Handler
+	Admins      *admins.Handler
 }
 
 // New creates and configures the gin.Engine:
@@ -68,7 +68,7 @@ func New(botToken string, h Handlers) *gin.Engine {
 		// Domain routes — OptionalAuth attempts both Telegram (tma) and JWT (Bearer)
 		// authentication but never rejects. Per-route guards enforce access control.
 		domain := api.Group("")
-		domain.Use(middleware.OptionalAuth(botToken, h.AdminService))
+		domain.Use(middleware.OptionalAuth(botToken, h.AuthService))
 		{
 			userrouter.RegisterRoutes(domain, h.Users)
 			categoryrouter.RegisterRoutes(domain, h.Categories)
