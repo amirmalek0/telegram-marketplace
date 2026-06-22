@@ -2,12 +2,22 @@ package admins
 
 import (
 	"context"
+	"errors"
+	"regexp"
+	"strings"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"telegram-marketplace/internal/core/membership/admins/model"
 	"telegram-marketplace/internal/core/membership/admins/repository"
 )
+
+// validUsername matches lowercase alphanumeric strings with optional dots/underscores,
+// starting with a letter, between 3 and 50 characters.
+var validUsername = regexp.MustCompile(`^[a-z][a-z0-9._]{2,49}$`)
+
+// ErrInvalidUsername is returned when the username does not meet requirements.
+var ErrInvalidUsername = errors.New("username must be 3-50 lowercase alphanumeric characters (dots and underscores allowed), starting with a letter")
 
 // Service handles admin business logic.
 type Service struct {
@@ -21,15 +31,28 @@ func NewService(repo repository.Repository) *Service {
 	}
 }
 
+// validateUsername checks that the username is lowercase, has no spaces or invalid chars.
+func validateUsername(username string) error {
+	if !validUsername.MatchString(username) {
+		return ErrInvalidUsername
+	}
+	return nil
+}
+
 // Create creates a new admin with a hashed password.
 func (s *Service) Create(ctx context.Context, req CreateRequest) error {
+	username := strings.ToLower(strings.TrimSpace(req.Username))
+	if err := validateUsername(username); err != nil {
+		return err
+	}
+
 	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
 	admin := &model.Admin{
 		ID:           uuid.New().String(),
-		Username:     req.Username,
+		Username:     username,
 		PasswordHash: string(hash),
 		IsActive:     true,
 	}
@@ -50,7 +73,11 @@ func (s *Service) List(ctx context.Context, limit, offset int) ([]model.Admin, e
 func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) error {
 	updates := make(map[string]interface{})
 	if req.Username != nil {
-		updates["username"] = *req.Username
+		username := strings.ToLower(strings.TrimSpace(*req.Username))
+		if err := validateUsername(username); err != nil {
+			return err
+		}
+		updates["username"] = username
 	}
 	if req.Password != nil {
 		hash, err := bcrypt.GenerateFromPassword([]byte(*req.Password), bcrypt.DefaultCost)
