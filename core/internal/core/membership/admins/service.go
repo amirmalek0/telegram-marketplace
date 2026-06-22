@@ -76,28 +76,30 @@ func (s *Service) Count(ctx context.Context) (int, error) {
 
 // Update updates an admin's fields.
 func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) error {
-	updates := make(map[string]interface{})
+	admin, err := s.repo.FindByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
 	if req.Username != nil {
 		username := strings.ToLower(strings.TrimSpace(*req.Username))
 		if err := validateUsername(username); err != nil {
 			return err
 		}
-		updates["username"] = username
+		admin.Username = username
 	}
 	if req.Password != nil {
 		hash, err := bcrypt.GenerateFromPassword([]byte(*req.Password), bcrypt.DefaultCost)
 		if err != nil {
 			return err
 		}
-		updates["password_hash"] = string(hash)
+		admin.PasswordHash = string(hash)
 	}
 	if req.IsActive != nil {
-		updates["is_active"] = *req.IsActive
+		admin.IsActive = *req.IsActive
 	}
-	if len(updates) == 0 {
-		return nil
-	}
-	return s.repo.Update(ctx, id, updates)
+
+	return s.repo.Update(ctx, admin)
 }
 
 // Delete removes an admin by ID.

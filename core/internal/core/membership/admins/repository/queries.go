@@ -28,6 +28,16 @@ const (
 		ORDER BY created_at DESC
 		LIMIT $1 OFFSET $2`
 
+	// queryUpdateAdmin updates an admin's mutable fields.
+	queryUpdateAdmin = `
+		UPDATE admins SET
+			username      = $1,
+			password_hash = $2,
+			is_active     = $3,
+			last_login_at = $4,
+			updated_at    = NOW()
+		WHERE id = $5`
+
 	// queryDeleteAdmin removes an admin by ID.
 	queryDeleteAdmin = `DELETE FROM admins WHERE id = $1`
 

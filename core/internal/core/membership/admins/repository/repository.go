@@ -17,7 +17,7 @@ type Repository interface {
 	Create(ctx context.Context, a *model.Admin) error
 	FindByUsername(ctx context.Context, username string) (*model.Admin, error)
 	FindByID(ctx context.Context, id string) (*model.Admin, error)
-	Update(ctx context.Context, id string, updates map[string]interface{}) error
+	Update(ctx context.Context, a *model.Admin) error
 	List(ctx context.Context, limit, offset int) ([]model.Admin, error)
 	Count(ctx context.Context) (int, error)
 	Delete(ctx context.Context, id string) error
@@ -70,23 +70,14 @@ func (r *postgresRepository) FindByID(ctx context.Context, id string) (*model.Ad
 	return &a, nil
 }
 
-func (r *postgresRepository) Update(ctx context.Context, id string, updates map[string]interface{}) error {
-	// Build dynamic UPDATE query
-	query := "UPDATE admins SET updated_at = NOW()"
-	args := []interface{}{}
-	argIdx := 1
-
-	for key, value := range updates {
-		query += ", " + key + " = $" + string(rune('0'+argIdx))
-		args = append(args, value)
-		argIdx++
+func (r *postgresRepository) Update(ctx context.Context, a *model.Admin) error {
+	_, err := r.db.Exec(ctx, queryUpdateAdmin,
+		a.Username, a.PasswordHash, a.IsActive, a.LastLoginAt, a.ID,
+	)
+	if err != nil {
+		return fmt.Errorf("admins.repository.Update: %w", err)
 	}
-
-	query += " WHERE id = $" + string(rune('0'+argIdx))
-	args = append(args, id)
-
-	_, err := r.db.Exec(ctx, query, args...)
-	return err
+	return nil
 }
 
 func (r *postgresRepository) List(ctx context.Context, limit, offset int) ([]model.Admin, error) {
