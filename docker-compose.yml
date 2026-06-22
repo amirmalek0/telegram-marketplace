@@ -57,6 +57,15 @@ services:
     depends_on:
       - postgres
 
+  dbeaver:
+    image: dbeaver/cloudbeaver:latest
+    ports:
+      - "8978:8978"
+    volumes:
+      - dbeaverdata:/opt/cloudbeaver/workspace
+    depends_on:
+      - postgres
+
   # ── Backend Services (core/) ────────────────────────
   api:
     build:
@@ -154,3 +163,4 @@ volumes:
   pgdata:
   redisdata:
   miniodata:
+  dbeaverdata:
