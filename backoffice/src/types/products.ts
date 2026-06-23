@@ -1,0 +1,56 @@
+import { PaginatedResponse } from './common';
+
+export type DeliveryType = 'file' | 'message' | 'inventory' | 'bundle' | 'api';
+export type ProductStatus = 'active' | 'draft' | 'archived';
+
+export interface CreateProductRequest {
+  title: string;
+  description: string;
+  price: number;
+  category_id: string;
+  delivery_type: DeliveryType;
+  file_id?: string;
+  message_id?: string;
+  inventory_id?: string;
+  bundle_id?: string;
+  api_id?: string;
+  demo_url?: string;
+  vip_only: boolean;
+}
+
+export interface UpdateProductRequest {
+  title?: string;
+  description?: string;
+  price?: number;
+  category_id?: string;
+  delivery_type?: DeliveryType;
+  file_id?: string;
+  message_id?: string;
+  inventory_id?: string;
+  bundle_id?: string;
+  api_id?: string;
+  demo_url?: string;
+  vip_only?: boolean;
+  status?: ProductStatus;
+}
+
+export interface ProductResponse {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  category_id: string;
+  delivery_type: DeliveryType;
+  file_id?: string;
+  message_id?: string;
+  inventory_id?: string;
+  bundle_id?: string;
+  api_id?: string;
+  demo_url?: string;
+  vip_only: boolean;
+  views_count: number;
+  status: ProductStatus;
+  created_at: string;
+}
+
+export type ProductsPaginatedResponse = PaginatedResponse<ProductResponse>;
