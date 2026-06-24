@@ -120,8 +120,9 @@ export default function AdminsPage() {
     setLoading(true);
     try {
       const res = await adminsApi.list({ page, per_page: PER_PAGE });
-      setAdmins(res.data);
-      setTotal(res.total);
+      // Backend returns { admins: [...], total, ... }
+      setAdmins(Array.isArray(res.admins) ? res.admins : []);
+      setTotal(res.total ?? 0);
     } catch {
       toast.error('خطا در دریافت مدیران');
     } finally {

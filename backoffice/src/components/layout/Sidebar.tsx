@@ -1,4 +1,5 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard,
@@ -12,13 +13,16 @@ import {
   Megaphone,
   Settings,
   LogOut,
-  ChevronRight,
+  ChevronLeft,
+  ChevronDown,
   Boxes,
   FileText,
   Zap,
   Star,
   Ticket,
   GitBranch,
+  Bot,
+  CornerDownLeft,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { useUIStore } from '@/stores/uiStore';
@@ -30,66 +34,115 @@ interface NavItem {
   icon: React.ReactNode;
   to: string;
   badge?: number;
+  subItems?: SubNavItem[];
+}
+
+interface SubNavItem {
+  label: string;
+  icon: React.ReactNode;
+  to: string;
 }
 
 interface NavGroup {
+  id: string;
   title: string;
+  icon: React.ReactNode;
+  color: string;
   items: NavItem[];
 }
 
+const productSubItems: SubNavItem[] = [
+  { label: 'موجودی', icon: <Boxes size={13} />, to: '/inventory' },
+  { label: 'فایل‌ها', icon: <FileText size={13} />, to: '/files' },
+  { label: 'باندل‌ها', icon: <Layers size={13} />, to: '/bundles' },
+  { label: 'API‌ها', icon: <Zap size={13} />, to: '/apis' },
+  { label: 'پیام‌ها', icon: <MessageSquare size={13} />, to: '/messages' },
+];
+
 const navGroups: NavGroup[] = [
   {
-    title: 'داشبورد',
+    id: 'main',
+    title: 'اصلی',
+    icon: <LayoutDashboard size={15} />,
+    color: 'text-sky-500',
     items: [
-      { label: 'خلاصه', icon: <LayoutDashboard size={18} />, to: '/' },
+      { label: 'داشبورد', icon: <LayoutDashboard size={16} />, to: '/' },
     ],
   },
   {
+    id: 'catalog',
     title: 'کاتالوگ',
+    icon: <Package size={15} />,
+    color: 'text-violet-500',
     items: [
-      { label: 'محصولات', icon: <Package size={18} />, to: '/products' },
-      { label: 'دسته‌بندی‌ها', icon: <Tag size={18} />, to: '/categories' },
-      { label: 'باندل‌ها', icon: <Layers size={18} />, to: '/bundles' },
-      { label: 'موجودی', icon: <Boxes size={18} />, to: '/inventory' },
-      { label: 'فایل‌ها', icon: <FileText size={18} />, to: '/files' },
-      { label: 'API‌ها', icon: <Zap size={18} />, to: '/apis' },
+      {
+        label: 'محصولات',
+        icon: <Package size={16} />,
+        to: '/products',
+        subItems: productSubItems,
+      },
+      { label: 'دسته‌بندی‌ها', icon: <Tag size={16} />, to: '/categories' },
     ],
   },
   {
+    id: 'commerce',
     title: 'تجارت',
+    icon: <ShoppingCart size={15} />,
+    color: 'text-emerald-500',
     items: [
-      { label: 'سفارش‌ها', icon: <ShoppingCart size={18} />, to: '/orders' },
+      { label: 'سفارش‌ها', icon: <ShoppingCart size={16} />, to: '/orders' },
     ],
   },
   {
+    id: 'users',
     title: 'کاربران',
+    icon: <Users size={15} />,
+    color: 'text-amber-500',
     items: [
-      { label: 'کاربران', icon: <Users size={18} />, to: '/users' },
-      { label: 'مدیران', icon: <Shield size={18} />, to: '/admins' },
-      { label: 'VIP', icon: <Star size={18} />, to: '/vip' },
-      { label: 'ارجاعات', icon: <GitBranch size={18} />, to: '/referrals' },
+      { label: 'کاربران', icon: <Users size={16} />, to: '/users' },
+      { label: 'مدیران', icon: <Shield size={16} />, to: '/admins' },
+      { label: 'VIP', icon: <Star size={16} />, to: '/vip' },
+      { label: 'ارجاعات', icon: <GitBranch size={16} />, to: '/referrals' },
     ],
   },
   {
+    id: 'comms',
     title: 'ارتباطات',
+    icon: <MessageSquare size={15} />,
+    color: 'text-rose-500',
     items: [
-      { label: 'پیام‌ها', icon: <MessageSquare size={18} />, to: '/messages' },
-      { label: 'پخش همگانی', icon: <Megaphone size={18} />, to: '/broadcasts' },
-      { label: 'تیکت‌ها', icon: <Ticket size={18} />, to: '/tickets' },
+      { label: 'پخش همگانی', icon: <Megaphone size={16} />, to: '/broadcasts' },
+      { label: 'تیکت‌ها', icon: <Ticket size={16} />, to: '/tickets' },
     ],
   },
   {
+    id: 'system',
     title: 'سیستم',
+    icon: <Settings size={15} />,
+    color: 'text-slate-400',
     items: [
-      { label: 'تنظیمات', icon: <Settings size={18} />, to: '/settings' },
+      { label: 'تنظیمات', icon: <Settings size={16} />, to: '/settings' },
     ],
   },
 ];
+
+const defaultOpen = new Set(['main', 'catalog', 'commerce', 'users', 'comms', 'system']);
 
 export function Sidebar() {
   const { sidebarCollapsed, toggleSidebar } = useUIStore();
   const { logout } = useAuthStore();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [openGroups, setOpenGroups] = useState<Set<string>>(defaultOpen);
+
+  const toggleGroup = (id: string) => {
+    setOpenGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const handleLogout = () => {
     logout();
@@ -97,141 +150,256 @@ export function Sidebar() {
     navigate('/login');
   };
 
+  // Check if any sub-item is active (to highlight parent)
+  const isSubItemActive = (subItems?: SubNavItem[]) =>
+    subItems?.some((s) => location.pathname === s.to) ?? false;
+
   return (
     <motion.aside
-      animate={{ width: sidebarCollapsed ? 64 : 240 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-      className="fixed top-0 right-0 h-full z-40 flex flex-col bg-[rgb(var(--color-surface))] border-l border-[rgb(var(--color-border))] overflow-hidden"
+      animate={{ width: sidebarCollapsed ? 68 : 260 }}
+      transition={{ type: 'spring', stiffness: 350, damping: 35 }}
+      className="fixed top-0 right-0 h-full z-40 flex flex-col overflow-hidden select-none"
+      style={{
+        background: 'rgb(var(--color-surface))',
+        borderLeft: '1px solid rgb(var(--color-border))',
+      }}
     >
-      {/* Logo */}
-      <div className="flex items-center h-16 px-4 border-b border-[rgb(var(--color-border))] flex-shrink-0">
-        <div className="w-8 h-8 rounded-lg bg-[#0088cc] flex items-center justify-center flex-shrink-0">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z" />
-          </svg>
+      {/* ── Logo ── */}
+      <div className="flex items-center h-16 px-3.5 flex-shrink-0 border-b border-[rgb(var(--color-border))]">
+        <div className="relative flex-shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#0088cc] to-[#00c6ff] flex items-center justify-center shadow-lg shadow-[#0088cc]/30">
+            <Bot size={18} className="text-white" />
+          </div>
+          <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-400 rounded-full border-2 border-[rgb(var(--color-surface))] pulse-dot" />
         </div>
+
         <AnimatePresence>
           {!sidebarCollapsed && (
             <motion.div
-              initial={{ opacity: 0, x: -10 }}
+              initial={{ opacity: 0, x: -8 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
+              exit={{ opacity: 0, x: -8 }}
               transition={{ duration: 0.15 }}
-              className="mr-3 overflow-hidden whitespace-nowrap"
+              className="mr-3 overflow-hidden whitespace-nowrap flex-1"
             >
-              <p className="text-sm font-bold text-[rgb(var(--color-text))]">پنل مدیریت</p>
-              <p className="text-xs text-[rgb(var(--color-text-secondary))]">Marketplace</p>
+              <p className="text-sm font-bold text-[rgb(var(--color-text))] leading-tight">پنل مدیریت</p>
+              <p className="text-[11px] text-[rgb(var(--color-text-muted))]">ربات تلگرام</p>
             </motion.div>
           )}
         </AnimatePresence>
+
+        <motion.button
+          onClick={toggleSidebar}
+          animate={{ rotate: sidebarCollapsed ? 180 : 0 }}
+          transition={{ duration: 0.25 }}
+          className="w-7 h-7 flex items-center justify-center rounded-lg text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text))] hover:bg-[rgb(var(--color-surface-2))] transition-colors flex-shrink-0"
+        >
+          <ChevronLeft size={14} />
+        </motion.button>
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
-        {navGroups.map((group) => (
-          <div key={group.title} className="mb-2">
-            <AnimatePresence>
-              {!sidebarCollapsed && (
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="px-3 py-1 text-xs font-semibold text-[rgb(var(--color-text-secondary))] uppercase tracking-wider"
+      {/* ── Nav ── */}
+      <nav className="flex-1 overflow-y-auto overflow-x-hidden py-2 px-2 space-y-1">
+        {navGroups.map((group) => {
+          const isOpen = openGroups.has(group.id);
+
+          return (
+            <div key={group.id}>
+              {/* Group header */}
+              {!sidebarCollapsed ? (
+                <button
+                  onClick={() => toggleGroup(group.id)}
+                  className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg group transition-colors hover:bg-[rgb(var(--color-surface-2))]"
                 >
-                  {group.title}
-                </motion.p>
+                  <span className={cn('flex-shrink-0', group.color)}>{group.icon}</span>
+                  <span className="flex-1 text-left text-[11px] font-bold uppercase tracking-widest text-[rgb(var(--color-text-secondary))] group-hover:text-[rgb(var(--color-text))] transition-colors">
+                    {group.title}
+                  </span>
+                  <motion.span
+                    animate={{ rotate: isOpen ? 0 : -90 }}
+                    transition={{ duration: 0.2 }}
+                    className="text-[rgb(var(--color-text-muted))]"
+                  >
+                    <ChevronDown size={13} />
+                  </motion.span>
+                </button>
+              ) : (
+                <div className="flex items-center justify-center py-1.5">
+                  <div className={cn('w-1.5 h-1.5 rounded-full', group.color.replace('text-', 'bg-'))} />
+                </div>
               )}
-            </AnimatePresence>
-            {group.items.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.to === '/'}
-                className={({ isActive }) =>
-                  cn(
-                    'flex items-center gap-3 px-3 py-2 rounded-xl text-sm transition-all duration-150 group relative',
-                    isActive
-                      ? 'bg-[#0088cc]/10 text-[#0088cc] font-medium'
-                      : 'text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-bg))] hover:text-[rgb(var(--color-text))]'
-                  )
-                }
-              >
-                {({ isActive }) => (
-                  <>
-                    <span className={cn('flex-shrink-0', isActive && 'text-[#0088cc]')}>
-                      {item.icon}
-                    </span>
-                    <AnimatePresence>
-                      {!sidebarCollapsed && (
-                        <motion.span
-                          initial={{ opacity: 0, x: -5 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -5 }}
-                          transition={{ duration: 0.15 }}
-                          className="whitespace-nowrap overflow-hidden"
-                        >
-                          {item.label}
-                        </motion.span>
-                      )}
-                    </AnimatePresence>
-                    {/* Active indicator */}
-                    {isActive && (
-                      <motion.div
-                        layoutId="activeIndicator"
-                        className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-[#0088cc] rounded-l-full"
-                      />
-                    )}
-                    {/* Tooltip when collapsed */}
-                    {sidebarCollapsed && (
-                      <div className="absolute right-full mr-2 px-2 py-1 bg-[rgb(var(--color-text))] text-[rgb(var(--color-bg))] text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
-                        {item.label}
-                      </div>
-                    )}
-                  </>
+
+              {/* Group items */}
+              <AnimatePresence initial={false}>
+                {(isOpen || sidebarCollapsed) && (
+                  <motion.div
+                    key={group.id + '-items'}
+                    initial={sidebarCollapsed ? false : { height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.22, ease: 'easeInOut' }}
+                    className="overflow-hidden"
+                  >
+                    <div className={cn(
+                      'space-y-0.5',
+                      !sidebarCollapsed && 'pr-2 border-r-2 border-[rgb(var(--color-border))] mr-2 mb-1'
+                    )}>
+                      {group.items.map((item) => {
+                        const hasSubItems = item.subItems && item.subItems.length > 0;
+                        const subActive = isSubItemActive(item.subItems);
+
+                        return (
+                          <div key={item.to}>
+                            {/* Main nav item */}
+                            <NavLink
+                              to={item.to}
+                              end={item.to === '/'}
+                              className={({ isActive }) =>
+                                cn(
+                                  'flex items-center gap-2.5 px-2.5 py-2 rounded-xl text-[13px] transition-all duration-150 relative group',
+                                  (isActive || subActive)
+                                    ? 'bg-[#0088cc]/10 text-[#0088cc] font-semibold'
+                                    : 'text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-surface-2))] hover:text-[rgb(var(--color-text))]'
+                                )
+                              }
+                            >
+                              {({ isActive }) => {
+                                const active = isActive || subActive;
+                                return (
+                                  <>
+                                    {active && (
+                                      <motion.div
+                                        layoutId="sidebar-active-bg"
+                                        className="absolute inset-0 rounded-xl bg-[#0088cc]/10"
+                                        transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+                                      />
+                                    )}
+
+                                    <span className={cn(
+                                      'relative z-10 flex-shrink-0 transition-colors',
+                                      active
+                                        ? 'text-[#0088cc]'
+                                        : 'text-[rgb(var(--color-text-muted))] group-hover:text-[rgb(var(--color-text-secondary))]'
+                                    )}>
+                                      {item.icon}
+                                    </span>
+
+                                    <AnimatePresence>
+                                      {!sidebarCollapsed && (
+                                        <motion.span
+                                          initial={{ opacity: 0 }}
+                                          animate={{ opacity: 1 }}
+                                          exit={{ opacity: 0 }}
+                                          transition={{ duration: 0.1 }}
+                                          className="relative z-10 whitespace-nowrap overflow-hidden flex-1"
+                                        >
+                                          {item.label}
+                                        </motion.span>
+                                      )}
+                                    </AnimatePresence>
+
+                                    {active && sidebarCollapsed && (
+                                      <span className="absolute left-1 top-1/2 -translate-y-1/2 w-1 h-4 rounded-full bg-[#0088cc]" />
+                                    )}
+
+                                    {sidebarCollapsed && (
+                                      <div className="absolute right-full mr-3 px-2.5 py-1.5 bg-[rgb(var(--color-text))] text-[rgb(var(--color-surface))] text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none shadow-xl z-50">
+                                        {item.label}
+                                        <div className="absolute top-1/2 -translate-y-1/2 -right-1 w-2 h-2 bg-[rgb(var(--color-text))] rotate-45" />
+                                      </div>
+                                    )}
+
+                                    {item.badge && !sidebarCollapsed && (
+                                      <span className="relative z-10 mr-auto bg-[#0088cc] text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center leading-none">
+                                        {item.badge}
+                                      </span>
+                                    )}
+                                  </>
+                                );
+                              }}
+                            </NavLink>
+
+                            {/* Sub-items (always visible, non-collapsible) */}
+                            {hasSubItems && !sidebarCollapsed && (
+                              <div className="mr-4 mt-0.5 mb-1 space-y-0.5 border-r border-dashed border-[rgb(var(--color-border))] pr-2">
+                                {item.subItems!.map((sub) => (
+                                  <NavLink
+                                    key={sub.to}
+                                    to={sub.to}
+                                    className={({ isActive }) =>
+                                      cn(
+                                        'flex items-center gap-2 px-2 py-1.5 rounded-lg text-[12px] transition-all duration-150 relative group',
+                                        isActive
+                                          ? 'text-[#0088cc] font-medium bg-[#0088cc]/8'
+                                          : 'text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text-secondary))] hover:bg-[rgb(var(--color-surface-2))]'
+                                      )
+                                    }
+                                  >
+                                    {({ isActive }) => (
+                                      <>
+                                        <CornerDownLeft
+                                          size={10}
+                                          className={cn(
+                                            'flex-shrink-0 opacity-40',
+                                            isActive && 'text-[#0088cc] opacity-70'
+                                          )}
+                                        />
+                                        <span className={cn(
+                                          'flex-shrink-0',
+                                          isActive ? 'text-[#0088cc]' : 'text-[rgb(var(--color-text-muted))]'
+                                        )}>
+                                          {sub.icon}
+                                        </span>
+                                        <span className="whitespace-nowrap overflow-hidden">{sub.label}</span>
+                                        {isActive && (
+                                          <span className="mr-auto w-1.5 h-1.5 rounded-full bg-[#0088cc] flex-shrink-0" />
+                                        )}
+                                      </>
+                                    )}
+                                  </NavLink>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
                 )}
-              </NavLink>
-            ))}
-          </div>
-        ))}
+              </AnimatePresence>
+            </div>
+          );
+        })}
       </nav>
 
-      {/* Footer */}
+      {/* ── Footer ── */}
       <div className="flex-shrink-0 p-2 border-t border-[rgb(var(--color-border))]">
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 w-full px-3 py-2 rounded-xl text-sm text-red-500 hover:bg-red-500/10 transition-colors group relative"
+          className={cn(
+            'w-full flex items-center gap-2.5 px-2.5 py-2.5 rounded-xl text-[13px] transition-all duration-150',
+            'text-[rgb(var(--color-text-secondary))] hover:bg-red-50 hover:text-red-500',
+            'dark:hover:bg-red-900/20 dark:hover:text-red-400 group'
+          )}
         >
-          <LogOut size={18} className="flex-shrink-0" />
+          <LogOut
+            size={16}
+            className="flex-shrink-0 text-[rgb(var(--color-text-muted))] group-hover:text-red-500 dark:group-hover:text-red-400 transition-colors"
+          />
           <AnimatePresence>
             {!sidebarCollapsed && (
               <motion.span
-                initial={{ opacity: 0, x: -5 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -5 }}
-                transition={{ duration: 0.15 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
                 className="whitespace-nowrap"
               >
-                خروج
+                خروج از حساب
               </motion.span>
             )}
           </AnimatePresence>
-          {sidebarCollapsed && (
-            <div className="absolute right-full mr-2 px-2 py-1 bg-[rgb(var(--color-text))] text-[rgb(var(--color-bg))] text-xs rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
-              خروج
-            </div>
-          )}
         </button>
       </div>
-
-      {/* Collapse toggle */}
-      <button
-        onClick={toggleSidebar}
-        className="absolute top-1/2 -translate-y-1/2 -left-3 w-6 h-6 rounded-full bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] flex items-center justify-center shadow-sm hover:bg-[rgb(var(--color-bg))] transition-colors z-50"
-      >
-        <motion.div animate={{ rotate: sidebarCollapsed ? 180 : 0 }} transition={{ duration: 0.2 }}>
-          <ChevronRight size={12} className="text-[rgb(var(--color-text-secondary))]" />
-        </motion.div>
-      </button>
     </motion.aside>
   );
 }

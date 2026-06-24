@@ -3,12 +3,20 @@ import {
   CreateAdminRequest,
   UpdateAdminRequest,
   AdminResponse,
-  AdminsPaginatedResponse,
 } from '@/types';
+
+// Backend returns { admins: [...], total, page, limit, total_pages }
+interface AdminsListResponse {
+  admins: AdminResponse[];
+  total: number;
+  page: number;
+  limit: number;
+  total_pages: number;
+}
 
 export const adminsApi = {
   list: (params?: { page?: number; per_page?: number }) =>
-    apiClient.get<AdminsPaginatedResponse>('/admins', { params }).then((r) => r.data),
+    apiClient.get<AdminsListResponse>('/admins', { params }).then((r) => r.data),
 
   getById: (id: string) =>
     apiClient.get<AdminResponse>(`/admins/${id}`).then((r) => r.data),

@@ -104,8 +104,9 @@ export default function InventoryPage() {
   const fetchItems = useCallback(async (inventoryId: string) => {
     setItemsLoading(true);
     try {
-      const res = await inventoryApi.listItems(inventoryId, { per_page: 100 });
-      setItems(res.data);
+      // Backend returns a plain array (not paginated)
+      const res = await inventoryApi.listItems(inventoryId);
+      setItems(Array.isArray(res) ? res : []);
     } catch {
       toast.error('خطا در دریافت آیتم‌ها');
     } finally {

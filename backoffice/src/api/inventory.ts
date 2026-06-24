@@ -6,7 +6,6 @@ import {
   InventoryResponse,
   InventoryItemResponse,
   InventoriesPaginatedResponse,
-  InventoryItemsPaginatedResponse,
 } from '@/types';
 
 export const inventoryApi = {
@@ -16,8 +15,9 @@ export const inventoryApi = {
   getById: (id: string) =>
     apiClient.get<InventoryResponse>(`/inventories/${id}`).then((r) => r.data),
 
-  listItems: (id: string, params?: { page?: number; per_page?: number }) =>
-    apiClient.get<InventoryItemsPaginatedResponse>(`/inventories/${id}/items`, { params }).then((r) => r.data),
+  // Backend returns a plain array (not paginated) for items
+  listItems: (id: string) =>
+    apiClient.get<InventoryItemResponse[]>(`/inventories/${id}/items`).then((r) => r.data),
 
   create: (data: CreateInventoryRequest) =>
     apiClient.post<InventoryResponse>('/inventories', data).then((r) => r.data),
