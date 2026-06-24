@@ -19,7 +19,7 @@ import { PageLoader } from '@/components/ui/LoadingSpinner';
 
 // --- Zod Schemas ---
 const inventorySchema = z.object({
-  name: z.string().min(1, 'نام موجودی الزامی است'),
+  name: z.string().min(1, 'نام مخزن الزامی است'),
 });
 
 type InventoryForm = z.infer<typeof inventorySchema>;
@@ -64,6 +64,7 @@ export default function InventoryPage() {
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Items modal state
   const [items, setItems] = useState<InventoryItemResponse[]>([]);
@@ -84,22 +85,22 @@ export default function InventoryPage() {
   });
 
   // --- Data Fetching ---
-  const fetchInventories = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await inventoryApi.list({ page, per_page: PER_PAGE });
-      setInventories(res.data);
-      setTotal(res.total);
-    } catch {
-      toast.error('خطا در دریافت موجودی‌ها');
-    } finally {
-      setLoading(false);
-    }
-  }, [page]);
-
   useEffect(() => {
+    const fetchInventories = async () => {
+      setLoading(true);
+      try {
+        const res = await inventoryApi.list({ page, per_page: PER_PAGE });
+        setInventories(res.data);
+        setTotal(res.total);
+      } catch {
+        toast.error('خطا در دریافت مخزن‌ها');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchInventories();
-  }, [fetchInventories]);
+  }, [page, refreshKey]);
 
   const fetchItems = useCallback(async (inventoryId: string) => {
     setItemsLoading(true);
@@ -119,12 +120,12 @@ export default function InventoryPage() {
     setCreating(true);
     try {
       await inventoryApi.create({ name: data.name });
-      toast.success('موجودی با موفقیت ایجاد شد');
+      toast.success('مخزن با موفقیت ایجاد شد');
       setCreateOpen(false);
       createForm.reset();
-      fetchInventories();
+      setRefreshKey(k => k + 1);
     } catch {
-      toast.error('خطا در ایجاد موجودی');
+      toast.error('خطا در ایجاد مخزن');
     } finally {
       setCreating(false);
     }
@@ -135,11 +136,11 @@ export default function InventoryPage() {
     setEditing(true);
     try {
       await inventoryApi.update(selected.id, { name: data.name });
-      toast.success('موجودی با موفقیت ویرایش شد');
+      toast.success('مخزن با موفقیت ویرایش شد');
       setEditOpen(false);
-      fetchInventories();
+      setRefreshKey(k => k + 1);
     } catch {
-      toast.error('خطا در ویرایش موجودی');
+      toast.error('خطا در ویرایش مخزن');
     } finally {
       setEditing(false);
     }
@@ -150,11 +151,11 @@ export default function InventoryPage() {
     setDeleting(true);
     try {
       await inventoryApi.delete(selected.id);
-      toast.success('موجودی با موفقیت حذف شد');
+      toast.success('مخزن با موفقیت حذف شد');
       setDeleteOpen(false);
-      fetchInventories();
+      setRefreshKey(k => k + 1);
     } catch {
-      toast.error('خطا در حذف موجودی');
+      toast.error('خطا در حذف مخزن');
     } finally {
       setDeleting(false);
     }
@@ -284,7 +285,7 @@ export default function InventoryPage() {
       key: 'status',
       title: 'وضعیت',
       render: (value) => (
-        <Badge variant={statusVariant(value as string)}>
+        <Badge variant={statusVariant(value as string)} dot>
           {statusLabel(value as string)}
         </Badge>
       ),
@@ -320,9 +321,9 @@ export default function InventoryPage() {
         className="flex items-center justify-between"
       >
         <div>
-          <h1 className="text-2xl font-bold text-[rgb(var(--color-text))]">موجودی‌ها</h1>
+          <h1 className="text-2xl font-bold text-[rgb(var(--color-text))]">مخزن‌ها</h1>
           <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">
-            مدیریت موجودی‌ها و آیتم‌های قابل فروش
+            مدیریت مخزن‌ها و آیتم‌های قابل فروش
           </p>
         </div>
         <Button
@@ -333,7 +334,7 @@ export default function InventoryPage() {
             setCreateOpen(true);
           }}
         >
-          موجودی جدید
+          مخزن جدید
         </Button>
       </motion.div>
 
@@ -355,7 +356,7 @@ export default function InventoryPage() {
             total,
             onPageChange: setPage,
           }}
-          emptyMessage="هیچ موجودی‌ای یافت نشد"
+          emptyMessage="هیچ مخزنی یافت نشد"
         />
       </motion.div>
 
@@ -363,7 +364,7 @@ export default function InventoryPage() {
       <Modal
         isOpen={createOpen}
         onClose={() => setCreateOpen(false)}
-        title="ایجاد موجودی جدید"
+        title="ایجاد مخزن جدید"
         size="md"
         footer={
           <>
@@ -382,7 +383,7 @@ export default function InventoryPage() {
       >
         <div className="space-y-4">
           <Input
-            label="نام موجودی"
+            label="نام مخزن"
             placeholder="مثال: کدهای تخفیف، لایسنس‌ها..."
             error={createForm.formState.errors.name?.message}
             {...createForm.register('name')}
@@ -394,7 +395,7 @@ export default function InventoryPage() {
       <Modal
         isOpen={editOpen}
         onClose={() => setEditOpen(false)}
-        title="ویرایش موجودی"
+        title="ویرایش مخزن"
         size="md"
         footer={
           <>
@@ -413,8 +414,8 @@ export default function InventoryPage() {
       >
         <div className="space-y-4">
           <Input
-            label="نام موجودی"
-            placeholder="نام موجودی"
+            label="نام مخزن"
+            placeholder="نام مخزن"
             error={editForm.formState.errors.name?.message}
             {...editForm.register('name')}
           />
@@ -426,8 +427,8 @@ export default function InventoryPage() {
         isOpen={deleteOpen}
         onClose={() => setDeleteOpen(false)}
         onConfirm={handleDelete}
-        title="حذف موجودی"
-        message={`آیا از حذف موجودی "${selected?.name}" اطمینان دارید؟ این عمل قابل بازگشت نیست.`}
+        title="حذف مخزن"
+        message={`آیا از حذف مخزن "${selected?.name}" اطمینان دارید؟ این عمل قابل بازگشت نیست.`}
         loading={deleting}
       />
 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Pencil, Trash2, X } from 'lucide-react';
 import { useForm } from 'react-hook-form';
@@ -51,6 +51,7 @@ export default function APIsPage() {
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Headers state
   const [createHeaders, setCreateHeaders] = useState<HeaderRow[]>([]);
@@ -68,22 +69,22 @@ export default function APIsPage() {
   });
 
   // --- Data Fetching ---
-  const fetchApis = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await apisApi.list({ page, per_page: PER_PAGE });
-      setApis(res.data);
-      setTotal(res.total);
-    } catch {
-      toast.error('خطا در دریافت API‌ها');
-    } finally {
-      setLoading(false);
-    }
-  }, [page]);
-
   useEffect(() => {
+    const fetchApis = async () => {
+      setLoading(true);
+      try {
+        const res = await apisApi.list({ page, per_page: PER_PAGE });
+        setApis(res.data);
+        setTotal(res.total);
+      } catch {
+        toast.error('خطا در دریافت API‌ها');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchApis();
-  }, [fetchApis]);
+  }, [page, refreshKey]);
 
   // --- Header helpers ---
   const addCreateHeader = () => setCreateHeaders([...createHeaders, { key: '', value: '' }]);
@@ -115,7 +116,7 @@ export default function APIsPage() {
       setCreateOpen(false);
       createForm.reset();
       setCreateHeaders([]);
-      fetchApis();
+      setRefreshKey(k => k + 1);
     } catch {
       toast.error('خطا در ایجاد API');
     } finally {
@@ -138,7 +139,7 @@ export default function APIsPage() {
       });
       toast.success('API با موفقیت ویرایش شد');
       setEditOpen(false);
-      fetchApis();
+      setRefreshKey(k => k + 1);
     } catch {
       toast.error('خطا در ویرایش API');
     } finally {
@@ -153,7 +154,7 @@ export default function APIsPage() {
       await apisApi.delete(selected.id);
       toast.success('API با موفقیت حذف شد');
       setDeleteOpen(false);
-      fetchApis();
+      setRefreshKey(k => k + 1);
     } catch {
       toast.error('خطا در حذف API');
     } finally {
@@ -198,7 +199,7 @@ export default function APIsPage() {
       key: 'method',
       title: 'متد',
       render: (value) => (
-        <Badge variant={(value as string) === 'GET' ? 'info' : 'success'}>
+        <Badge variant={(value as string) === 'GET' ? 'cyan' : 'success'}>
           {value as string}
         </Badge>
       ),

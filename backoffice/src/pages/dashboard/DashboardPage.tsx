@@ -25,7 +25,7 @@ const primaryCards: NavCard[] = [
     gradient: 'from-violet-500 via-purple-500 to-indigo-600',
     glow: 'shadow-violet-500/25',
     path: '/products',
-    tag: 'کاتالوگ',
+    tag: 'فروشگاه',
   },
   {
     label: 'دسته‌بندی‌ها',
@@ -34,7 +34,7 @@ const primaryCards: NavCard[] = [
     gradient: 'from-sky-500 via-blue-500 to-cyan-600',
     glow: 'shadow-sky-500/25',
     path: '/categories',
-    tag: 'کاتالوگ',
+    tag: 'فروشگاه',
   },
   {
     label: 'سفارش‌ها',
@@ -74,8 +74,8 @@ const secondaryCards: NavCard[] = [
     path: '/messages',
   },
   {
-    label: 'موجودی‌ها',
-    description: 'مدیریت موجودی و آیتم‌ها',
+    label: 'مخزن‌ها',
+    description: 'مدیریت مخزن و آیتم‌ها',
     icon: Archive,
     gradient: 'from-fuchsia-500 to-purple-500',
     glow: 'shadow-fuchsia-500/20',

@@ -50,6 +50,7 @@ export default function BundlesPage() {
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Related data
   const [files, setFiles] = useState<FileResponse[]>([]);
@@ -84,22 +85,22 @@ export default function BundlesPage() {
   });
 
   // --- Data Fetching ---
-  const fetchBundles = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await bundlesApi.list({ page, per_page: PER_PAGE });
-      setBundles(res.data);
-      setTotal(res.total);
-    } catch {
-      toast.error('خطا در دریافت باندل‌ها');
-    } finally {
-      setLoading(false);
-    }
-  }, [page]);
-
   useEffect(() => {
+    const fetchBundles = async () => {
+      setLoading(true);
+      try {
+        const res = await bundlesApi.list({ page, per_page: PER_PAGE });
+        setBundles(res.data);
+        setTotal(res.total);
+      } catch {
+        toast.error('خطا در دریافت باندل‌ها');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchBundles();
-  }, [fetchBundles]);
+  }, [page, refreshKey]);
 
   const fetchRelatedData = useCallback(async () => {
     try {
@@ -130,7 +131,7 @@ export default function BundlesPage() {
       setCreateOpen(false);
       createForm.reset();
       resetCreateToggles();
-      fetchBundles();
+      setRefreshKey(k => k + 1);
     } catch {
       toast.error('خطا در ایجاد باندل');
     } finally {
@@ -150,7 +151,7 @@ export default function BundlesPage() {
       });
       toast.success('باندل با موفقیت ویرایش شد');
       setEditOpen(false);
-      fetchBundles();
+      setRefreshKey(k => k + 1);
     } catch {
       toast.error('خطا در ویرایش باندل');
     } finally {
@@ -165,7 +166,7 @@ export default function BundlesPage() {
       await bundlesApi.delete(selected.id);
       toast.success('باندل با موفقیت حذف شد');
       setDeleteOpen(false);
-      fetchBundles();
+      setRefreshKey(k => k + 1);
     } catch {
       toast.error('خطا در حذف باندل');
     } finally {
@@ -236,7 +237,7 @@ export default function BundlesPage() {
     },
     {
       key: 'inventory_id',
-      title: 'موجودی',
+      title: 'مخزن',
       render: (value) => (
         <span className={value ? 'text-green-500' : 'text-[rgb(var(--color-text-secondary))]'}>
           {value ? '✓' : '—'}
@@ -415,7 +416,7 @@ export default function BundlesPage() {
           </SectionCard>
 
           <SectionCard
-            title="موجودی"
+            title="مخزن"
             enabled={createInventoryEnabled}
             onToggle={(val) => {
               setCreateInventoryEnabled(val);
@@ -427,7 +428,7 @@ export default function BundlesPage() {
               value={createInventoryId}
               onChange={(e) => setCreateInventoryId(e.target.value)}
               options={[
-                { value: '', label: 'انتخاب موجودی...' },
+                { value: '', label: 'انتخاب مخزن...' },
                 ...inventories.map((inv) => ({ value: inv.id, label: inv.name })),
               ]}
             />
@@ -506,7 +507,7 @@ export default function BundlesPage() {
           </SectionCard>
 
           <SectionCard
-            title="موجودی"
+            title="مخزن"
             enabled={editInventoryEnabled}
             onToggle={(val) => {
               setEditInventoryEnabled(val);
@@ -518,7 +519,7 @@ export default function BundlesPage() {
               value={editInventoryId}
               onChange={(e) => setEditInventoryId(e.target.value)}
               options={[
-                { value: '', label: 'انتخاب موجودی...' },
+                { value: '', label: 'انتخاب مخزن...' },
                 ...inventories.map((inv) => ({ value: inv.id, label: inv.name })),
               ]}
             />

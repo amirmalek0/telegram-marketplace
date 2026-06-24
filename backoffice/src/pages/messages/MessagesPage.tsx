@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
@@ -42,6 +42,7 @@ export default function MessagesPage() {
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Forms
   const createForm = useForm<MessageForm>({
@@ -55,22 +56,22 @@ export default function MessagesPage() {
   });
 
   // --- Data Fetching ---
-  const fetchMessages = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await messagesApi.list({ page, per_page: PER_PAGE });
-      setMessages(res.data);
-      setTotal(res.total);
-    } catch {
-      toast.error('خطا در دریافت پیام‌ها');
-    } finally {
-      setLoading(false);
-    }
-  }, [page]);
-
   useEffect(() => {
+    const fetchMessages = async () => {
+      setLoading(true);
+      try {
+        const res = await messagesApi.list({ page, per_page: PER_PAGE });
+        setMessages(res.data);
+        setTotal(res.total);
+      } catch {
+        toast.error('خطا در دریافت پیام‌ها');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchMessages();
-  }, [fetchMessages]);
+  }, [page, refreshKey]);
 
   // --- Handlers ---
   const handleCreate = async (data: MessageForm) => {
@@ -80,7 +81,7 @@ export default function MessagesPage() {
       toast.success('پیام با موفقیت ایجاد شد');
       setCreateOpen(false);
       createForm.reset();
-      fetchMessages();
+      setRefreshKey(k => k + 1);
     } catch {
       toast.error('خطا در ایجاد پیام');
     } finally {
@@ -95,7 +96,7 @@ export default function MessagesPage() {
       await messagesApi.update(selected.id, { content: data.content });
       toast.success('پیام با موفقیت ویرایش شد');
       setEditOpen(false);
-      fetchMessages();
+      setRefreshKey(k => k + 1);
     } catch {
       toast.error('خطا در ویرایش پیام');
     } finally {
@@ -110,7 +111,7 @@ export default function MessagesPage() {
       await messagesApi.delete(selected.id);
       toast.success('پیام با موفقیت حذف شد');
       setDeleteOpen(false);
-      fetchMessages();
+      setRefreshKey(k => k + 1);
     } catch {
       toast.error('خطا در حذف پیام');
     } finally {

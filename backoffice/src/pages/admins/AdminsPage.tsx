@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
@@ -99,6 +99,7 @@ export default function AdminsPage() {
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Forms
   const createForm = useForm<CreateForm>({
@@ -116,23 +117,23 @@ export default function AdminsPage() {
   const editPassword = editForm.watch('password');
 
   // --- Data Fetching ---
-  const fetchAdmins = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await adminsApi.list({ page, per_page: PER_PAGE });
-      // Backend returns { admins: [...], total, ... }
-      setAdmins(Array.isArray(res.admins) ? res.admins : []);
-      setTotal(res.total ?? 0);
-    } catch {
-      toast.error('خطا در دریافت مدیران');
-    } finally {
-      setLoading(false);
-    }
-  }, [page]);
-
   useEffect(() => {
+    const fetchAdmins = async () => {
+      setLoading(true);
+      try {
+        const res = await adminsApi.list({ page, per_page: PER_PAGE });
+        // Backend returns { admins: [...], total, ... }
+        setAdmins(Array.isArray(res.admins) ? res.admins : []);
+        setTotal(res.total ?? 0);
+      } catch {
+        toast.error('خطا در دریافت مدیران');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchAdmins();
-  }, [fetchAdmins]);
+  }, [page, refreshKey]);
 
   // --- Handlers ---
   const handleCreate = async (data: CreateForm) => {
@@ -142,7 +143,7 @@ export default function AdminsPage() {
       toast.success('مدیر با موفقیت ایجاد شد');
       setCreateOpen(false);
       createForm.reset();
-      fetchAdmins();
+      setRefreshKey(k => k + 1);
     } catch {
       toast.error('خطا در ایجاد مدیر');
     } finally {
@@ -162,7 +163,7 @@ export default function AdminsPage() {
       await adminsApi.update(selected.id, updateData);
       toast.success('مدیر با موفقیت ویرایش شد');
       setEditOpen(false);
-      fetchAdmins();
+      setRefreshKey(k => k + 1);
     } catch {
       toast.error('خطا در ویرایش مدیر');
     } finally {
@@ -177,7 +178,7 @@ export default function AdminsPage() {
       await adminsApi.delete(selected.id);
       toast.success('مدیر با موفقیت حذف شد');
       setDeleteOpen(false);
-      fetchAdmins();
+      setRefreshKey(k => k + 1);
     } catch {
       toast.error('خطا در حذف مدیر');
     } finally {
@@ -209,7 +210,7 @@ export default function AdminsPage() {
       key: 'is_active',
       title: 'وضعیت',
       render: (value) => (
-        <Badge variant={value ? 'success' : 'default'}>
+        <Badge variant={value ? 'success' : 'default'} dot>
           {value ? 'فعال' : 'غیرفعال'}
         </Badge>
       ),

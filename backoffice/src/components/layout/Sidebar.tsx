@@ -52,7 +52,7 @@ interface NavGroup {
 }
 
 const productSubItems: SubNavItem[] = [
-  { label: 'موجودی', icon: <Boxes size={13} />, to: '/inventory' },
+  { label: 'مخزن', icon: <Boxes size={13} />, to: '/inventory' },
   { label: 'فایل‌ها', icon: <FileText size={13} />, to: '/files' },
   { label: 'باندل‌ها', icon: <Layers size={13} />, to: '/bundles' },
   { label: 'API‌ها', icon: <Zap size={13} />, to: '/apis' },
@@ -71,7 +71,7 @@ const navGroups: NavGroup[] = [
   },
   {
     id: 'catalog',
-    title: 'کاتالوگ',
+    title: 'فروشگاه',
     icon: <Package size={15} />,
     color: 'text-violet-500',
     items: [
@@ -209,10 +209,10 @@ export function Sidebar() {
               {!sidebarCollapsed ? (
                 <button
                   onClick={() => toggleGroup(group.id)}
-                  className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg group transition-colors hover:bg-[rgb(var(--color-surface-2))]"
+                  className="w-full flex flex-row-reverse items-center gap-2 px-2 py-1.5 rounded-lg group transition-colors hover:bg-[rgb(var(--color-surface-2))]"
                 >
                   <span className={cn('flex-shrink-0', group.color)}>{group.icon}</span>
-                  <span className="flex-1 text-left text-[11px] font-bold uppercase tracking-widest text-[rgb(var(--color-text-secondary))] group-hover:text-[rgb(var(--color-text))] transition-colors">
+                  <span className="flex-1 text-right text-[11px] font-bold uppercase tracking-widest text-[rgb(var(--color-text-secondary))] group-hover:text-[rgb(var(--color-text))] transition-colors">
                     {group.title}
                   </span>
                   <motion.span

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Plus, Pencil, Trash2, ArrowUpDown, Image as ImageIcon
@@ -74,6 +74,7 @@ export default function CategoriesPage() {
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [reordering, setReordering] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // Icon file for create/edit
   const [createIconFile, setCreateIconFile] = useState<File | null>(null);
@@ -99,22 +100,22 @@ export default function CategoriesPage() {
   );
 
   // --- Data Fetching ---
-  const fetchCategories = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await categoriesApi.list({ page, per_page: PER_PAGE });
-      setCategories(res.data);
-      setTotal(res.total);
-    } catch {
-      toast.error('خطا در دریافت دسته‌بندی‌ها');
-    } finally {
-      setLoading(false);
-    }
-  }, [page]);
-
   useEffect(() => {
+    const fetchCategories = async () => {
+      setLoading(true);
+      try {
+        const res = await categoriesApi.list({ page, per_page: PER_PAGE });
+        setCategories(res.data);
+        setTotal(res.total);
+      } catch {
+        toast.error('خطا در دریافت دسته‌بندی‌ها');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchCategories();
-  }, [fetchCategories]);
+  }, [page, refreshKey]);
 
   // --- Handlers ---
   const handleCreate = async (data: CreateForm) => {
@@ -131,7 +132,7 @@ export default function CategoriesPage() {
       setCreateOpen(false);
       createForm.reset();
       setCreateIconFile(null);
-      fetchCategories();
+      setRefreshKey(k => k + 1);
     } catch {
       toast.error('خطا در ایجاد دسته‌بندی');
     } finally {
@@ -156,7 +157,7 @@ export default function CategoriesPage() {
       toast.success('دسته‌بندی با موفقیت ویرایش شد');
       setEditOpen(false);
       setEditIconFile(null);
-      fetchCategories();
+      setRefreshKey(k => k + 1);
     } catch {
       toast.error('خطا در ویرایش دسته‌بندی');
     } finally {
@@ -171,7 +172,7 @@ export default function CategoriesPage() {
       await categoriesApi.delete(selected.id);
       toast.success('دسته‌بندی با موفقیت حذف شد');
       setDeleteOpen(false);
-      fetchCategories();
+      setRefreshKey(k => k + 1);
     } catch {
       toast.error('خطا در حذف دسته‌بندی');
     } finally {
@@ -220,7 +221,7 @@ export default function CategoriesPage() {
       await categoriesApi.reorder({ items });
       toast.success('ترتیب دسته‌بندی‌ها با موفقیت ذخیره شد');
       setSortOpen(false);
-      fetchCategories();
+      setRefreshKey(k => k + 1);
     } catch {
       toast.error('خطا در ذخیره ترتیب');
     } finally {
@@ -261,7 +262,7 @@ export default function CategoriesPage() {
       key: 'active',
       title: 'وضعیت',
       render: (value) => (
-        <Badge variant={value ? 'success' : 'default'}>
+        <Badge variant={value ? 'success' : 'default'} dot>
           {value ? 'فعال' : 'غیرفعال'}
         </Badge>
       ),
@@ -538,7 +539,7 @@ export default function CategoriesPage() {
                         </div>
                       )}
                       <span className="font-medium text-[rgb(var(--color-text))]">{item.title}</span>
-                      <Badge variant={item.active ? 'success' : 'default'} className="mr-auto">
+                      <Badge variant={item.active ? 'success' : 'default'} dot className="mr-auto">
                         {item.active ? 'فعال' : 'غیرفعال'}
                       </Badge>
                     </div>

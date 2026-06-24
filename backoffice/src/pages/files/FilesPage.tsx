@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Trash2, Download } from 'lucide-react';
 import { useForm } from 'react-hook-form';
@@ -47,6 +47,7 @@ export default function FilesPage() {
   // Loading states
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // File for upload
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -58,22 +59,22 @@ export default function FilesPage() {
   });
 
   // --- Data Fetching ---
-  const fetchFiles = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await filesApi.list({ page, per_page: PER_PAGE });
-      setFiles(res.data);
-      setTotal(res.total);
-    } catch {
-      toast.error('خطا در دریافت فایل‌ها');
-    } finally {
-      setLoading(false);
-    }
-  }, [page]);
-
   useEffect(() => {
+    const fetchFiles = async () => {
+      setLoading(true);
+      try {
+        const res = await filesApi.list({ page, per_page: PER_PAGE });
+        setFiles(res.data);
+        setTotal(res.total);
+      } catch {
+        toast.error('خطا در دریافت فایل‌ها');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchFiles();
-  }, [fetchFiles]);
+  }, [page, refreshKey]);
 
   // --- Handlers ---
   const handleUpload = async (data: UploadForm) => {
@@ -88,7 +89,7 @@ export default function FilesPage() {
       setUploadOpen(false);
       uploadForm.reset();
       setUploadFile(null);
-      fetchFiles();
+      setRefreshKey(k => k + 1);
     } catch {
       toast.error('خطا در آپلود فایل');
     } finally {
@@ -103,7 +104,7 @@ export default function FilesPage() {
       await filesApi.delete(selected.id);
       toast.success('فایل با موفقیت حذف شد');
       setDeleteOpen(false);
-      fetchFiles();
+      setRefreshKey(k => k + 1);
     } catch {
       toast.error('خطا در حذف فایل');
     } finally {

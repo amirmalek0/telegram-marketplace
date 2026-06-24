@@ -15,18 +15,18 @@ interface AdminsListResponse {
 }
 
 export const adminsApi = {
-  list: (params?: { page?: number; per_page?: number }) =>
-    apiClient.get<AdminsListResponse>('/admins', { params }).then((r) => r.data),
+  list: (params?: { page?: number; per_page?: number }, signal?: AbortSignal) =>
+    apiClient.get<AdminsListResponse>('/admins', { params, signal }).then((r) => r.data),
 
-  getById: (id: string) =>
-    apiClient.get<AdminResponse>(`/admins/${id}`).then((r) => r.data),
+  getById: (id: string, signal?: AbortSignal) =>
+    apiClient.get<AdminResponse>(`/admins/${id}`, { signal }).then((r) => r.data),
 
-  create: (data: CreateAdminRequest) =>
-    apiClient.post<AdminResponse>('/admins', data).then((r) => r.data),
+  create: (data: CreateAdminRequest, signal?: AbortSignal) =>
+    apiClient.post<AdminResponse>('/admins', data, { signal }).then((r) => r.data),
 
-  update: (id: string, data: UpdateAdminRequest) =>
-    apiClient.patch<AdminResponse>(`/admins/${id}`, data).then((r) => r.data),
+  update: (id: string, data: UpdateAdminRequest, signal?: AbortSignal) =>
+    apiClient.put<AdminResponse>(`/admins/${id}`, data, { signal }).then((r) => r.data),
 
-  delete: (id: string) =>
-    apiClient.delete<void>(`/admins/${id}`).then((r) => r.data),
+  delete: (id: string, signal?: AbortSignal) =>
+    apiClient.delete<void>(`/admins/${id}`, { signal }).then((r) => r.data),
 };

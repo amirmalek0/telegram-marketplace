@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { useForm, Controller, Control, FieldErrors, UseFormRegister } from 'react-hook-form';
@@ -38,7 +38,7 @@ import { Badge } from '@/components/ui/Badge';
 const deliveryTypeLabels: Record<DeliveryType, string> = {
   file: 'فایل',
   message: 'پیام',
-  inventory: 'موجودی',
+  inventory: 'مخزن',
   bundle: 'بسته',
   api: 'API',
 };
@@ -134,108 +134,120 @@ function DeliveryTypeSection({
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2 text-sm text-[rgb(var(--color-text-secondary))]">
-        <span className="animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
-        در حال بارگذاری...
+      <div className="border-2 border-dashed border-[rgb(var(--color-border))] rounded-xl p-4">
+        <div className="flex items-center gap-2 text-sm text-[rgb(var(--color-text-secondary))]">
+          <span className="animate-spin inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
+          در حال بارگذاری...
+        </div>
       </div>
     );
   }
 
   if (deliveryType === 'file') {
     return (
-      <Controller
-        name="file_id"
-        control={control}
-        render={({ field }) => (
-          <Select
-            label="انتخاب فایل"
-            placeholder="یک فایل انتخاب کنید"
-            options={files.map((f) => ({ value: f.id, label: f.name }))}
-            error={errors.file_id?.message}
-            value={field.value ?? ''}
-            onChange={field.onChange}
-          />
-        )}
-      />
+      <div className="border-2 border-dashed border-[rgb(var(--color-border))] rounded-xl p-4">
+        <Controller
+          name="file_id"
+          control={control}
+          render={({ field }) => (
+            <Select
+              label="انتخاب فایل"
+              placeholder="یک فایل انتخاب کنید"
+              options={files.map((f) => ({ value: f.id, label: f.name }))}
+              error={errors.file_id?.message}
+              value={field.value ?? ''}
+              onChange={field.onChange}
+            />
+          )}
+        />
+      </div>
     );
   }
 
   if (deliveryType === 'message') {
     return (
-      <Controller
-        name="message_id"
-        control={control}
-        render={({ field }) => (
-          <Select
-            label="انتخاب پیام"
-            placeholder="یک پیام انتخاب کنید"
-            options={messages.map((m) => ({
-              value: m.id,
-              label: m.content.slice(0, 60) + (m.content.length > 60 ? '...' : ''),
-            }))}
-            error={errors.message_id?.message}
-            value={field.value ?? ''}
-            onChange={field.onChange}
-          />
-        )}
-      />
+      <div className="border-2 border-dashed border-[rgb(var(--color-border))] rounded-xl p-4">
+        <Controller
+          name="message_id"
+          control={control}
+          render={({ field }) => (
+            <Select
+              label="انتخاب پیام"
+              placeholder="یک پیام انتخاب کنید"
+              options={messages.map((m) => ({
+                value: m.id,
+                label: m.content.slice(0, 60) + (m.content.length > 60 ? '...' : ''),
+              }))}
+              error={errors.message_id?.message}
+              value={field.value ?? ''}
+              onChange={field.onChange}
+            />
+          )}
+        />
+      </div>
     );
   }
 
   if (deliveryType === 'inventory') {
     return (
-      <Controller
-        name="inventory_id"
-        control={control}
-        render={({ field }) => (
-          <Select
-            label="انتخاب موجودی"
-            placeholder="یک موجودی انتخاب کنید"
-            options={inventories.map((inv) => ({ value: inv.id, label: inv.name }))}
-            error={errors.inventory_id?.message}
-            value={field.value ?? ''}
-            onChange={field.onChange}
-          />
-        )}
-      />
+      <div className="border-2 border-dashed border-[rgb(var(--color-border))] rounded-xl p-4">
+        <Controller
+          name="inventory_id"
+          control={control}
+          render={({ field }) => (
+            <Select
+              label="انتخاب مخزن"
+              placeholder="یک مخزن انتخاب کنید"
+              options={inventories.map((inv) => ({ value: inv.id, label: inv.name }))}
+              error={errors.inventory_id?.message}
+              value={field.value ?? ''}
+              onChange={field.onChange}
+            />
+          )}
+        />
+      </div>
     );
   }
 
   if (deliveryType === 'bundle') {
     return (
-      <Controller
-        name="bundle_id"
-        control={control}
-        render={({ field }) => (
-          <Select
-            label="انتخاب بسته"
-            placeholder="یک بسته انتخاب کنید"
-            options={bundles.map((b) => ({ value: b.id, label: b.name }))}
-            error={errors.bundle_id?.message}
-            value={field.value ?? ''}
-            onChange={field.onChange}
-          />
-        )}
-      />
+      <div className="border-2 border-dashed border-[rgb(var(--color-border))] rounded-xl p-4">
+        <Controller
+          name="bundle_id"
+          control={control}
+          render={({ field }) => (
+            <Select
+              label="انتخاب بسته"
+              placeholder="یک بسته انتخاب کنید"
+              options={bundles.map((b) => ({ value: b.id, label: b.name }))}
+              error={errors.bundle_id?.message}
+              value={field.value ?? ''}
+              onChange={field.onChange}
+            />
+          )}
+        />
+      </div>
     );
   }
 
   if (deliveryType === 'api') {
     return (
-      <Controller
-        name="api_id"
-        control={control}
-        render={({ field }) => (
-          <Select
-            label="انتخاب API"
-            placeholder="یک API انتخاب کنید"
-            options={apisList.map((a) => ({ value: a.id, label: a.name }))}
-            error={errors.api_id?.message}
-            value={field.value ?? ''}
-            onChange={field.onChange}
-          />
-        )}
-      />
+      <div className="border-2 border-dashed border-[rgb(var(--color-border))] rounded-xl p-4">
+        <Controller
+          name="api_id"
+          control={control}
+          render={({ field }) => (
+            <Select
+              label="انتخاب API"
+              placeholder="یک API انتخاب کنید"
+              options={apisList.map((a) => ({ value: a.id, label: a.name }))}
+              error={errors.api_id?.message}
+              value={field.value ?? ''}
+              onChange={field.onChange}
+            />
+          )}
+        />
+      </div>
     );
   }
 
@@ -382,6 +394,7 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   // ── Modal state ──
   const [createOpen, setCreateOpen] = useState(false);
@@ -426,36 +439,36 @@ export default function ProductsPage() {
   const editDeliveryType = editForm.watch('delivery_type') as DeliveryType | '';
 
   // ── Fetch products ──
-  const fetchProducts = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await productsApi.list({ page, per_page: PER_PAGE });
-      setProducts(res.data);
-      setTotal(res.total);
-    } catch {
-      toast.error('خطا در بارگذاری محصولات');
-    } finally {
-      setLoading(false);
-    }
-  }, [page]);
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const res = await productsApi.list({ page, per_page: PER_PAGE });
+        setProducts(res.data);
+        setTotal(res.total);
+      } catch {
+        toast.error('خطا در بارگذاری محصولات');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [page, refreshKey]);
 
   // ── Fetch categories (once) ──
-  const fetchCategories = useCallback(async () => {
-    try {
-      const res = await categoriesApi.list({ per_page: 200 });
-      setCategories(res.data);
-    } catch {
-      toast.error('خطا در بارگذاری دسته‌بندی‌ها');
-    }
-  }, []);
-
   useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+    const fetchCategories = async () => {
+      try {
+        const res = await categoriesApi.list({ per_page: 200 });
+        setCategories(res.data);
+      } catch {
+        toast.error('خطا در بارگذاری دسته‌بندی‌ها');
+      }
+    };
 
-  useEffect(() => {
     fetchCategories();
-  }, [fetchCategories]);
+  }, []);
 
   // ── Category lookup helper ──
   const getCategoryName = (id: string) => {
@@ -486,7 +499,7 @@ export default function ProductsPage() {
       toast.success('محصول با موفقیت ایجاد شد');
       setCreateOpen(false);
       createForm.reset(defaultValues);
-      fetchProducts();
+      setRefreshKey(k => k + 1);
     } catch {
       toast.error('خطا در ایجاد محصول');
     } finally {
@@ -540,7 +553,7 @@ export default function ProductsPage() {
       toast.success('محصول با موفقیت ویرایش شد');
       setEditOpen(false);
       setSelected(null);
-      fetchProducts();
+      setRefreshKey(k => k + 1);
     } catch {
       toast.error('خطا در ویرایش محصول');
     } finally {
@@ -562,7 +575,7 @@ export default function ProductsPage() {
       toast.success('محصول با موفقیت حذف شد');
       setDeleteOpen(false);
       setSelected(null);
-      fetchProducts();
+      setRefreshKey(k => k + 1);
     } catch {
       toast.error('خطا در حذف محصول');
     } finally {
@@ -610,14 +623,14 @@ export default function ProductsPage() {
       key: 'delivery_type',
       title: 'نوع تحویل',
       render: (_, row) => (
-        <Badge variant="info">{deliveryTypeLabels[row.delivery_type]}</Badge>
+        <Badge variant="purple">{deliveryTypeLabels[row.delivery_type]}</Badge>
       ),
     },
     {
       key: 'vip_only',
       title: 'VIP',
       render: (_, row) =>
-        row.vip_only ? <Badge variant="warning">VIP</Badge> : <span>-</span>,
+        row.vip_only ? <Badge variant="amber">VIP</Badge> : <span>-</span>,
     },
     {
       key: 'views_count',
@@ -632,7 +645,7 @@ export default function ProductsPage() {
       key: 'status',
       title: 'وضعیت',
       render: (_, row) => (
-        <Badge variant={statusVariants[row.status]}>{statusLabels[row.status]}</Badge>
+        <Badge variant={statusVariants[row.status]} dot>{statusLabels[row.status]}</Badge>
       ),
     },
     {
