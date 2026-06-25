@@ -20,6 +20,8 @@ import (
 	msgrouter "telegram-marketplace/internal/core/catalog/messages/router"
 	"telegram-marketplace/internal/core/catalog/products"
 	productrouter "telegram-marketplace/internal/core/catalog/products/router"
+	"telegram-marketplace/internal/core/commerce/wallets"
+	walletrouter "telegram-marketplace/internal/core/commerce/wallets/router"
 	"telegram-marketplace/internal/core/membership/admins"
 	adminrouter "telegram-marketplace/internal/core/membership/admins/router"
 	"telegram-marketplace/internal/core/membership/auth"
@@ -42,6 +44,7 @@ type Handlers struct {
 	Bundles     *bundles.Handler
 	Products    *products.Handler
 	Admins      *admins.Handler
+	Wallets     *wallets.Handler
 }
 
 // New creates and configures the gin.Engine:
@@ -79,6 +82,7 @@ func New(botToken string, h Handlers) *gin.Engine {
 			bundlerouter.RegisterRoutes(domain, h.Bundles)
 			productrouter.RegisterRoutes(domain, h.Products)
 			adminrouter.RegisterRoutes(domain, h.Admins)
+			walletrouter.RegisterRoutes(domain, h.Wallets)
 		}
 	}
 

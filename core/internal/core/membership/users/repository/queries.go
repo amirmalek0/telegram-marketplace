@@ -57,4 +57,10 @@ const (
 
 	// queryCountUsers returns the total number of users.
 	queryCountUsers = `SELECT COUNT(*) FROM users`
+
+	// queryUpdateWalletBalance updates the wallet balance for a user.
+	queryUpdateWalletBalance = `UPDATE users SET wallet_balance = $1 WHERE id = $2`
+
+	// queryGetWalletBalance retrieves the wallet balance for a user.
+	queryGetWalletBalance = `SELECT wallet_balance FROM users WHERE id = $1`
 )

@@ -85,20 +85,19 @@ usage limit
 expires at
 
 **Wallet**
-id
+(Balance stored in users.wallet_balance field)
 user id
 balance
-created at
-updated at
 
 
 **Wallet transactions**
 id
 user_id
-type(purchase/pay/reward)
+type(purchase/reward/topup/refund/admin_adjust)
 amount
 balance before
 balance after
+description
 created at
 
 **BOT Settings**

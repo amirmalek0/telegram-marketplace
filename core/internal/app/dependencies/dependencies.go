@@ -21,6 +21,8 @@ import (
 	msgrepo "telegram-marketplace/internal/core/catalog/messages/repository"
 	"telegram-marketplace/internal/core/catalog/products"
 	productrepo "telegram-marketplace/internal/core/catalog/products/repository"
+	"telegram-marketplace/internal/core/commerce/wallets"
+	walletrepo "telegram-marketplace/internal/core/commerce/wallets/repository"
 	"telegram-marketplace/internal/core/membership/admins"
 	adminrepo "telegram-marketplace/internal/core/membership/admins/repository"
 	"telegram-marketplace/internal/core/membership/auth"
@@ -119,6 +121,11 @@ func Wire(ctx context.Context, db *pgxpool.Pool, cfg config.Config) router.Handl
 	)
 	productHandler := products.NewHandler(productService)
 
+	// --- commerce/wallets ---
+	walletTxRepo := walletrepo.NewPostgresRepository(db)
+	walletService := wallets.NewService(walletTxRepo, userRepo, db)
+	walletHandler := wallets.NewHandler(walletService)
+
 	return router.Handlers{
 		Auth:        authHandler,
 		AuthService: authService,
@@ -131,5 +138,6 @@ func Wire(ctx context.Context, db *pgxpool.Pool, cfg config.Config) router.Handl
 		Bundles:     bundleHandler,
 		Products:    productHandler,
 		Admins:      adminHandler,
+		Wallets:     walletHandler,
 	}
 }

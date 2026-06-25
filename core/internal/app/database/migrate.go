@@ -169,4 +169,19 @@ var migrations = []string{
 		seed_name  TEXT        PRIMARY KEY,
 		created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 	)`,
+
+	`CREATE TABLE IF NOT EXISTS wallet_transactions (
+		id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+		user_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+		type            TEXT NOT NULL CHECK (type IN ('purchase','reward','topup','refund','admin_adjust')),
+		amount          DOUBLE PRECISION NOT NULL CHECK (amount > 0),
+		balance_before  DOUBLE PRECISION NOT NULL,
+		balance_after   DOUBLE PRECISION NOT NULL,
+		description     TEXT NOT NULL DEFAULT '',
+		created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+	)`,
+
+	`CREATE INDEX IF NOT EXISTS idx_wallet_transactions_user_id ON wallet_transactions(user_id)`,
+	`CREATE INDEX IF NOT EXISTS idx_wallet_transactions_type ON wallet_transactions(type)`,
+	`CREATE INDEX IF NOT EXISTS idx_wallet_transactions_created_at ON wallet_transactions(created_at DESC)`,
 }
