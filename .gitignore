@@ -42,5 +42,3 @@ coverage/
 *.tgz
 .npm
 .eslintcache
-/backoffice/plans/backoffice-architecture.md
-/backoffice/plans/
