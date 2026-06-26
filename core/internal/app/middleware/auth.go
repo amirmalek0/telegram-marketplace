@@ -13,6 +13,36 @@ import (
 	"telegram-marketplace/internal/core/membership/auth"
 )
 
+const (
+	// InitDataKey is the gin context key under which the validated
+	// Telegram initData url.Values are stored after successful auth.
+	InitDataKey = "telegram_init_data"
+
+	// AdminClaimsKey is the gin context key for validated admin JWT claims.
+	AdminClaimsKey = "admin_claims"
+)
+
+// GetInitData retrieves the validated Telegram initData params from the context.
+// Returns nil if the middleware was not applied or auth failed.
+func GetInitData(c *gin.Context) url.Values {
+	v, exists := c.Get(InitDataKey)
+	if !exists {
+		return nil
+	}
+	params, _ := v.(url.Values)
+	return params
+}
+
+// GetAdminClaims retrieves the validated admin claims from the context.
+// Returns nil if the middleware was not applied or auth failed.
+func GetAdminClaims(c *gin.Context) *auth.Claims {
+	v, exists := c.Get(AdminClaimsKey)
+	if !exists {
+		return nil
+	}
+	return v.(*auth.Claims)
+}
+
 // OptionalAuth returns a Gin middleware that attempts to authenticate the
 // request using either Telegram Mini App initData (scheme "tma") or a
 // JWT Bearer token. It never rejects — if neither scheme is present or
