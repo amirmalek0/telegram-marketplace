@@ -84,22 +84,6 @@ discount value
 usage limit
 expires at
 
-**Wallet**
-(Balance stored in users.wallet_balance field)
-user id
-balance
-
-
-**Wallet transactions**
-id
-user_id
-type(purchase/reward/topup/refund/admin_adjust)
-amount
-balance before
-balance after
-description
-created at
-
 **BOT Settings**
 key(TEXT)
 value(jsonB)
