@@ -19,13 +19,27 @@ func NewService(repo repository.Repository) *Service {
 	return &Service{repo: repo}
 }
 
-// Create registers a new user. Prevents duplicate Telegram IDs.
-func (s *Service) Create(ctx context.Context, req CreateUserRequest) (*model.User, error) {
+// Upsert creates a new user or updates an existing one by Telegram ID.
+// Returns the user and a boolean indicating if it was created (true) or updated (false).
+func (s *Service) Upsert(ctx context.Context, req CreateUserRequest) (*model.User, bool, error) {
 	existing, err := s.repo.GetByTelegramID(ctx, req.TelegramID)
+
+	// User exists - update their info
 	if err == nil && existing != nil {
-		return nil, fmt.Errorf("user with telegram_id %d already exists", req.TelegramID)
+		existing.FirstName = req.FirstName
+		existing.LastName = req.LastName
+		existing.Username = req.Username
+		if req.PhoneNumber != "" {
+			existing.PhoneNumber = req.PhoneNumber
+		}
+
+		if err := s.repo.Update(ctx, existing); err != nil {
+			return nil, false, fmt.Errorf("users.service.Upsert update: %w", err)
+		}
+		return existing, false, nil
 	}
 
+	// User doesn't exist - create new
 	var referredBy *int64
 	if req.ReferredBy != 0 {
 		referredBy = &req.ReferredBy
@@ -42,9 +56,9 @@ func (s *Service) Create(ctx context.Context, req CreateUserRequest) (*model.Use
 	}
 
 	if err := s.repo.Create(ctx, user); err != nil {
-		return nil, fmt.Errorf("users.service.Create: %w", err)
+		return nil, false, fmt.Errorf("users.service.Upsert create: %w", err)
 	}
-	return user, nil
+	return user, true, nil
 }
 
 // GetByID returns a user by its internal ID.

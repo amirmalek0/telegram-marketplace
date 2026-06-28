@@ -18,21 +18,25 @@ func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
 }
 
-// Create registers a new user from the JSON body.
-func (h *Handler) Create(c *gin.Context) {
+// Save creates a new user or updates an existing one by Telegram ID.
+func (h *Handler) Save(c *gin.Context) {
 	var req CreateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	user, err := h.service.Create(c.Request.Context(), req)
+	user, created, err := h.service.Upsert(c.Request.Context(), req)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusCreated, toResponse(user))
+	status := http.StatusOK
+	if created {
+		status = http.StatusCreated
+	}
+	c.JSON(status, toResponse(user))
 }
 
 // GetByID returns a single user by their internal UUID.
