@@ -47,9 +47,39 @@ var migrations = []string{
 		updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 	)`,
 
-	`CREATE TABLE IF NOT EXISTS tickets (
-		id UUID PRIMARY KEY DEFAULT gen_random_uuid()
+	`CREATE TABLE IF NOT EXISTS ticket_categories (
+		id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+		name       TEXT        NOT NULL UNIQUE,
+		created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 	)`,
+
+	`CREATE TABLE IF NOT EXISTS tickets (
+		id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+		user_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+		subject         TEXT NOT NULL,
+		status          TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'closed', 'resolved')),
+		priority        TEXT NOT NULL DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high', 'urgent')),
+		category        TEXT NOT NULL DEFAULT 'general' REFERENCES ticket_categories(name),
+		created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+		updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+		closed_at       TIMESTAMPTZ,
+		last_message_at TIMESTAMPTZ NOT NULL DEFAULT now()
+	)`,
+	`CREATE INDEX IF NOT EXISTS idx_tickets_user_id ON tickets(user_id)`,
+	`CREATE INDEX IF NOT EXISTS idx_tickets_status ON tickets(status)`,
+	`CREATE INDEX IF NOT EXISTS idx_tickets_created_at ON tickets(created_at DESC)`,
+	`CREATE INDEX IF NOT EXISTS idx_tickets_last_message_at ON tickets(last_message_at DESC)`,
+
+	`CREATE TABLE IF NOT EXISTS ticket_messages (
+		id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+		ticket_id   UUID NOT NULL REFERENCES tickets(id) ON DELETE CASCADE,
+		sender_type TEXT NOT NULL CHECK (sender_type IN ('user', 'admin')),
+		sender_id   UUID NOT NULL,
+		message     TEXT NOT NULL,
+		created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+	)`,
+	`CREATE INDEX IF NOT EXISTS idx_ticket_messages_ticket_id ON ticket_messages(ticket_id)`,
+	`CREATE INDEX IF NOT EXISTS idx_ticket_messages_created_at ON ticket_messages(created_at)`,
 
 	`CREATE TABLE IF NOT EXISTS referrals (
 		id UUID PRIMARY KEY DEFAULT gen_random_uuid()
