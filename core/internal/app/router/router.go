@@ -26,6 +26,10 @@ import (
 	adminrouter "telegram-marketplace/internal/core/membership/admins/router"
 	"telegram-marketplace/internal/core/membership/auth"
 	authrouter "telegram-marketplace/internal/core/membership/auth/router"
+	ticketcategories "telegram-marketplace/internal/core/membership/ticket-categories"
+	ticketcategoryrouter "telegram-marketplace/internal/core/membership/ticket-categories/router"
+	"telegram-marketplace/internal/core/membership/tickets"
+	ticketrouter "telegram-marketplace/internal/core/membership/tickets/router"
 	"telegram-marketplace/internal/core/membership/users"
 	userrouter "telegram-marketplace/internal/core/membership/users/router"
 )
@@ -33,18 +37,20 @@ import (
 // Handlers groups all domain handlers that the router needs.
 // Add a new field here when a new module is introduced.
 type Handlers struct {
-	Auth        *auth.Handler
-	AuthService *auth.Service
-	Users       *users.Handler
-	Categories  *categories.Handler
-	Files       *files.Handler
-	Messages    *messages.Handler
-	Inventory   *inventory.Handler
-	APIs        *apis.Handler
-	Bundles     *bundles.Handler
-	Products    *products.Handler
-	Admins      *admins.Handler
-	Wallets     *wallets.Handler
+	Auth             *auth.Handler
+	AuthService      *auth.Service
+	Users            *users.Handler
+	Categories       *categories.Handler
+	Files            *files.Handler
+	Messages         *messages.Handler
+	Inventory        *inventory.Handler
+	APIs             *apis.Handler
+	Bundles          *bundles.Handler
+	Products         *products.Handler
+	Admins           *admins.Handler
+	Wallets          *wallets.Handler
+	Tickets          *tickets.Handler
+	TicketCategories *ticketcategories.Handler
 }
 
 // New creates and configures the gin.Engine:
@@ -68,10 +74,10 @@ func New(botToken string, h Handlers) *gin.Engine {
 		// Public auth endpoints — no auth required (they issue tokens)
 		authrouter.RegisterRoutes(api, h.Auth)
 
-		// Domain routes — OptionalAuth attempts both Telegram (tma) and JWT (Bearer)
-		// authentication but never rejects. Per-route guards enforce access control.
+		// Domain routes — Auth requires valid Telegram (tma) or JWT (Bearer)
+		// authentication. Per-route guards enforce role-specific access control.
 		domain := api.Group("")
-		domain.Use(middleware.OptionalAuth(botToken, h.AuthService))
+		domain.Use(middleware.Auth(botToken, h.AuthService))
 		{
 			userrouter.RegisterRoutes(domain, h.Users)
 			categoryrouter.RegisterRoutes(domain, h.Categories)
@@ -83,6 +89,8 @@ func New(botToken string, h Handlers) *gin.Engine {
 			productrouter.RegisterRoutes(domain, h.Products)
 			adminrouter.RegisterRoutes(domain, h.Admins)
 			walletrouter.RegisterRoutes(domain, h.Wallets)
+			ticketrouter.RegisterRoutes(domain, h.Tickets)
+			ticketcategoryrouter.RegisterRoutes(domain, h.TicketCategories)
 		}
 	}
 
