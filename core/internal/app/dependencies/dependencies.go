@@ -26,6 +26,10 @@ import (
 	"telegram-marketplace/internal/core/membership/admins"
 	adminrepo "telegram-marketplace/internal/core/membership/admins/repository"
 	"telegram-marketplace/internal/core/membership/auth"
+	ticketcategories "telegram-marketplace/internal/core/membership/ticket-categories"
+	ticketcategoryrepo "telegram-marketplace/internal/core/membership/ticket-categories/repository"
+	"telegram-marketplace/internal/core/membership/tickets"
+	ticketrepo "telegram-marketplace/internal/core/membership/tickets/repository"
 	"telegram-marketplace/internal/core/membership/users"
 	userrepo "telegram-marketplace/internal/core/membership/users/repository"
 	"telegram-marketplace/pkg/storage"
@@ -126,18 +130,30 @@ func Wire(ctx context.Context, db *pgxpool.Pool, cfg config.Config) router.Handl
 	walletService := wallets.NewService(walletTxRepo, userRepo, db)
 	walletHandler := wallets.NewHandler(walletService)
 
+	// --- membership/ticket-categories ---
+	ticketCategoryRepo := ticketcategoryrepo.NewPostgresRepository(db)
+	ticketCategoryService := ticketcategories.NewService(ticketCategoryRepo)
+	ticketCategoryHandler := ticketcategories.NewHandler(ticketCategoryService)
+
+	// --- membership/tickets ---
+	ticketRepo := ticketrepo.NewPostgresRepository(db)
+	ticketService := tickets.NewService(ticketRepo, userService, ticketCategoryRepo)
+	ticketHandler := tickets.NewHandler(ticketService)
+
 	return router.Handlers{
-		Auth:        authHandler,
-		AuthService: authService,
-		Users:       userHandler,
-		Categories:  categoryHandler,
-		Files:       fileHandler,
-		Messages:    msgHandler,
-		Inventory:   invHandler,
-		APIs:        apiHandler,
-		Bundles:     bundleHandler,
-		Products:    productHandler,
-		Admins:      adminHandler,
-		Wallets:     walletHandler,
+		Auth:             authHandler,
+		AuthService:      authService,
+		Users:            userHandler,
+		Categories:       categoryHandler,
+		Files:            fileHandler,
+		Messages:         msgHandler,
+		Inventory:        invHandler,
+		APIs:             apiHandler,
+		Bundles:          bundleHandler,
+		Products:         productHandler,
+		Admins:           adminHandler,
+		Wallets:          walletHandler,
+		Tickets:          ticketHandler,
+		TicketCategories: ticketCategoryHandler,
 	}
 }
