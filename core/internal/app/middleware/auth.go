@@ -4,6 +4,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
+	"net/http"
 	"net/url"
 	"sort"
 	"strings"
@@ -20,6 +21,27 @@ const (
 
 	// AdminClaimsKey is the gin context key for validated admin JWT claims.
 	AdminClaimsKey = "admin_claims"
+
+	// authorizationHeader is the standard HTTP header name for credentials.
+	authorizationHeader = "Authorization"
+
+	// tmaSchemePrefix is the Authorization header prefix for Telegram Mini App initData.
+	tmaSchemePrefix = "tma "
+
+	// bearerSchemePrefix is the Authorization header prefix for JWT Bearer tokens.
+	bearerSchemePrefix = "Bearer "
+
+	// tmaHMACSalt is the HMAC-SHA256 salt used to derive the TMA secret key.
+	tmaHMACSalt = "WebAppData"
+
+	// tmaHashParam is the query parameter name containing the Telegram initData hash.
+	tmaHashParam = "hash"
+
+	// errorKey is the JSON key used in error response bodies.
+	errorKey = "error"
+
+	// errAuthenticationRequired is the error message returned when auth is missing or invalid.
+	errAuthenticationRequired = "authentication required"
 )
 
 // GetInitData retrieves the validated Telegram initData params from the context.
@@ -43,47 +65,56 @@ func GetAdminClaims(c *gin.Context) *auth.Claims {
 	return v.(*auth.Claims)
 }
 
-// OptionalAuth returns a Gin middleware that attempts to authenticate the
-// request using either Telegram Mini App initData (scheme "tma") or a
-// JWT Bearer token. It never rejects — if neither scheme is present or
-// validation fails, the request continues with no identity in the context.
-// Downstream guard middlewares (RequireAdmin, RequireTelegram, RequireAny)
-// enforce access control per route.
-func OptionalAuth(botToken string, authService *auth.Service) gin.HandlerFunc {
+// Auth returns a Gin middleware that authenticates the request using either
+// Telegram Mini App initData (scheme "tma") or a JWT Bearer token.
+// Returns 401 Unauthorized if no valid credentials are provided.
+// Downstream guard middlewares (RequireAdmin, RequireTelegram) enforce
+// role-specific access control per route.
+func Auth(botToken string, authService *auth.Service) gin.HandlerFunc {
 	// Pre-derive the TMA secret key once at startup.
-	mac := hmac.New(sha256.New, []byte("WebAppData"))
+	mac := hmac.New(sha256.New, []byte(tmaHMACSalt))
 	mac.Write([]byte(botToken))
 	tmaSecretKey := mac.Sum(nil)
 
 	return func(c *gin.Context) {
-		authHeader := c.GetHeader("Authorization")
+		authHeader := c.GetHeader(authorizationHeader)
 		if authHeader == "" {
-			c.Next()
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{errorKey: errAuthenticationRequired})
 			return
 		}
 
 		switch {
-		case strings.HasPrefix(authHeader, "tma "):
-			tryTelegramAuth(c, strings.TrimPrefix(authHeader, "tma "), tmaSecretKey)
+		case strings.HasPrefix(authHeader, tmaSchemePrefix):
+			TelegramAuth(c, strings.TrimPrefix(authHeader, tmaSchemePrefix), tmaSecretKey)
 
-		case strings.HasPrefix(authHeader, "Bearer "):
-			tryAdminAuth(c, strings.TrimPrefix(authHeader, "Bearer "), authService)
+		case strings.HasPrefix(authHeader, bearerSchemePrefix):
+			AdminAuth(c, strings.TrimPrefix(authHeader, bearerSchemePrefix), authService)
+
+		default:
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{errorKey: errAuthenticationRequired})
+			return
+		}
+
+		// If neither auth method set identity in the context, validation failed.
+		if GetInitData(c) == nil && GetAdminClaims(c) == nil {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{errorKey: errAuthenticationRequired})
+			return
 		}
 
 		c.Next()
 	}
 }
 
-// tryTelegramAuth validates Telegram Mini App initData and stores the
+// TelegramAuth validates Telegram Mini App initData and stores the
 // parsed params in the context under InitDataKey on success.
-// Silently returns on any validation failure (non-rejecting).
-func tryTelegramAuth(c *gin.Context, rawInitData string, secretKey []byte) {
+// Returns without setting context on any validation failure.
+func TelegramAuth(c *gin.Context, rawInitData string, secretKey []byte) {
 	params, err := url.ParseQuery(rawInitData)
 	if err != nil {
 		return
 	}
 
-	receivedHash := params.Get("hash")
+	receivedHash := params.Get(tmaHashParam)
 	if receivedHash == "" {
 		return
 	}
@@ -91,7 +122,7 @@ func tryTelegramAuth(c *gin.Context, rawInitData string, secretKey []byte) {
 	// Build the data-check string: sorted key=value pairs (excluding hash), joined by \n.
 	var parts []string
 	for key, values := range params {
-		if key == "hash" {
+		if key == tmaHashParam {
 			continue
 		}
 		parts = append(parts, key+"="+values[0])
@@ -111,9 +142,9 @@ func tryTelegramAuth(c *gin.Context, rawInitData string, secretKey []byte) {
 	c.Set(InitDataKey, params)
 }
 
-// tryAdminAuth validates a JWT token and stores the claims in the context
-// under AdminClaimsKey on success. Silently returns on failure (non-rejecting).
-func tryAdminAuth(c *gin.Context, tokenString string, authService *auth.Service) {
+// AdminAuth validates a JWT token and stores the claims in the context
+// under AdminClaimsKey on success. Returns without setting context on failure.
+func AdminAuth(c *gin.Context, tokenString string, authService *auth.Service) {
 	claims, err := authService.ValidateToken(tokenString)
 	if err != nil {
 		return
