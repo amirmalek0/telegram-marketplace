@@ -65,3 +65,42 @@ func markSeeded(ctx context.Context, db *pgxpool.Pool, seedName string) {
 		log.Fatalf("seed: failed to insert seed marker: %v", err)
 	}
 }
+
+// SeedTicketCategories ensures default ticket categories exist.
+// Uses a seed marker to guarantee the seed runs exactly once in the database's lifetime.
+func SeedTicketCategories(ctx context.Context, db *pgxpool.Pool) {
+	const seedName = "default_ticket_categories"
+
+	if isSeeded(ctx, db, seedName) {
+		log.Printf("seed: %q already executed, skipping", seedName)
+		return
+	}
+
+	createTicketCategories(ctx, db)
+	markSeeded(ctx, db, seedName)
+
+	log.Printf("seed: default ticket categories created and marked")
+}
+
+// createTicketCategories inserts the default ticket categories.
+func createTicketCategories(ctx context.Context, db *pgxpool.Pool) {
+	categories := []string{
+		"general",
+		"billing",
+		"technical",
+		"account",
+		"other",
+	}
+
+	for _, name := range categories {
+		_, err := db.Exec(ctx,
+			`INSERT INTO ticket_categories (id, name, created_at)
+			 VALUES ($1, $2, now())
+			 ON CONFLICT (name) DO NOTHING`,
+			uuid.New().String(), name,
+		)
+		if err != nil {
+			log.Fatalf("seed: failed to create ticket category %q: %v", name, err)
+		}
+	}
+}
