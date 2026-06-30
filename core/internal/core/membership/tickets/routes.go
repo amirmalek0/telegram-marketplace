@@ -1,3 +1,0 @@
-package tickets
-
-func RegisterRoutes(){}
