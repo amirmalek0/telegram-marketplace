@@ -36,7 +36,7 @@ export default function HomePage() {
       setError(null)
 
       try {
-        const result = await api.post<UserResponse>('/users', {
+        const result = await api.post<UserResponse>('/user', {
           first_name: user.firstName,
           last_name: user.lastName || '',
           username: user.username || '',

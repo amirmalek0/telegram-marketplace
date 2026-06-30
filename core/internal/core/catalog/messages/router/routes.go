@@ -10,7 +10,7 @@ import (
 // Read operations are accessible to both admins and telegram users.
 // Write operations (create, update, delete) are admin-only.
 func RegisterRoutes(rg *gin.RouterGroup, h *messages.Handler) {
-	g := rg.Group("/messages")
+	g := rg.Group("/message")
 
 	// Accessible by both admins and telegram users
 	public := g.Group("", middleware.RequireAny())

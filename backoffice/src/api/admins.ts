@@ -16,17 +16,17 @@ interface AdminsListResponse {
 
 export const adminsApi = {
   list: (params?: { page?: number; per_page?: number }, signal?: AbortSignal) =>
-    apiClient.get<AdminsListResponse>('/admins', { params, signal }).then((r) => r.data),
+    apiClient.get<AdminsListResponse>('/admin', { params, signal }).then((r) => r.data),
 
   getById: (id: string, signal?: AbortSignal) =>
-    apiClient.get<AdminResponse>(`/admins/${id}`, { signal }).then((r) => r.data),
+    apiClient.get<AdminResponse>(`/admin/${id}`, { signal }).then((r) => r.data),
 
   create: (data: CreateAdminRequest, signal?: AbortSignal) =>
-    apiClient.post<AdminResponse>('/admins', data, { signal }).then((r) => r.data),
+    apiClient.post<AdminResponse>('/admin', data, { signal }).then((r) => r.data),
 
   update: (id: string, data: UpdateAdminRequest, signal?: AbortSignal) =>
-    apiClient.put<AdminResponse>(`/admins/${id}`, data, { signal }).then((r) => r.data),
+    apiClient.put<AdminResponse>(`/admin/${id}`, data, { signal }).then((r) => r.data),
 
   delete: (id: string, signal?: AbortSignal) =>
-    apiClient.delete<void>(`/admins/${id}`, { signal }).then((r) => r.data),
+    apiClient.delete<void>(`/admin/${id}`, { signal }).then((r) => r.data),
 };

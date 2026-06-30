@@ -12,7 +12,7 @@ import (
 // Note: static segments (/reorder) are registered before /:id so
 // that gin's router resolves them correctly without ambiguity.
 func RegisterRoutes(rg *gin.RouterGroup, h *categories.Handler) {
-	g := rg.Group("/categories")
+	g := rg.Group("/category")
 
 	// Accessible by both admins and telegram users
 	public := g.Group("", middleware.RequireAny())

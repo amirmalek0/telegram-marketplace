@@ -10,7 +10,7 @@ import (
 // Telegram users can create their own profile and look up by telegram ID.
 // Admin-only operations include listing, viewing, updating, banning, and deleting users.
 func RegisterRoutes(rg *gin.RouterGroup, h *users.Handler) {
-	g := rg.Group("/users")
+	g := rg.Group("/user")
 
 	// Telegram users only
 	tma := g.Group("", middleware.RequireTelegram())

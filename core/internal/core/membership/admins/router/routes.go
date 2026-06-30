@@ -9,7 +9,7 @@ import (
 // RegisterRoutes mounts admin management routes on the given router group.
 // All admin management routes require admin JWT authentication.
 func RegisterRoutes(rg *gin.RouterGroup, h *admins.Handler) {
-	g := rg.Group("/admins", middleware.RequireAdmin())
+	g := rg.Group("/admin", middleware.RequireAdmin())
 	{
 		g.POST("", h.Create)
 		g.GET("", h.List)

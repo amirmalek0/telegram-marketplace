@@ -10,14 +10,14 @@ import (
 // Read operations are accessible to both admins and telegram users.
 // Write operations (create, update, delete, bulk add items, delete item) are admin-only.
 func RegisterRoutes(rg *gin.RouterGroup, h *inventory.Handler) {
-	g := rg.Group("/inventories")
+	g := rg.Group("/inventory")
 
 	// Accessible by both admins and telegram users
 	public := g.Group("", middleware.RequireAny())
 	{
 		public.GET("", h.List)
 		public.GET("/:id", h.GetByID)
-		public.GET("/:id/items", h.ListItems)
+		public.GET("/:id/item", h.ListItems)
 	}
 
 	// Admin-only operations
@@ -26,7 +26,7 @@ func RegisterRoutes(rg *gin.RouterGroup, h *inventory.Handler) {
 		admin.POST("", h.Create)
 		admin.PATCH("/:id", h.Update)
 		admin.DELETE("/:id", h.Delete)
-		admin.POST("/:id/items", h.BulkAddItems)
-		admin.DELETE("/:id/items/:itemId", h.DeleteItem)
+		admin.POST("/:id/item", h.BulkAddItems)
+		admin.DELETE("/:id/item/:itemId", h.DeleteItem)
 	}
 }

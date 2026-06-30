@@ -10,7 +10,7 @@ import (
 // Telegram users can create tickets, view their own tickets, and add messages.
 // Admin-only operations include listing all tickets, updating, closing, reopening, and deleting tickets.
 func RegisterRoutes(rg *gin.RouterGroup, h *tickets.Handler) {
-	g := rg.Group("/tickets")
+	g := rg.Group("/ticket")
 
 	// Telegram users only - user ticket operations
 	tma := g.Group("", middleware.RequireTelegram())

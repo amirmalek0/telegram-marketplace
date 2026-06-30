@@ -10,7 +10,7 @@ import (
 // Read operations are accessible to both admins and telegram users.
 // Write operations (upload, delete) are admin-only.
 func RegisterRoutes(rg *gin.RouterGroup, h *files.Handler) {
-	g := rg.Group("/files")
+	g := rg.Group("/file")
 
 	// Accessible by both admins and telegram users
 	public := g.Group("", middleware.RequireAny())

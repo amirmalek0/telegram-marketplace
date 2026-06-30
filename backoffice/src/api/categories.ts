@@ -9,35 +9,35 @@ import {
 
 export const categoriesApi = {
   list: (params?: { page?: number; per_page?: number }, signal?: AbortSignal) =>
-    apiClient.get<CategoriesPaginatedResponse>('/categories', { params, signal }).then((r) => r.data),
+    apiClient.get<CategoriesPaginatedResponse>('/category', { params, signal }).then((r) => r.data),
 
   getById: (id: string, signal?: AbortSignal) =>
-    apiClient.get<CategoryResponse>(`/categories/${id}`, { signal }).then((r) => r.data),
+    apiClient.get<CategoryResponse>(`/category/${id}`, { signal }).then((r) => r.data),
 
   create: (data: CreateCategoryRequest, signal?: AbortSignal) => {
     const formData = new FormData();
     formData.append('title', data.title);
-    return apiClient.post<CategoryResponse>('/categories', formData, {
+    return apiClient.post<CategoryResponse>('/category', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
       signal,
     }).then((r) => r.data);
   },
 
   update: (id: string, data: UpdateCategoryRequest, signal?: AbortSignal) =>
-    apiClient.patch<CategoryResponse>(`/categories/${id}`, data, { signal }).then((r) => r.data),
+    apiClient.patch<CategoryResponse>(`/category/${id}`, data, { signal }).then((r) => r.data),
 
   reorder: (data: ReorderRequest, signal?: AbortSignal) =>
-    apiClient.patch<void>('/categories/reorder', data, { signal }).then((r) => r.data),
+    apiClient.patch<void>('/category/reorder', data, { signal }).then((r) => r.data),
 
   uploadIcon: (id: string, file: File, signal?: AbortSignal) => {
     const formData = new FormData();
     formData.append('icon', file);
-    return apiClient.post<CategoryResponse>(`/categories/${id}/icon`, formData, {
+    return apiClient.post<CategoryResponse>(`/category/${id}/icon`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
       signal,
     }).then((r) => r.data);
   },
 
   delete: (id: string, signal?: AbortSignal) =>
-    apiClient.delete<void>(`/categories/${id}`, { signal }).then((r) => r.data),
+    apiClient.delete<void>(`/category/${id}`, { signal }).then((r) => r.data),
 };
