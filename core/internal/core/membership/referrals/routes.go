@@ -1,3 +1,0 @@
-package referrals
-
-func RegisterRoutes(){}

@@ -60,22 +60,6 @@ referred user id
 reward amount
 created at
 
-**Tickets**
-id
-user id
-subject
-status
-priority
-created at
-
-**Tickets messages**
-id
-ticket id
-sender type(user/admin)
-sender id
-message
-created at
-
 **Coupons**
 id
 code
