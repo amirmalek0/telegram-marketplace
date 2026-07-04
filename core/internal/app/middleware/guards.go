@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -52,4 +53,44 @@ func RequireAny() gin.HandlerFunc {
 		}
 		c.Next()
 	}
+}
+
+// telegramUser represents the user data from Telegram initData.
+type telegramUser struct {
+	ID int64 `json:"id"`
+}
+
+// GetTelegramUserID extracts the Telegram user ID from the initData.
+// Returns the user ID and true if successful, or 0 and false if not.
+func GetTelegramUserID(c *gin.Context) (int64, bool) {
+	initData := GetInitData(c)
+	if initData == nil {
+		return 0, false
+	}
+
+	userJSON := initData.Get("user")
+	if userJSON == "" {
+		return 0, false
+	}
+
+	var user telegramUser
+	if err := json.Unmarshal([]byte(userJSON), &user); err != nil {
+		return 0, false
+	}
+
+	if user.ID == 0 {
+		return 0, false
+	}
+
+	return user.ID, true
+}
+
+// GetAdminID extracts the admin ID from the JWT claims.
+// Returns the admin ID and true if successful, or empty string and false if not.
+func GetAdminID(c *gin.Context) (string, bool) {
+	claims := GetAdminClaims(c)
+	if claims == nil {
+		return "", false
+	}
+	return claims.AdminID, true
 }
