@@ -187,9 +187,59 @@ var migrations = []string{
 		id UUID PRIMARY KEY DEFAULT gen_random_uuid()
 	)`,
 
-	`CREATE TABLE IF NOT EXISTS orders (
-		id UUID PRIMARY KEY DEFAULT gen_random_uuid()
+	`CREATE TABLE IF NOT EXISTS coupons (
+		id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+		code           TEXT NOT NULL UNIQUE,
+		discount_type  TEXT NOT NULL CHECK (discount_type IN ('static', 'percentage')),
+		discount_value DOUBLE PRECISION NOT NULL CHECK (discount_value > 0),
+		usage_limit    INTEGER NOT NULL DEFAULT 0,
+		usage_count    INTEGER NOT NULL DEFAULT 0,
+		expires_at     TIMESTAMPTZ,
+		is_active      BOOLEAN NOT NULL DEFAULT true,
+		product_ids    JSONB DEFAULT '[]'::jsonb,
+		created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+		updated_at     TIMESTAMPTZ NOT NULL DEFAULT now()
 	)`,
+	`CREATE INDEX IF NOT EXISTS idx_coupons_code ON coupons(code)`,
+	`CREATE INDEX IF NOT EXISTS idx_coupons_is_active ON coupons(is_active)`,
+	`CREATE INDEX IF NOT EXISTS idx_coupons_expires_at ON coupons(expires_at)`,
+
+	`CREATE TABLE IF NOT EXISTS orders (
+		id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+		user_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+		product_id      UUID NOT NULL REFERENCES products(id),
+		quantity        INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0),
+		coupon_id       UUID REFERENCES coupons(id),
+		amount          DOUBLE PRECISION NOT NULL CHECK (amount >= 0),
+		discount_amount DOUBLE PRECISION NOT NULL DEFAULT 0,
+		payment_method  TEXT,
+		status          TEXT NOT NULL DEFAULT 'pending'
+		                          CHECK (status IN ('pending', 'paid', 'failed', 'refunded', 'cancelled')),
+		paid_at         TIMESTAMPTZ,
+		created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+		updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+	)`,
+	`CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders(user_id)`,
+	`CREATE INDEX IF NOT EXISTS idx_orders_product_id ON orders(product_id)`,
+	`CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status)`,
+	`CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at DESC)`,
+
+	`CREATE TABLE IF NOT EXISTS payments (
+		id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+		order_id        UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+		provider        TEXT NOT NULL,
+		gateway_trx_id  TEXT,
+		amount          DOUBLE PRECISION NOT NULL CHECK (amount > 0),
+		status          TEXT NOT NULL DEFAULT 'pending'
+		                          CHECK (status IN ('pending', 'succeeded', 'failed', 'refunded')),
+		callback_data   JSONB,
+		created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+		updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+	)`,
+	`CREATE INDEX IF NOT EXISTS idx_payments_order_id ON payments(order_id)`,
+	`CREATE INDEX IF NOT EXISTS idx_payments_provider ON payments(provider)`,
+	`CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status)`,
+	`CREATE INDEX IF NOT EXISTS idx_payments_gateway_trx_id ON payments(gateway_trx_id)`,
 
 	`CREATE TABLE IF NOT EXISTS settings (
 		id UUID PRIMARY KEY DEFAULT gen_random_uuid()
