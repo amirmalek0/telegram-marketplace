@@ -50,3 +50,19 @@ type Order struct {
 	CreatedAt      time.Time   `db:"created_at" json:"created_at"`
 	UpdatedAt      time.Time   `db:"updated_at" json:"updated_at"`
 }
+
+// NewOrder constructs a new Order with pending status and current timestamps.
+func NewOrder(userID, productID string, quantity int, couponID *string, amount, discountAmount float64) *Order {
+	now := time.Now()
+	return &Order{
+		UserID:         userID,
+		ProductID:      productID,
+		Quantity:       quantity,
+		CouponID:       couponID,
+		Amount:         amount,
+		DiscountAmount: discountAmount,
+		Status:         StatusPending,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	}
+}
