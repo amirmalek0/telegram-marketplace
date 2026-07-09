@@ -108,7 +108,7 @@ func (s *Service) applyCoupon(ctx context.Context, couponID *string, totalAmount
 		return 0.0, nil, fmt.Errorf("orders.service.applyCoupon: get coupon: %w", err)
 	}
 
-	if !coupon.Validate() {
+	if err := coupon.Validate(""); err != nil {
 		return 0.0, nil, ErrCouponInvalid
 	}
 
