@@ -20,6 +20,12 @@ import (
 	msgrouter "telegram-marketplace/internal/core/catalog/messages/router"
 	"telegram-marketplace/internal/core/catalog/products"
 	productrouter "telegram-marketplace/internal/core/catalog/products/router"
+	"telegram-marketplace/internal/core/commerce/coupons"
+	couponsrouter "telegram-marketplace/internal/core/commerce/coupons/router"
+	"telegram-marketplace/internal/core/commerce/orders"
+	ordersrouter "telegram-marketplace/internal/core/commerce/orders/router"
+	"telegram-marketplace/internal/core/commerce/payments"
+	paymentsrouter "telegram-marketplace/internal/core/commerce/payments/router"
 	"telegram-marketplace/internal/core/commerce/wallets"
 	walletrouter "telegram-marketplace/internal/core/commerce/wallets/router"
 	"telegram-marketplace/internal/core/membership/admins"
@@ -49,6 +55,9 @@ type Handlers struct {
 	Products         *products.Handler
 	Admins           *admins.Handler
 	Wallets          *wallets.Handler
+	Coupons          *coupons.Handler
+	Orders           *orders.Handler
+	Payments         *payments.Handler
 	Tickets          *tickets.Handler
 	TicketCategories *ticketcategories.Handler
 }
@@ -89,6 +98,9 @@ func New(botToken string, h Handlers) *gin.Engine {
 			productrouter.RegisterRoutes(domain, h.Products)
 			adminrouter.RegisterRoutes(domain, h.Admins)
 			walletrouter.RegisterRoutes(domain, h.Wallets)
+			couponsrouter.RegisterRoutes(domain, h.Coupons)
+			ordersrouter.RegisterRoutes(domain, h.Orders)
+			paymentsrouter.RegisterRoutes(domain, h.Payments)
 			ticketrouter.RegisterRoutes(domain, h.Tickets)
 			ticketcategoryrouter.RegisterRoutes(domain, h.TicketCategories)
 		}
