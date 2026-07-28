@@ -33,6 +33,14 @@ type Config struct {
 
 	ProductFilesBucket    string // e.g. "product-files"
 	ProductFilesPublicURL string // e.g. "http://localhost:9000/product-files"
+
+	// Payment Gateway Configuration
+	CallbackURL string // Base URL for gateway verify callbacks, e.g. http://localhost:8080/api/v1/payment/verify
+
+	ZarinpalMerchantID  string
+	ZarinpalSandbox     bool
+	ZarinpalCallbackURL string
+
 }
 
 // Load reads configuration from environment variables and returns a Config.
@@ -62,6 +70,14 @@ func Load() Config {
 
 		ProductFilesBucket:    getEnv("PRODUCT_FILES_BUCKET", "product-files"),
 		ProductFilesPublicURL: mustEnv("PRODUCT_FILES_PUBLIC_URL"),
+
+		// Payment Gateway Configuration
+		CallbackURL: getEnv("CALLBACK_URL", "http://localhost:8080/api/v1/payment/verify"),
+
+		ZarinpalMerchantID:  getEnv("ZARINPAL_MERCHANT_ID", ""),
+		ZarinpalSandbox:     getEnv("ZARINPAL_SANDBOX", "true") == "true",
+		ZarinpalCallbackURL: getEnv("ZARINPAL_CALLBACK_URL", ""),
+
 	}
 }
 

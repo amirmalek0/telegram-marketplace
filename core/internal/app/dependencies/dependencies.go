@@ -21,6 +21,13 @@ import (
 	msgrepo "telegram-marketplace/internal/core/catalog/messages/repository"
 	"telegram-marketplace/internal/core/catalog/products"
 	productrepo "telegram-marketplace/internal/core/catalog/products/repository"
+	"telegram-marketplace/internal/core/commerce/coupons"
+	couponsrepo "telegram-marketplace/internal/core/commerce/coupons/repository"
+	"telegram-marketplace/internal/core/commerce/orders"
+	ordersrepo "telegram-marketplace/internal/core/commerce/orders/repository"
+	"telegram-marketplace/internal/core/commerce/payments"
+	paymentsrepo "telegram-marketplace/internal/core/commerce/payments/repository"
+	"telegram-marketplace/internal/core/commerce/payments/provider"
 	"telegram-marketplace/internal/core/commerce/wallets"
 	walletrepo "telegram-marketplace/internal/core/commerce/wallets/repository"
 	"telegram-marketplace/internal/core/membership/admins"
@@ -130,6 +137,28 @@ func Wire(ctx context.Context, db *pgxpool.Pool, cfg config.Config) router.Handl
 	walletService := wallets.NewService(walletTxRepo, userRepo, db)
 	walletHandler := wallets.NewHandler(walletService)
 
+	// --- commerce/coupons ---
+	couponsRepo := couponsrepo.NewPostgresRepository(db)
+	couponsService := coupons.NewService(couponsRepo)
+	couponsHandler := coupons.NewHandler(couponsService)
+
+	// --- commerce/orders ---
+	ordersRepo := ordersrepo.NewPostgresRepository(db)
+	ordersService := orders.NewService(ordersRepo, productRepo, couponsRepo, userRepo)
+	ordersHandler := orders.NewHandler(ordersService)
+
+	// --- commerce/payments ---
+	paymentsRepo := paymentsrepo.NewPostgresRepository(db)
+	gatewayRegistry := payments.NewGatewayRegistry()
+
+	// Register payment gateways based on configuration
+	if cfg.ZarinpalMerchantID != "" {
+		gatewayRegistry.Register(provider.NewZarinpal(cfg.ZarinpalMerchantID, cfg.ZarinpalSandbox, cfg.ZarinpalCallbackURL))
+	}
+
+	paymentsService := payments.NewService(paymentsRepo, ordersRepo, gatewayRegistry)
+	paymentsHandler := payments.NewHandler(paymentsService, cfg.CallbackURL)
+
 	// --- membership/ticket-categories ---
 	ticketCategoryRepo := ticketcategoryrepo.NewPostgresRepository(db)
 	ticketCategoryService := ticketcategories.NewService(ticketCategoryRepo)
@@ -153,6 +182,9 @@ func Wire(ctx context.Context, db *pgxpool.Pool, cfg config.Config) router.Handl
 		Products:         productHandler,
 		Admins:           adminHandler,
 		Wallets:          walletHandler,
+		Coupons:          couponsHandler,
+		Orders:           ordersHandler,
+		Payments:         paymentsHandler,
 		Tickets:          ticketHandler,
 		TicketCategories: ticketCategoryHandler,
 	}
