@@ -10,7 +10,6 @@ const (
 	StatusPending   PaymentStatus = "pending"
 	StatusSucceeded PaymentStatus = "succeeded"
 	StatusFailed    PaymentStatus = "failed"
-	StatusRefunded  PaymentStatus = "refunded"
 )
 
 // ValidPaymentStatuses returns all valid payment statuses.
@@ -19,7 +18,6 @@ func ValidPaymentStatuses() []PaymentStatus {
 		StatusPending,
 		StatusSucceeded,
 		StatusFailed,
-		StatusRefunded,
 	}
 }
 
@@ -61,10 +59,4 @@ type VerificationResult struct {
 	TrackingCode string  `json:"tracking_code,omitempty"`
 	CardNumber   string  `json:"card_number,omitempty"`
 	Message      string  `json:"message,omitempty"`
-}
-
-// RefundResult represents the result of a refund operation.
-type RefundResult struct {
-	Success bool   `json:"success"`
-	Message string `json:"message,omitempty"`
 }

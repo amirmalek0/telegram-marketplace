@@ -117,29 +117,6 @@ func (h *Handler) AdminList(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-// AdminRefund initiates a refund for a payment (admin only).
-func (h *Handler) AdminRefund(c *gin.Context) {
-	id := c.Param("id")
-
-	var req RefundRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		// Allow empty body for full refund
-		req = RefundRequest{}
-	}
-
-	result, err := h.service.Refund(c.Request.Context(), id, req.Amount)
-	if err != nil {
-		if errors.Is(err, paymentsrepo.ErrNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, result)
-}
-
 // ListGateways returns all available payment gateways.
 func (h *Handler) ListGateways(c *gin.Context) {
 	gateways := h.service.ListGateways()

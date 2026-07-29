@@ -19,11 +19,6 @@ type VerifyPaymentRequest struct {
 	PaymentID string `json:"payment_id" binding:"required"`
 }
 
-// RefundRequest represents the payload for refunding a payment.
-type RefundRequest struct {
-	Amount *float64 `json:"amount"` // Optional: partial refund amount
-}
-
 // --- Response DTOs ---
 
 // Response represents a payment in API responses.
@@ -54,12 +49,6 @@ type VerifyPaymentResponse struct {
 	TrackingCode string  `json:"tracking_code,omitempty"`
 	CardNumber   string  `json:"card_number,omitempty"`
 	Message      string  `json:"message,omitempty"`
-}
-
-// RefundResponse represents the response after a refund operation.
-type RefundResponse struct {
-	Success bool   `json:"success"`
-	Message string `json:"message,omitempty"`
 }
 
 // GatewayListResponse represents the list of available gateways.

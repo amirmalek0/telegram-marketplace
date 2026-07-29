@@ -9,7 +9,7 @@ import (
 // RegisterRoutes mounts all payment endpoints onto the provided RouterGroup.
 // Telegram users can create payments and view their own payments.
 // Gateway callbacks are public (no auth required).
-// Admin-only operations include viewing all payments and processing refunds.
+// Admin-only operations include viewing all payments.
 func RegisterRoutes(rg *gin.RouterGroup, h *payments.Handler) {
 	g := rg.Group("/payment")
 
@@ -28,6 +28,5 @@ func RegisterRoutes(rg *gin.RouterGroup, h *payments.Handler) {
 	admin := g.Group("", middleware.RequireAdmin())
 	{
 		admin.GET("/all", h.AdminList)
-		admin.POST("/:id/refund", h.AdminRefund)
 	}
 }

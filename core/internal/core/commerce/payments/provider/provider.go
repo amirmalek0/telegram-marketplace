@@ -11,6 +11,5 @@ import (
 type Provider interface {
 	CreatePayment(ctx context.Context, amount float64, orderID string, description string, callbackURL string) (*model.PaymentResult, error)
 	VerifyPayment(ctx context.Context, paymentID string, callbackData map[string]string) (*model.VerificationResult, error)
-	Refund(ctx context.Context, paymentID string, amount float64) (*model.RefundResult, error)
 	GetGatewayName() string
 }

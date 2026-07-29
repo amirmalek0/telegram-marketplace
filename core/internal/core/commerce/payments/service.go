@@ -251,55 +251,6 @@ func (s *Service) ListAll(ctx context.Context, params pagination.Params) (*Pagin
 	return &result, nil
 }
 
-// Refund initiates a refund for a payment.
-func (s *Service) Refund(ctx context.Context, paymentID string, amount *float64) (*RefundResponse, error) {
-	// Get the payment
-	payment, err := s.repo.GetByID(ctx, paymentID)
-	if err != nil {
-		return nil, fmt.Errorf("payments.service.Refund: get payment: %w", err)
-	}
-
-	// Check if payment can be refunded
-	if payment.Status != model.StatusSucceeded {
-		return nil, errors.New("payment cannot be refunded (not succeeded)")
-	}
-
-	// Get the payment gateway
-	gateway, err := s.registry.Get(payment.Provider)
-	if err != nil {
-		return nil, ErrGatewayNotFound
-	}
-
-	// Determine refund amount
-	refundAmount := payment.Amount
-	if amount != nil && *amount > 0 {
-		refundAmount = *amount
-	}
-
-	// Process refund with the gateway
-	result, err := gateway.Refund(ctx, paymentID, refundAmount)
-	if err != nil {
-		return nil, fmt.Errorf("payments.service.Refund: gateway refund: %w", err)
-	}
-
-	// Update payment status if refund succeeded
-	if result.Success {
-		if err := s.repo.UpdateStatus(ctx, payment.ID, model.StatusRefunded, payment.GatewayTrxID, nil); err != nil {
-			return nil, fmt.Errorf("payments.service.Refund: update payment: %w", err)
-		}
-
-		// Update order status
-		if err := s.orderRepo.UpdateStatus(ctx, payment.OrderID, ordersmodel.StatusRefunded, nil); err != nil {
-			return nil, fmt.Errorf("payments.service.Refund: update order: %w", err)
-		}
-	}
-
-	return &RefundResponse{
-		Success: result.Success,
-		Message: result.Message,
-	}, nil
-}
-
 // ListGateways returns all registered payment gateways.
 func (s *Service) ListGateways() []string {
 	return s.registry.List()

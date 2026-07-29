@@ -58,13 +58,3 @@ func (z *Zarinpal) VerifyPayment(ctx context.Context, paymentID string, callback
 		Message: "Payment verification failed",
 	}, nil
 }
-
-// Refund initiates a refund for a Zarinpal payment.
-func (z *Zarinpal) Refund(ctx context.Context, paymentID string, amount float64) (*model.RefundResult, error) {
-	// TODO: Implement Zarinpal refund API integration
-	// This is a placeholder implementation
-	return &model.RefundResult{
-		Success: true,
-		Message: "Refund processed successfully",
-	}, nil
-}
