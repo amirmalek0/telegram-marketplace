@@ -16,20 +16,15 @@ import BundlesPage from '@/pages/bundles/BundlesPage';
 import APIsPage from '@/pages/apis/APIsPage';
 import AdminsPage from '@/pages/admins/AdminsPage';
 import DashboardPage from '@/pages/dashboard/DashboardPage';
+import OrdersPage from '@/pages/orders/OrdersPage';
+import PaymentsPage from '@/pages/payments/PaymentsPage';
+import CouponsPage from '@/pages/coupons/CouponsPage';
+import UsersPage from '@/pages/users/UsersPage';
+import WalletsPage from '@/pages/wallets/WalletsPage';
+import VipPage from '@/pages/vip/VipPage';
+import TicketsPage from '@/pages/tickets/TicketsPage';
 
-// Suppress unused import warning for PageLoader (used in lazy loading scenarios)
 void PageLoader;
-
-function PlaceholderPage({ name }: { name: string }) {
-  return (
-    <div className="rounded-2xl bg-[rgb(var(--color-surface))] border border-[rgb(var(--color-border))] p-10 text-center">
-      <p className="text-lg font-semibold text-[rgb(var(--color-text))]">{name}</p>
-      <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-2">
-        این صفحه در فازهای بعدی پیاده‌سازی می‌شود.
-      </p>
-    </div>
-  );
-}
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore();
@@ -76,14 +71,14 @@ function App() {
             <Route path="files" element={<FilesPage />} />
             <Route path="apis" element={<APIsPage />} />
             <Route path="admins" element={<AdminsPage />} />
-            <Route path="orders" element={<PlaceholderPage name="سفارش‌ها" />} />
-            <Route path="users" element={<PlaceholderPage name="کاربران" />} />
-            <Route path="vip" element={<PlaceholderPage name="کاربران VIP" />} />
-            <Route path="referrals" element={<PlaceholderPage name="ارجاعات" />} />
+            <Route path="orders" element={<OrdersPage />} />
+            <Route path="payments" element={<PaymentsPage />} />
+            <Route path="coupons" element={<CouponsPage />} />
+            <Route path="users" element={<UsersPage />} />
+            <Route path="wallets" element={<WalletsPage />} />
+            <Route path="vip" element={<VipPage />} />
             <Route path="messages" element={<MessagesPage />} />
-            <Route path="broadcasts" element={<PlaceholderPage name="پخش همگانی" />} />
-            <Route path="tickets" element={<PlaceholderPage name="تیکت‌ها" />} />
-            <Route path="settings" element={<PlaceholderPage name="تنظیمات" />} />
+            <Route path="tickets" element={<TicketsPage />} />
             {/* Catch-all */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>

@@ -8,3 +8,4 @@ export * from './inventory';
 export * from './bundles';
 export * from './apis';
 export * from './admins';
+export * from './operations';

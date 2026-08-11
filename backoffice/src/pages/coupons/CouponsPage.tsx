@@ -1,0 +1,33 @@
+import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { couponsApi } from '@/api';
+import { CouponResponse, CreateCouponRequest, DiscountType } from '@/types';
+import { Badge, Button, ConfirmationModal, DataTable, Input, Modal, PageHeader, Select, Toggle } from '@/components/ui';
+import type { Column } from '@/components/ui';
+import { formatDate } from '@/utils/format';
+
+type FormState = { code: string; discount_type: DiscountType; discount_value: string; usage_limit: string; expires_at: string; product_ids: string };
+const emptyForm: FormState = { code: '', discount_type: 'percentage', discount_value: '', usage_limit: '0', expires_at: '', product_ids: '' };
+
+export default function CouponsPage() {
+  const [rows, setRows] = useState<CouponResponse[]>([]); const [total, setTotal] = useState(0); const [page, setPage] = useState(1); const [loading, setLoading] = useState(true); const [saving, setSaving] = useState(false); const [form, setForm] = useState<FormState>(emptyForm); const [editing, setEditing] = useState<CouponResponse | null>(null); const [deleting, setDeleting] = useState<CouponResponse | null>(null); const [open, setOpen] = useState(false);
+  const load = useCallback(async () => { setLoading(true); try { const r = await couponsApi.list({ page, per_page: 20 }); setRows(r.data); setTotal(r.total); } catch { toast.error('دریافت کدهای تخفیف ناموفق بود'); } finally { setLoading(false); } }, [page]);
+  useEffect(() => { load(); }, [load]);
+  const begin = (row?: CouponResponse) => { setEditing(row || null); setForm(row ? { code: row.code, discount_type: row.discount_type, discount_value: String(row.discount_value), usage_limit: String(row.usage_limit), expires_at: row.expires_at?.slice(0, 16) || '', product_ids: row.product_ids.join(', ') } : emptyForm); setOpen(true); };
+  const submit = async (e: FormEvent) => { e.preventDefault(); const payload: CreateCouponRequest = { code: form.code.trim().toUpperCase(), discount_type: form.discount_type, discount_value: Number(form.discount_value), usage_limit: Number(form.usage_limit || 0), expires_at: form.expires_at ? new Date(form.expires_at).toISOString() : undefined, product_ids: form.product_ids.split(',').map(v => v.trim()).filter(Boolean) }; if (!payload.code || payload.discount_value <= 0) return toast.error('کد و مقدار تخفیف را کامل کنید'); setSaving(true); try { editing ? await couponsApi.update(editing.id, payload) : await couponsApi.create(payload); toast.success(editing ? 'کد تخفیف ویرایش شد' : 'کد تخفیف ساخته شد'); setOpen(false); load(); } catch { toast.error('ذخیره کد تخفیف ناموفق بود'); } finally { setSaving(false); } };
+  const toggle = async (row: CouponResponse) => { try { await couponsApi.update(row.id, { is_active: !row.is_active }); setRows(v => v.map(x => x.id === row.id ? { ...x, is_active: !x.is_active } : x)); } catch { toast.error('تغییر وضعیت ناموفق بود'); } };
+  const remove = async () => { if (!deleting) return; setSaving(true); try { await couponsApi.delete(deleting.id); toast.success('کد تخفیف حذف شد'); setDeleting(null); load(); } catch { toast.error('حذف کد تخفیف ناموفق بود'); } finally { setSaving(false); } };
+  const columns: Column<CouponResponse>[] = [
+    { key: 'code', title: 'کد', render: v => <span dir="ltr" className="inline-flex rounded-lg bg-blue-500/10 px-2.5 py-1 font-mono text-xs font-bold text-blue-600">{String(v)}</span> },
+    { key: 'discount_value', title: 'تخفیف', render: (v, r) => <b>{Number(v).toLocaleString('fa-IR')}{r.discount_type === 'percentage' ? '٪' : ' تومان'}</b> },
+    { key: 'usage_count', title: 'استفاده', render: (v, r) => <span>{Number(v).toLocaleString('fa-IR')} / {r.usage_limit ? r.usage_limit.toLocaleString('fa-IR') : '∞'}</span> },
+    { key: 'expires_at', title: 'انقضا', render: v => <span className="text-xs">{formatDate(v as string)}</span> },
+    { key: 'is_active', title: 'فعال', render: (v, r) => <Toggle size="sm" checked={Boolean(v)} onChange={() => toggle(r)} /> },
+    { key: 'actions', title: 'عملیات', render: (_, r) => <div className="flex gap-1"><Button variant="ghost" size="sm" icon={<Pencil size={14} />} onClick={() => begin(r)}>ویرایش</Button><Button variant="ghost" size="sm" className="text-rose-500" icon={<Trash2 size={14} />} onClick={() => setDeleting(r)}>حذف</Button></div> },
+  ];
+  return <div><PageHeader eyebrow="PROMOTIONS" title="کدهای تخفیف" description="ساخت کمپین‌های مبلغ ثابت یا درصدی و کنترل سقف مصرف" action={<Button icon={<Plus size={16} />} onClick={() => begin()}>کد جدید</Button>} /><div className="mb-4 flex gap-3"><Badge variant="success" dot>{rows.filter(x => x.is_active).length.toLocaleString('fa-IR')} فعال در این صفحه</Badge><Badge variant="default">{total.toLocaleString('fa-IR')} کد در مجموع</Badge></div><DataTable columns={columns} data={rows} loading={loading} keyExtractor={r => r.id} pagination={{ page, perPage: 20, total, onPageChange: setPage }} emptyMessage="هنوز کد تخفیفی ایجاد نشده است" />
+    <Modal isOpen={open} onClose={() => setOpen(false)} title={editing ? 'ویرایش کد تخفیف' : 'کد تخفیف جدید'} size="lg" footer={<><Button variant="secondary" onClick={() => setOpen(false)}>انصراف</Button><Button loading={saving} onClick={() => document.getElementById('coupon-submit')?.click()}>ذخیره</Button></>}><form onSubmit={submit} className="grid gap-4 sm:grid-cols-2"><Input label="کد تخفیف" value={form.code} onChange={e => setForm({ ...form, code: e.target.value })} placeholder="SUMMER25" /><Select label="نوع تخفیف" value={form.discount_type} onChange={e => setForm({ ...form, discount_type: e.target.value as DiscountType })} options={[{ value: 'percentage', label: 'درصدی' }, { value: 'static', label: 'مبلغ ثابت' }]} /><Input label="مقدار" type="number" min="0" value={form.discount_value} onChange={e => setForm({ ...form, discount_value: e.target.value })} /><Input label="سقف استفاده (۰ = نامحدود)" type="number" min="0" value={form.usage_limit} onChange={e => setForm({ ...form, usage_limit: e.target.value })} /><Input label="تاریخ انقضا" type="datetime-local" value={form.expires_at} onChange={e => setForm({ ...form, expires_at: e.target.value })} /><Input label="شناسه محصولات" hint="با ویرگول جدا کنید؛ خالی یعنی همه محصولات" value={form.product_ids} onChange={e => setForm({ ...form, product_ids: e.target.value })} /><button id="coupon-submit" className="hidden" /></form></Modal>
+    <ConfirmationModal isOpen={Boolean(deleting)} onClose={() => setDeleting(null)} onConfirm={remove} title="حذف کد تخفیف" message={`کد «${deleting?.code || ''}» برای همیشه حذف شود؟`} confirmText="حذف" loading={saving} />
+  </div>;
+}

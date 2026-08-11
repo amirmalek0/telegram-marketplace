@@ -8,3 +8,13 @@ export { inventoryApi } from './inventory';
 export { bundlesApi } from './bundles';
 export { apisApi } from './apis';
 export { adminsApi } from './admins';
+export {
+  usersApi,
+  walletsApi,
+  couponsApi,
+  ordersApi,
+  paymentsApi,
+  vipApi,
+  ticketsApi,
+  ticketCategoriesApi,
+} from './operations';
