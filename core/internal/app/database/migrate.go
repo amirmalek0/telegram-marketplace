@@ -90,8 +90,21 @@ var migrations = []string{
 	)`,
 
 	`CREATE TABLE IF NOT EXISTS vip_plans (
-		id UUID PRIMARY KEY DEFAULT gen_random_uuid()
+		id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+		title      TEXT NOT NULL,
+		price      DOUBLE PRECISION NOT NULL CHECK (price >= 0),
+		duration   INT NOT NULL CHECK (duration > 0),
+		status     TEXT NOT NULL DEFAULT 'active'
+		           CHECK (status IN ('active', 'inactive')),
+		created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 	)`,
+
+	// Upgrade path for DBs that already have the id-only vip_plans stub.
+	`ALTER TABLE vip_plans ADD COLUMN IF NOT EXISTS title TEXT NOT NULL DEFAULT ''`,
+	`ALTER TABLE vip_plans ADD COLUMN IF NOT EXISTS price DOUBLE PRECISION NOT NULL DEFAULT 0`,
+	`ALTER TABLE vip_plans ADD COLUMN IF NOT EXISTS duration INT NOT NULL DEFAULT 30`,
+	`ALTER TABLE vip_plans ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'active'`,
+	`ALTER TABLE vip_plans ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now()`,
 
 	`CREATE TABLE IF NOT EXISTS categories (
 		id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
