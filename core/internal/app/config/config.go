@@ -4,17 +4,19 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
 
 // Config holds all application-level configuration.
 type Config struct {
-	DatabaseURL string
-	BotToken    string
-	Addr        string
-	WebhookURL  string // Optional: webhook URL for bot (empty = polling mode)
-	JWTSecret   string // Secret key for signing admin JWT tokens
+	DatabaseURL        string
+	BotToken           string
+	Addr               string
+	WebhookURL         string // Optional: webhook URL for bot (empty = polling mode)
+	JWTSecret          string // Secret key for signing admin JWT tokens
+	CORSAllowedOrigins []string
 
 	// Seed admin credentials (used only on first boot)
 	AdminSeedUsername string // default: "admin"
@@ -40,7 +42,6 @@ type Config struct {
 	ZarinpalMerchantID  string
 	ZarinpalSandbox     bool
 	ZarinpalCallbackURL string
-
 }
 
 // Load reads configuration from environment variables and returns a Config.
@@ -55,6 +56,10 @@ func Load() Config {
 		Addr:        getEnv("ADDR", ":8080"),
 		WebhookURL:  getEnv("WEBHOOK_URL", ""),
 		JWTSecret:   mustEnv("JWT_SECRET"),
+		CORSAllowedOrigins: splitCSV(getEnv(
+			"CORS_ALLOWED_ORIGINS",
+			"http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001",
+		)),
 
 		AdminSeedUsername: getEnv("ADMIN_SEED_USERNAME", "admin"),
 		AdminSeedPassword: getEnv("ADMIN_SEED_PASSWORD", "admin"),
@@ -77,8 +82,18 @@ func Load() Config {
 		ZarinpalMerchantID:  getEnv("ZARINPAL_MERCHANT_ID", ""),
 		ZarinpalSandbox:     getEnv("ZARINPAL_SANDBOX", "true") == "true",
 		ZarinpalCallbackURL: getEnv("ZARINPAL_CALLBACK_URL", ""),
-
 	}
+}
+
+func splitCSV(value string) []string {
+	parts := strings.Split(value, ",")
+	result := make([]string, 0, len(parts))
+	for _, part := range parts {
+		if trimmed := strings.TrimSpace(part); trimmed != "" {
+			result = append(result, trimmed)
+		}
+	}
+	return result
 }
 
 // loadEnvFile tries to find and load a .env file by walking up from the

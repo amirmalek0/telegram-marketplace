@@ -66,14 +66,15 @@ type Handlers struct {
 }
 
 // New creates and configures the gin.Engine:
-//   - attaches global middleware (logger, recovery)
+//   - attaches global middleware (logger, recovery, CORS)
 //   - registers the /health probe (no auth)
 //   - mounts /api/v1 with clean sub-groups for auth and domain routes
 //   - each module's RegisterRoutes applies per-route guards (RequireAdmin, RequireTelegram, RequireAny)
-func New(botToken string, h Handlers) *gin.Engine {
+func New(botToken string, corsAllowedOrigins []string, h Handlers) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
+	r.Use(middleware.CORS(corsAllowedOrigins))
 
 	// Health probe — no authentication required
 	r.GET("/health", func(c *gin.Context) {

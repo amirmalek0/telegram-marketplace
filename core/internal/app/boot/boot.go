@@ -22,6 +22,6 @@ func Start(cfg config.Config) {
 	database.SeedTicketCategories(ctx, db)
 
 	handlers := dependencies.Wire(ctx, db, cfg)
-	r := router.New(cfg.BotToken, handlers)
+	r := router.New(cfg.BotToken, cfg.CORSAllowedOrigins, handlers)
 	server.Run(cfg.Addr, r)
 }
