@@ -21,24 +21,6 @@ Processes:
 
 Entities:
 
-**Order**
-id
-user id
-product id
-amount
-payment method
-status
-paid at
-created at
-
-**Payment**
-id
-order id
-provider
-gateway trx id
-amount
-status
-
 **Plans**
 id
 title
@@ -59,14 +41,6 @@ referrer user id
 referred user id
 reward amount
 created at
-
-**Coupons**
-id
-code
-discount type (static/percentage)
-discount value
-usage limit
-expires at
 
 **BOT Settings**
 key(TEXT)

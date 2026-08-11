@@ -1,0 +1,905 @@
+<title>Telegram Marketplace — Architecture Canvas</title>
+<style>
+  :root {
+    --paper:      #e9ecf2;
+    --sheet:      #f7f9fc;
+    --sheet-2:    #eef1f6;
+    --grid:       #d7dde8;
+    --grid-major: #c6cede;
+    --rule:       #c2cad8;
+    --rule-soft:  #d5dbe6;
+    --ink:        #12161f;
+    --ink-2:      #4c5666;
+    --ink-3:      #7b8698;
+
+    --catalog:    #0f6f66;
+    --commerce:   #a1541e;
+    --membership: #3d51a2;
+    --platform:   #56606f;
+    --infra:      #6b4e8d;
+    --alert:      #b23c36;
+
+    --shadow: 0 1px 0 rgba(18,22,31,.05), 0 2px 8px rgba(18,22,31,.06);
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper:      #090c11;
+      --sheet:      #141922;
+      --sheet-2:    #1b212c;
+      --grid:       #171d27;
+      --grid-major: #1f2734;
+      --rule:       #2b3442;
+      --rule-soft:  #222a36;
+      --ink:        #e0e6ef;
+      --ink-2:      #98a3b4;
+      --ink-3:      #6d7889;
+
+      --catalog:    #3fc0ae;
+      --commerce:   #e0904a;
+      --membership: #8298ec;
+      --platform:   #93a0b1;
+      --infra:      #b48cd4;
+      --alert:      #e8695f;
+
+      --shadow: 0 1px 0 rgba(0,0,0,.4), 0 2px 10px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:#090c11; --sheet:#141922; --sheet-2:#1b212c; --grid:#171d27; --grid-major:#1f2734;
+    --rule:#2b3442; --rule-soft:#222a36; --ink:#e0e6ef; --ink-2:#98a3b4; --ink-3:#6d7889;
+    --catalog:#3fc0ae; --commerce:#e0904a; --membership:#8298ec; --platform:#93a0b1;
+    --infra:#b48cd4; --alert:#e8695f;
+    --shadow: 0 1px 0 rgba(0,0,0,.4), 0 2px 10px rgba(0,0,0,.35);
+  }
+  :root[data-theme="light"] {
+    --paper:#e9ecf2; --sheet:#f7f9fc; --sheet-2:#eef1f6; --grid:#d7dde8; --grid-major:#c6cede;
+    --rule:#c2cad8; --rule-soft:#d5dbe6; --ink:#12161f; --ink-2:#4c5666; --ink-3:#7b8698;
+    --catalog:#0f6f66; --commerce:#a1541e; --membership:#3d51a2; --platform:#56606f;
+    --infra:#6b4e8d; --alert:#b23c36;
+    --shadow: 0 1px 0 rgba(18,22,31,.05), 0 2px 8px rgba(18,22,31,.06);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 13px;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+    height: 100vh;
+  }
+
+  .shell { display: grid; grid-template-columns: 264px 1fr; height: 100vh; }
+
+  /* ── rail ─────────────────────────────────────────── */
+  .rail {
+    border-right: 1px solid var(--rule);
+    background: var(--sheet);
+    display: flex; flex-direction: column;
+    overflow-y: auto;
+    z-index: 3;
+  }
+  .rail-head { padding: 18px 18px 16px; border-bottom: 1px solid var(--rule); }
+  .mark {
+    display: flex; align-items: baseline; gap: 8px;
+    font-family: var(--sans); font-weight: 640; font-size: 15px;
+    letter-spacing: -.01em; margin: 0 0 2px;
+  }
+  .mark span { width: 8px; height: 8px; background: var(--commerce); display: inline-block; }
+  .sub { color: var(--ink-3); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; }
+  .rail-sec { padding: 16px 18px; border-bottom: 1px solid var(--rule-soft); }
+  .sec-label {
+    font-size: 9.5px; letter-spacing: .13em; text-transform: uppercase;
+    color: var(--ink-3); margin: 0 0 10px;
+  }
+
+  .tabs { display: flex; flex-direction: column; gap: 2px; }
+  .tab {
+    display: flex; align-items: baseline; gap: 9px;
+    padding: 8px 10px; background: none; border: 1px solid transparent;
+    color: var(--ink-2); font-family: var(--mono); font-size: 12.5px;
+    text-align: left; cursor: pointer; border-radius: 2px; width: 100%;
+  }
+  .tab:hover { background: var(--sheet-2); color: var(--ink); }
+  .tab[aria-selected="true"] { background: var(--sheet-2); border-color: var(--rule); color: var(--ink); }
+  .tab b { font-weight: 600; }
+  .tab i { font-style: normal; color: var(--ink-3); font-size: 10px; letter-spacing: .08em; min-width: 12px; }
+  .tab[aria-selected="true"] i { color: var(--commerce); }
+  .tab em { font-style: normal; color: var(--ink-3); font-size: 10.5px; margin-left: auto; }
+
+  .legend { display: flex; flex-direction: column; gap: 7px; }
+  .lg { display: flex; align-items: center; gap: 9px; font-size: 11.5px; color: var(--ink-2); }
+  .lg .sw { width: 20px; height: 11px; border: 1px solid var(--rule); background: var(--sheet-2); flex: none; position: relative; }
+  .lg .sw::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 3px; background: var(--c); }
+  .lg .sw.dashed { border-style: dashed; opacity: .7; }
+  .lg .sw.dashed::before { opacity: .5; }
+
+  .facts { display: flex; flex-direction: column; gap: 0; }
+  .fact {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 10px;
+    padding: 6px 0; border-bottom: 1px dotted var(--rule-soft); font-size: 11.5px;
+  }
+  .fact:last-child { border-bottom: none; }
+  .fact span { color: var(--ink-3); }
+  .fact b { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .fact b.warn { color: var(--alert); }
+
+  .gaps { display: flex; flex-direction: column; gap: 9px; }
+  .gap { display: flex; gap: 9px; font-size: 11.5px; line-height: 1.45; color: var(--ink-2); }
+  .gap::before { content: "!"; color: var(--alert); font-weight: 700; flex: none; width: 10px; }
+
+  .rail-foot { margin-top: auto; padding: 14px 18px; color: var(--ink-3); font-size: 10.5px; line-height: 1.6; }
+
+  /* ── canvas ───────────────────────────────────────── */
+  .stage { position: relative; overflow: hidden; background: var(--paper); }
+  .viewport {
+    position: absolute; inset: 0; cursor: grab;
+    background-image:
+      linear-gradient(to right, var(--grid) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid) 1px, transparent 1px),
+      linear-gradient(to right, var(--grid-major) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-major) 1px, transparent 1px);
+  }
+  .viewport.grabbing { cursor: grabbing; }
+  .world { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
+
+  svg.wires { position: absolute; top: 0; left: 0; overflow: visible; pointer-events: none; }
+  svg.wires path { fill: none; stroke: var(--ink-3); stroke-width: 1.25; opacity: .55; }
+  svg.wires path.dashed { stroke-dasharray: 5 4; }
+  svg.wires path.alert { stroke: var(--alert); opacity: .8; }
+  svg.wires .cap { fill: var(--ink-3); opacity: .55; }
+  svg.wires .cap.alert { fill: var(--alert); opacity: .8; }
+  .world.focus svg.wires path, .world.focus svg.wires .cap { opacity: .12; }
+  .world.focus svg.wires path.hot { opacity: 1; stroke: var(--ink); stroke-width: 1.75; }
+  .world.focus svg.wires .cap.hot { opacity: 1; fill: var(--ink); }
+
+  .elabel {
+    position: absolute; transform: translate(-50%, -50%);
+    background: var(--paper); padding: 1px 5px; font-size: 9.5px; letter-spacing: .04em;
+    color: var(--ink-3); white-space: nowrap; border: 1px solid var(--rule-soft); border-radius: 2px;
+  }
+  .world.focus .elabel { opacity: .15; }
+  .world.focus .elabel.hot { opacity: 1; color: var(--ink); border-color: var(--rule); }
+
+  .zone {
+    position: absolute; border: 1px solid var(--c); border-radius: 3px;
+    background: color-mix(in srgb, var(--c) 4%, transparent);
+    opacity: .55; pointer-events: none;
+  }
+  .zone-tag {
+    position: absolute; font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--c); pointer-events: none; font-weight: 600;
+  }
+
+  .node {
+    position: absolute; background: var(--sheet); border: 1px solid var(--rule);
+    border-left: 3px solid var(--c); border-radius: 2px; box-shadow: var(--shadow);
+    padding: 9px 11px 9px 12px; cursor: pointer; text-align: left;
+    font-family: var(--mono); color: var(--ink); overflow: hidden;
+    display: flex; flex-direction: column; gap: 3px; justify-content: center;
+  }
+  .node:hover { border-color: var(--c); }
+  .node:focus-visible { outline: 2px solid var(--c); outline-offset: 2px; }
+  .node.ghost { border-style: dashed; background: var(--sheet-2); }
+  .node.ghost .n-title { color: var(--ink-2); }
+  .node.alarm { border-color: var(--alert); border-left-color: var(--alert); }
+  .world.focus .node { opacity: .28; }
+  .world.focus .node.hot { opacity: 1; }
+  .world.focus .node.sel { opacity: 1; border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+
+  .n-title { font-size: 12.5px; font-weight: 600; letter-spacing: -.01em; line-height: 1.25; }
+  .n-sub { font-size: 10.5px; color: var(--ink-3); line-height: 1.35; }
+  .n-meta { display: flex; gap: 8px; font-size: 9.5px; color: var(--ink-3); letter-spacing: .04em; font-variant-numeric: tabular-nums; }
+  .n-chip {
+    position: absolute; top: 7px; right: 8px; font-size: 8.5px; letter-spacing: .09em;
+    text-transform: uppercase; color: var(--alert); border: 1px solid var(--alert);
+    padding: 0 4px; border-radius: 2px; line-height: 1.5;
+  }
+  .n-step {
+    position: absolute; top: 7px; right: 8px; font-size: 9.5px; color: var(--ink-3);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── controls ─────────────────────────────────────── */
+  .hud {
+    position: absolute; bottom: 16px; left: 16px; display: flex; gap: 6px; align-items: center;
+    background: var(--sheet); border: 1px solid var(--rule); border-radius: 3px; padding: 4px;
+    box-shadow: var(--shadow); z-index: 4;
+  }
+  .hud button {
+    background: none; border: none; color: var(--ink-2); font-family: var(--mono); font-size: 12px;
+    padding: 4px 9px; cursor: pointer; border-radius: 2px; min-width: 28px;
+  }
+  .hud button:hover { background: var(--sheet-2); color: var(--ink); }
+  .hud button:focus-visible { outline: 2px solid var(--commerce); outline-offset: -2px; }
+  .hud .pct { color: var(--ink-3); font-size: 10.5px; min-width: 42px; text-align: center; font-variant-numeric: tabular-nums; }
+  .hud .div { width: 1px; height: 16px; background: var(--rule); }
+
+  .caption {
+    position: absolute; top: 16px; left: 16px; max-width: 460px; z-index: 4;
+    background: var(--sheet); border: 1px solid var(--rule); border-radius: 3px;
+    padding: 11px 14px; box-shadow: var(--shadow);
+  }
+  .caption h2 { margin: 0 0 4px; font-family: var(--sans); font-size: 14px; font-weight: 640; letter-spacing: -.01em; }
+  .caption p { margin: 0; font-size: 11.5px; line-height: 1.55; color: var(--ink-2); }
+
+  /* ── inspector ────────────────────────────────────── */
+  .inspector {
+    position: absolute; top: 0; right: 0; bottom: 0; width: 348px; z-index: 5;
+    background: var(--sheet); border-left: 1px solid var(--rule);
+    transform: translateX(100%); transition: transform .18s cubic-bezier(.3,.7,.3,1);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  .inspector.open { transform: translateX(0); }
+  @media (prefers-reduced-motion: reduce) { .inspector { transition: none; } }
+  .i-head { padding: 16px 18px 14px; border-bottom: 1px solid var(--rule); position: relative; }
+  .i-kind { font-size: 9.5px; letter-spacing: .13em; text-transform: uppercase; color: var(--c); margin-bottom: 6px; font-weight: 600; }
+  .i-head h3 { margin: 0 0 4px; font-family: var(--sans); font-size: 17px; font-weight: 640; letter-spacing: -.015em; }
+  .i-path { font-size: 11px; color: var(--ink-3); word-break: break-all; }
+  .i-close {
+    position: absolute; top: 12px; right: 12px; background: none; border: 1px solid var(--rule);
+    color: var(--ink-3); width: 24px; height: 24px; border-radius: 2px; cursor: pointer; line-height: 1;
+    font-family: var(--mono); font-size: 13px;
+  }
+  .i-close:hover { color: var(--ink); border-color: var(--ink-3); }
+  .i-body { overflow-y: auto; padding: 0 0 24px; }
+  .i-sec { padding: 14px 18px; border-bottom: 1px solid var(--rule-soft); }
+  .i-sec:last-child { border-bottom: none; }
+  .i-sec h4 { margin: 0 0 9px; font-size: 9.5px; letter-spacing: .13em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+  .i-sec p { margin: 0 0 8px; font-size: 12px; line-height: 1.6; color: var(--ink-2); }
+  .i-sec p:last-child { margin-bottom: 0; }
+  .i-sec p b { color: var(--ink); font-weight: 600; }
+  .kv { display: grid; grid-template-columns: auto 1fr; gap: 5px 14px; font-size: 11.5px; }
+  .kv dt { color: var(--ink-3); }
+  .kv dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+  .kv dd.warn { color: var(--alert); }
+  .rt { display: flex; flex-direction: column; gap: 4px; }
+  .rt-row { display: flex; align-items: baseline; gap: 8px; font-size: 11px; line-height: 1.5; }
+  .verb {
+    flex: none; width: 46px; font-size: 9px; letter-spacing: .06em; font-weight: 700;
+    padding: 1px 0; text-align: center; border-radius: 2px; border: 1px solid currentColor;
+  }
+  .verb.GET { color: var(--catalog); }
+  .verb.POST { color: var(--membership); }
+  .verb.PATCH, .verb.PUT { color: var(--commerce); }
+  .verb.DELETE { color: var(--alert); }
+  .rt-row code { color: var(--ink); word-break: break-all; }
+  .rt-row em { font-style: normal; margin-left: auto; color: var(--ink-3); font-size: 9.5px; letter-spacing: .05em; white-space: nowrap; }
+  .tags { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tag {
+    font-size: 10.5px; padding: 2px 7px; border: 1px solid var(--rule);
+    border-radius: 2px; color: var(--ink-2); background: var(--sheet-2); cursor: pointer;
+  }
+  .tag:hover { border-color: var(--ink-3); color: var(--ink); }
+  .tag.flat { cursor: default; }
+  .note {
+    font-size: 11.5px; line-height: 1.6; color: var(--ink-2);
+    border-left: 2px solid var(--alert); padding-left: 11px;
+  }
+
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; }
+    .rail { display: none; }
+    .inspector { width: 100%; }
+  }
+</style>
+
+<div class="shell">
+  <aside class="rail">
+    <div class="rail-head">
+      <div class="mark"><span></span>Telegram Marketplace</div>
+      <div class="sub">Architecture canvas · core/</div>
+    </div>
+
+    <div class="rail-sec">
+      <p class="sec-label">Sheets</p>
+      <div class="tabs" role="tablist" id="tabs"></div>
+    </div>
+
+    <div class="rail-sec">
+      <p class="sec-label">Bounded contexts</p>
+      <div class="legend">
+        <div class="lg"><i class="sw" style="--c:var(--catalog)"></i>catalog — 7 modules</div>
+        <div class="lg"><i class="sw" style="--c:var(--commerce)"></i>commerce — 4 wired, 1 empty</div>
+        <div class="lg"><i class="sw" style="--c:var(--membership)"></i>membership — 5 wired, 4 empty</div>
+        <div class="lg"><i class="sw" style="--c:var(--platform)"></i>app / cmd / pkg</div>
+        <div class="lg"><i class="sw" style="--c:var(--infra)"></i>infrastructure &amp; external</div>
+        <div class="lg"><i class="sw dashed" style="--c:var(--platform)"></i>scaffold or not wired</div>
+      </div>
+    </div>
+
+    <div class="rail-sec">
+      <p class="sec-label">Census</p>
+      <div class="facts">
+        <div class="fact"><span>Go files</span><b>141</b></div>
+        <div class="fact"><span>Module directories</span><b>22</b></div>
+        <div class="fact"><span>Wired into router</span><b>16</b></div>
+        <div class="fact"><span>HTTP routes</span><b>86</b></div>
+        <div class="fact"><span>Postgres tables</span><b>24</b></div>
+        <div class="fact"><span>Payment gateways</span><b>1</b></div>
+        <div class="fact"><span>Empty module dirs</span><b class="warn">5</b></div>
+      </div>
+    </div>
+
+    <div class="rail-sec">
+      <p class="sec-label">What the code doesn't do yet</p>
+      <div class="gaps">
+        <div class="gap">Paid orders trigger no fulfilment — nothing hands over inventory items, files, or delivery messages.</div>
+        <div class="gap">Nothing credits <b>wallets</b> on payment success; it is admin-adjust only.</div>
+        <div class="gap"><b>cmd/bot</b> wires every service, then returns nil from both start modes.</div>
+        <div class="gap"><b>settings</b> has six files and is absent from Wire() and the router.</div>
+        <div class="gap">Redis is provisioned in compose and imported nowhere.</div>
+      </div>
+    </div>
+
+    <div class="rail-foot">
+      Read from source at <code>2b78038</code>.<br>
+      Drag to pan · scroll to zoom · click any block.
+    </div>
+  </aside>
+
+  <main class="stage">
+    <div class="viewport" id="viewport">
+      <div class="world" id="world">
+        <svg class="wires" id="wires"></svg>
+        <div id="layer"></div>
+      </div>
+    </div>
+
+    <div class="caption">
+      <h2 id="capTitle"></h2>
+      <p id="capText"></p>
+    </div>
+
+    <div class="hud">
+      <button id="zOut" title="Zoom out">−</button>
+      <span class="pct" id="zPct">100%</span>
+      <button id="zIn" title="Zoom in">+</button>
+      <span class="div"></span>
+      <button id="zFit">fit</button>
+      <span class="div"></span>
+      <button id="themeBtn" title="Toggle theme">◐</button>
+    </div>
+
+    <aside class="inspector" id="inspector" aria-live="polite">
+      <div class="i-head">
+        <div class="i-kind" id="iKind"></div>
+        <h3 id="iTitle"></h3>
+        <div class="i-path" id="iPath"></div>
+        <button class="i-close" id="iClose" aria-label="Close details">×</button>
+      </div>
+      <div class="i-body" id="iBody"></div>
+    </aside>
+  </main>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const C = { catalog: "var(--catalog)", commerce: "var(--commerce)", membership: "var(--membership)",
+              platform: "var(--platform)", infra: "var(--infra)", alert: "var(--alert)" };
+
+  // Route tables, transcribed from each module's router/routes.go
+  const R = {
+    apis: [["GET","/api","any"],["GET","/api/:id","any"],["POST","/api","admin"],["PATCH","/api/:id","admin"],["DELETE","/api/:id","admin"]],
+    bundles: [["GET","/bundle","any"],["GET","/bundle/:id","any"],["POST","/bundle","admin"],["PATCH","/bundle/:id","admin"],["DELETE","/bundle/:id","admin"]],
+    categories: [["GET","/category","any"],["GET","/category/:id","any"],["POST","/category","admin"],["PATCH","/category/reorder","admin"],["PATCH","/category/:id","admin"],["POST","/category/:id/icon","admin"],["DELETE","/category/:id","admin"]],
+    files: [["GET","/file","any"],["GET","/file/:id","any"],["POST","/file","admin"],["DELETE","/file/:id","admin"]],
+    inventory: [["GET","/inventory","any"],["GET","/inventory/:id","any"],["GET","/inventory/:id/item","any"],["POST","/inventory","admin"],["PATCH","/inventory/:id","admin"],["DELETE","/inventory/:id","admin"],["POST","/inventory/:id/item","admin"],["DELETE","/inventory/:id/item/:itemId","admin"]],
+    messages: [["GET","/message","any"],["GET","/message/:id","any"],["POST","/message","admin"],["PATCH","/message/:id","admin"],["DELETE","/message/:id","admin"]],
+    products: [["GET","/product","any"],["GET","/product/:id","any"],["POST","/product","admin"],["PATCH","/product/:id","admin"],["DELETE","/product/:id","admin"]],
+    coupons: [["POST","/coupon/validate","tma"],["POST","/coupon","admin"],["GET","/coupon","admin"],["GET","/coupon/:id","admin"],["PATCH","/coupon/:id","admin"],["DELETE","/coupon/:id","admin"]],
+    orders: [["POST","/order","tma"],["GET","/order","tma"],["GET","/order/:id","tma"],["GET","/order/all","admin"],["PATCH","/order/:id/status","admin"]],
+    payments: [["POST","/payment/verify/:provider","open"],["POST","/payment/create","tma"],["GET","/payment/:id","tma"],["GET","/payment/gateways","tma"],["GET","/payment/all","admin"]],
+    wallets: [["GET","/wallet/balance","tma"],["GET","/wallet/transactions","tma"],["GET","/wallet/users/:id/balance","admin"],["GET","/wallet/users/:id/transactions","admin"],["POST","/wallet/adjust","admin"]],
+    admins: [["POST","/admin","admin"],["GET","/admin","admin"],["GET","/admin/:id","admin"],["PUT","/admin/:id","admin"],["DELETE","/admin/:id","admin"]],
+    auth: [["POST","/auth/login","open"],["POST","/auth/refresh","open"]],
+    tickets: [["POST","/ticket","tma"],["GET","/ticket/:id","tma"],["GET","/ticket/:id/messages","tma"],["POST","/ticket/:id/messages","any"],["GET","/ticket","any"],["PATCH","/ticket/:id","admin"],["DELETE","/ticket/:id","admin"]],
+    tcats: [["GET","/ticket/category","any"],["POST","/ticket/category","admin"],["PATCH","/ticket/category/:id","admin"],["DELETE","/ticket/category/:id","admin"]],
+    vip: [["GET","/vip/plan","any"],["GET","/vip/plan/:id","any"],["POST","/vip/plan","admin"],["PATCH","/vip/plan/:id","admin"],["DELETE","/vip/plan/:id","admin"]]
+  };
+
+  const D = {}; // detail records, keyed by node id
+
+  const mod = (id, o) => (D[id] = Object.assign({ kind: "Domain module", layers: "model · repository · router" }, o));
+
+  mod("files",      { path:"internal/core/catalog/files", files:7, loc:420, deps:["bundles/repository","pkg/storage"], usedBy:["bundles","products"], routes:R.files, ctor:"files.NewService(fileRepo, productFilesStore, bundleRepo)", note:"Uploads land in the product-files bucket through pkg/storage; the bundle repo is consulted to keep bundle membership consistent." });
+  mod("messages",   { path:"internal/core/catalog/messages", files:7, loc:441, deps:["bundles/repository"], usedBy:["bundles","products"], routes:R.messages, ctor:"messages.NewService(msgRepo, bundleRepo)", note:"Delivery messages — the text a buyer receives. Nothing sends them yet." });
+  mod("inventory",  { path:"internal/core/catalog/inventory", files:7, loc:685, deps:["bundles/repository"], usedBy:["bundles","products"], routes:R.inventory, ctor:"inventory.NewService(invRepo, bundleRepo)", note:"Owns inventories and inventory_items. Items are added and deleted by admins; no code path consumes one on purchase." });
+  mod("bundles",    { path:"internal/core/catalog/bundles", files:7, loc:588, deps:["files/repository","messages/repository","inventory/repository"], usedBy:["files","messages","inventory","products"], routes:R.bundles, ctor:"bundles.NewService(bundleRepo, fileRepo, msgRepo, invRepo)", note:"The hub of the catalog: a bundle groups files, delivery messages and inventory into one deliverable." });
+  mod("apis",       { path:"internal/core/catalog/apis", files:7, loc:596, deps:[], usedBy:["products"], routes:R.apis, ctor:"apis.NewService(apiRepo)", note:"External API-backed products. jsonpath is a direct dependency, so responses are addressed by expression." });
+  mod("categories", { path:"internal/core/catalog/categories", files:7, loc:626, deps:["pkg/storage"], usedBy:[], routes:R.categories, ctor:"categories.NewService(categoryRepo, categoryIconsStore)", note:"Only module besides files that touches object storage — icons go to their own bucket. Supports explicit reordering." });
+  mod("products",   { path:"internal/core/catalog/products", files:7, loc:785, deps:["apis/repository","bundles/repository","files/repository","messages/repository","inventory/repository"], usedBy:["orders"], routes:R.products, ctor:"products.NewService(productRepo, fileRepo, msgRepo, invRepo, bundleRepo, apiRepo)", note:"Six repositories in one constructor — the widest fan-out in the codebase and the first place to feel a schema change." });
+
+  mod("coupons",    { path:"internal/core/commerce/coupons", files:7, loc:741, deps:[], usedBy:["orders"], routes:R.coupons, ctor:"coupons.NewService(couponsRepo)", note:"Validate() and CalculateDiscount() live on the model, so orders can apply a coupon without going through this service." });
+  mod("orders",     { path:"internal/core/commerce/orders", files:7, loc:682, deps:["products/repository","coupons/repository","users/repository"], usedBy:["payments"], routes:R.orders, ctor:"orders.NewService(ordersRepo, productRepo, couponsRepo, userRepo)", note:"Single product per order. Amount is computed server-side as price × quantity minus discount; status starts at pending. Coupon usage is incremented at order creation, before any money moves." });
+  mod("payments",   { path:"internal/core/commerce/payments", files:9, loc:911, deps:["orders/repository","provider/"], usedBy:[], routes:R.payments, layers:"model · provider · repository · router", ctor:"payments.NewService(paymentsRepo, ordersRepo, gatewayRegistry)", note:"Holds GatewayRegistry, a mutex-guarded map of provider.Provider. Zarinpal registers only when ZARINPAL_MERCHANT_ID is set, so /payment/gateways can legitimately return an empty list." });
+  mod("wallets",    { path:"internal/core/commerce/wallets", files:7, loc:543, deps:["users/repository","*pgxpool.Pool"], usedBy:[], routes:R.wallets, ctor:"wallets.NewService(walletTxRepo, userRepo, db)", note:"The only service handed the raw connection pool — it needs its own transactions to move a balance and write the ledger row atomically." });
+  mod("refunds",    { path:"internal/core/commerce/refunds", files:0, loc:0, deps:[], usedBy:[], routes:[], stub:true, note:"Empty directory. Payment refunds are not implemented." });
+
+  mod("users",      { path:"internal/core/membership/users", files:7, loc:633, deps:["pkg/pgconv"], usedBy:["orders","wallets","tickets"], routes:[["POST","/user","tma"],["GET","/user/t/:id","tma"],["GET","/user","admin"],["GET","/user/:id","admin"],["PATCH","/user/:id","admin"],["PATCH","/user/:id/ban","admin"],["DELETE","/user/:id","admin"]], ctor:"users.NewService(userRepo)", note:"The Telegram ID to UUID bridge. Every buyer-facing service starts with GetByTelegramID, because guards only put the Telegram ID on the context." });
+  mod("admins",     { path:"internal/core/membership/admins", files:7, loc:427, deps:[], usedBy:["auth"], routes:R.admins, ctor:"admins.NewService(adminRepo)", note:"Seeded at boot from ADMIN_SEED_USERNAME / ADMIN_SEED_PASSWORD. Passwords hash with golang.org/x/crypto." });
+  mod("auth",       { path:"internal/core/membership/auth", files:4, loc:215, deps:["admins/repository"], usedBy:["middleware.Auth"], routes:R.auth, layers:"router only", ctor:"auth.NewService(adminRepo, cfg.JWTSecret)", note:"The one module whose service is exported through router.Handlers as well as its handler — middleware.Auth needs it to verify Bearer tokens." });
+  mod("tickets",    { path:"internal/core/membership/tickets", files:7, loc:1017, deps:["ticket-categories/repository","users (service)"], usedBy:[], routes:R.tickets, ctor:"tickets.NewService(ticketRepo, userService, ticketCategoryRepo)", note:"Largest module, and the only one that takes another module's Service rather than its Repository. Also absorbs ticket_messages, which is why the ticket-messages directory is empty." });
+  mod("tcats",      { path:"internal/core/membership/ticket-categories", files:7, loc:477, deps:[], usedBy:["tickets"], routes:R.tcats, ctor:"ticketcategories.NewService(ticketCategoryRepo)", note:"Seeded at boot by database.SeedTicketCategories." });
+  mod("vip",        { path:"internal/core/membership/vip", files:7, loc:0, deps:[], usedBy:[], routes:R.vip, ctor:"vip.NewService(vipPlanRepo)", note:"VIP plan CRUD (title, price, duration days, active/inactive). Subscriptions and user plan sync are not wired yet." });
+  mod("referrals",  { path:"internal/core/membership/referrals", files:0, loc:0, deps:[], usedBy:[], routes:[], stub:true, note:"Empty directory; the referrals table exists in the migration." });
+  mod("broadcasts", { path:"internal/core/membership/broadcasts", files:0, loc:0, deps:[], usedBy:[], routes:[], stub:true, note:"Empty directory; the broadcasts table exists with sent/failed counters." });
+  mod("tmsgs",      { path:"internal/core/membership/ticket-messages", files:0, loc:0, deps:[], usedBy:[], routes:[], stub:true, note:"Empty by design — ticket messages are served from the tickets module at /ticket/:id/messages." });
+  mod("settings",   { path:"internal/core/settings", files:6, loc:22, deps:[], usedBy:[], routes:[], orphan:true, layers:"flat — no model/repository/router split", ctor:"— not called", note:"Six files totalling 22 lines, and the only core package with a flat layout. It appears in neither dependencies.Wire nor router.New, so none of it is reachable at runtime." });
+
+  Object.assign(D, {
+    shopper:    { kind:"Person", title:"Shopper", path:"Telegram user", note:"Authenticates by the initData string Telegram signs. Never sees a password." },
+    operator:   { kind:"Person", title:"Store operator", path:"Admin account", note:"Signs in at /auth/login and carries a JWT. Seeded at first boot." },
+    miniapp:    { kind:"Client", path:"miniapp/", note:"React + Vite mini app served inside Telegram. Sends Authorization: tma <initData> on every call.", kv:{ Framework:"React + Vite", Auth:"tma initData" } },
+    tgchat:     { kind:"Client", path:"Telegram chat", note:"The bot conversation. The process behind it is wired but inert." },
+    backoffice: { kind:"Client", path:"backoffice/", note:"React + Vite admin console. Holds a Bearer JWT from /auth/login and refreshes it at /auth/refresh.", kv:{ Framework:"React + Vite", Auth:"Bearer JWT" } },
+    api:        { kind:"Process", path:"core/cmd/api", note:"config.Load() then boot.Start(cfg): connect, migrate, seed admin, seed ticket categories, Wire(), router.New(), server.Run(addr).", kv:{ Router:"gin v1.12", Driver:"pgx v5" } },
+    bot:        { kind:"Process", path:"core/cmd/bot", alarm:true, note:"Loads config, connects, calls the same dependencies.Wire() and holds every service — then StartPolling and StartWebhook both return nil with a TODO. The process starts and immediately exits.", kv:{ Status:"scaffold" } },
+    appl:       { kind:"Composition root", path:"core/internal/app", note:"boot · config · database · dependencies · middleware · router · server. Wire() builds 16 repository→service→handler chains in one function and returns router.Handlers.", kv:{ Handlers:"16", Packages:"7" } },
+    corel:      { kind:"Domain layer", path:"core/internal/core", note:"Three bounded contexts and a stray settings package. Every wired module repeats model / repository / router around a service and a handler.", kv:{ Contexts:"3", Modules:"22", Wired:"16" } },
+    pkgl:       { kind:"Shared kit", path:"core/pkg", note:"pagination (params, offset, envelope), storage (S3/MinIO behind a Storage interface), pgconv (pgtype helpers), util. Imports nothing from internal.", kv:{ Packages:"4" } },
+    pg:         { kind:"Datastore", path:"postgres:16", note:"24 tables, migrated in-process at boot by database.Migrate. Every repository is a PostgresRepository over pgxpool.", kv:{ Tables:"24", Migration:"in-process" } },
+    minio:      { kind:"Object storage", path:"minio", note:"Two buckets created on start: category icons and product files. Reached through the AWS S3 SDK, so a real S3 endpoint drops in unchanged.", kv:{ Buckets:"2" } },
+    redis:      { kind:"Provisioned, unused", path:"redis", alarm:true, note:"A service and a named volume in docker-compose. No Go file imports a Redis client.", kv:{ References:"0" } },
+    zarinpal:   { kind:"External gateway", path:"payments/provider/zarinpal.go", note:"The only implementation of provider.Provider. Registered at wiring time only when ZARINPAL_MERCHANT_ID is non-empty, sandbox toggled by config.", kv:{ Methods:"4" } },
+
+    l_client:   { kind:"Layer 1", path:"miniapp / backoffice", note:"Authorization: tma <initData> from the mini app, Bearer <jwt> from the console." },
+    l_main:     { kind:"Layer 2", path:"cmd/api/main.go", note:"config.Load() reads .env through godotenv, then boot.Start(cfg)." },
+    l_db:       { kind:"Layer 3", path:"internal/app/database", note:"Connect, Migrate, SeedAdmin, SeedTicketCategories — all before the server binds. seed_markers keeps seeding idempotent." },
+    l_wire:     { kind:"Layer 4", path:"internal/app/dependencies", note:"One function, 16 module blocks, returns router.Handlers. Adding a module means a block here, a field on Handlers, and a mount in router.New." },
+    l_engine:   { kind:"Layer 5", path:"internal/app/router", note:"gin.New with Logger and Recovery. GET /health answers before any auth." },
+    l_v1:       { kind:"Layer 6", path:"router.New → /api/v1", note:"authrouter mounts first and stays public — it is what issues the tokens." },
+    l_auth:     { kind:"Layer 7", path:"internal/app/middleware/auth.go", alarm:false, note:"One middleware, two schemes: a tma header is HMAC-verified against the bot token; a Bearer header is parsed as a JWT via auth.Service. Whichever succeeds puts its identity on the gin context." },
+    l_guard:    { kind:"Layer 8", path:"internal/app/middleware/guards.go", note:"RequireTelegram, RequireAdmin, RequireAny — applied per sub-group inside each module's RegisterRoutes, so the guard sits next to the route it protects." },
+    l_route:    { kind:"Layer 9", path:"<module>/router/routes.go", note:"16 RegisterRoutes calls. Each opens a group, then splits it into public / tma / admin sub-groups." },
+    l_handler:  { kind:"Layer 10", path:"<module>/handler.go", note:"Binds the DTO, pulls the identity off the context, calls the service, maps sentinel errors to status codes." },
+    l_service:  { kind:"Layer 11", path:"<module>/service.go", note:"Where the rules live — and where cross-module calls happen, by importing another module's repository package directly." },
+    l_repo:     { kind:"Layer 12", path:"<module>/repository", note:"An interface plus PostgresRepository, with SQL kept in queries.go. Each package exports its own ErrNotFound." },
+    l_store:    { kind:"Layer 13", path:"postgres · minio", note:"pgxpool for data, the S3 SDK for blobs." },
+
+    f_gap:      { kind:"Gap", title:"Flow ends here", path:"no fulfilment step exists", alarm:true, note:"Once the order reads paid, nothing else runs. No inventory item is claimed, no file or delivery message is released, no wallet ledger row is written, and no Telegram message is sent — the bot handler that would send it is still a stub." }
+  });
+
+  // ── sheets ────────────────────────────────────────────
+  const N = (id, x, y, w, h, title, sub, group, extra) =>
+    Object.assign({ id, x, y, w, h, title, sub, group }, extra);
+
+  const SHEETS = {
+    system: {
+      label: "System",
+      idx: "01",
+      title: "System & containers",
+      text: "Two Go processes, three browser-side clients, one database. Both processes call the same dependencies.Wire(), so the bot already holds every service it would need.",
+      count: "14",
+      zones: [
+        { x: 24, y: 24, w: 226, h: 452, c: C.platform, tag: "People" },
+        { x: 274, y: 24, w: 246, h: 452, c: C.platform, tag: "Clients" },
+        { x: 544, y: 24, w: 286, h: 452, c: C.platform, tag: "Processes · core/cmd" },
+        { x: 854, y: 24, w: 286, h: 452, c: C.platform, tag: "core/internal · core/pkg" },
+        { x: 1164, y: 24, w: 226, h: 596, c: C.infra, tag: "Infrastructure" }
+      ],
+      nodes: [
+        N("shopper", 48, 140, 178, 62, "Shopper", "Telegram user", C.platform),
+        N("operator", 48, 320, 178, 62, "Store operator", "seeded admin", C.platform),
+        N("miniapp", 298, 80, 198, 62, "miniapp/", "React + Vite", C.platform),
+        N("tgchat", 298, 220, 198, 62, "Telegram chat", "bot conversation", C.platform, { ghost: true }),
+        N("backoffice", 298, 360, 198, 62, "backoffice/", "React + Vite", C.platform),
+        N("api", 568, 140, 238, 62, "cmd/api", "gin · :8080", C.platform),
+        N("bot", 568, 320, 238, 62, "cmd/bot", "polling / webhook", C.platform, { ghost: true, chip: "todo" }),
+        N("appl", 878, 70, 238, 62, "internal/app", "wire · router · middleware", C.platform),
+        N("corel", 878, 210, 238, 62, "internal/core", "22 modules · 16 wired", C.platform),
+        N("pkgl", 878, 350, 238, 62, "pkg", "storage · pagination", C.platform),
+        N("pg", 1188, 70, 178, 62, "postgres", "24 tables", C.infra),
+        N("minio", 1188, 200, 178, 62, "minio / s3", "2 buckets", C.infra),
+        N("redis", 1188, 330, 178, 62, "redis", "unused", C.infra, { ghost: true, chip: "0 refs" }),
+        N("zarinpal", 1188, 500, 178, 62, "zarinpal", "payment gateway", C.infra)
+      ],
+      edges: [
+        ["shopper", "miniapp"], ["shopper", "tgchat"], ["operator", "backoffice"],
+        ["miniapp", "api", "tma initData"], ["backoffice", "api", "Bearer JWT"],
+        ["tgchat", "bot", "", "dashed"], ["api", "appl"], ["bot", "appl", "same Wire()", "dashed"],
+        ["appl", "corel"], ["corel", "pkgl"],
+        ["corel", "pg", "pgx"], ["pkgl", "minio", "s3 sdk"], ["corel", "zarinpal", "provider"]
+      ]
+    },
+
+    modules: {
+      label: "Modules",
+      idx: "02",
+      title: "Modules & real dependencies",
+      text: "Every arrow is an import found in the source. Cross-module calls go service → foreign repository package, never service → service — which is how bundles and files depend on each other without a compile cycle. tickets is the one exception.",
+      count: "22",
+      zones: [
+        { x: 24, y: 60, w: 716, h: 424, c: C.catalog, tag: "catalog" },
+        { x: 776, y: 60, w: 464, h: 424, c: C.commerce, tag: "commerce" },
+        { x: 24, y: 556, w: 1216, h: 248, c: C.membership, tag: "membership" }
+      ],
+      nodes: [
+        N("files", 48, 112, 196, 64, "files", "7 files · 420 loc", C.catalog),
+        N("messages", 48, 202, 196, 64, "messages", "7 files · 441 loc", C.catalog),
+        N("inventory", 48, 292, 196, 64, "inventory", "7 files · 685 loc", C.catalog),
+        N("categories", 48, 396, 196, 64, "categories", "7 files · 626 loc", C.catalog),
+        N("bundles", 288, 202, 196, 64, "bundles", "7 files · 588 loc", C.catalog),
+        N("apis", 288, 340, 196, 64, "apis", "7 files · 596 loc", C.catalog),
+        N("products", 524, 250, 196, 64, "products", "7 files · 785 loc", C.catalog),
+
+        N("coupons", 800, 112, 196, 64, "coupons", "7 files · 741 loc", C.commerce),
+        N("orders", 800, 244, 196, 64, "orders", "7 files · 682 loc", C.commerce),
+        N("payments", 1024, 244, 196, 64, "payments", "9 files · 911 loc", C.commerce),
+        N("wallets", 800, 376, 196, 64, "wallets", "7 files · 543 loc", C.commerce),
+        N("refunds", 1024, 376, 196, 64, "refunds", "empty directory", C.commerce, { ghost: true }),
+
+        N("settings", 1024, 504, 196, 64, "settings", "6 files · 22 loc", C.platform, { ghost: true, chip: "not wired", alarm: true }),
+
+        N("users", 48, 596, 196, 64, "users", "7 files · 633 loc", C.membership),
+        N("admins", 48, 700, 196, 64, "admins", "7 files · 427 loc", C.membership),
+        N("tcats", 288, 596, 196, 64, "ticket-categories", "7 files · 477 loc", C.membership),
+        N("auth", 288, 700, 196, 64, "auth", "4 files · 215 loc", C.membership),
+        N("tickets", 528, 596, 196, 64, "tickets", "7 files · 1017 loc", C.membership),
+        N("vip", 768, 596, 196, 64, "vip", "7 files · plans CRUD", C.membership),
+        N("referrals", 768, 700, 196, 64, "referrals", "empty directory", C.membership, { ghost: true }),
+        N("broadcasts", 1008, 596, 196, 64, "broadcasts", "empty directory", C.membership, { ghost: true }),
+        N("tmsgs", 1008, 700, 196, 64, "ticket-messages", "empty directory", C.membership, { ghost: true })
+      ],
+      edges: [
+        ["files", "bundles", "repo ↔", "", true],
+        ["messages", "bundles", "repo ↔", "", true],
+        ["inventory", "bundles", "repo ↔", "", true],
+        ["products", "bundles"], ["products", "files"], ["products", "messages"],
+        ["products", "inventory"], ["products", "apis"],
+        ["orders", "products"], ["orders", "coupons"], ["orders", "users"],
+        ["payments", "orders"], ["wallets", "users"],
+        ["auth", "admins"], ["tickets", "tcats"],
+        ["tickets", "users", "service ⚠", "dashed"]
+      ]
+    },
+
+    layers: {
+      label: "Request path",
+      idx: "03",
+      title: "One request, top to bottom",
+      text: "The vertical slice a POST /api/v1/order takes. Authentication happens once for the whole /api/v1 group; authorisation happens per route, inside the module that owns it.",
+      count: "13",
+      zones: [
+        { x: 130, y: 24, w: 620, h: 372, c: C.platform, tag: "Startup" },
+        { x: 130, y: 420, w: 620, h: 284, c: C.membership, tag: "Identity" },
+        { x: 130, y: 728, w: 620, h: 372, c: C.commerce, tag: "Per request" },
+        { x: 130, y: 1124, w: 620, h: 96, c: C.infra, tag: "State" }
+      ],
+      nodes: [
+        N("l_client", 158, 48, 564, 68, "Client", "tma <initData>  ·  Bearer <jwt>", C.platform),
+        N("l_main", 158, 136, 564, 68, "cmd/api · main()", "config.Load() → boot.Start(cfg)", C.platform),
+        N("l_db", 158, 224, 564, 68, "app/database", "Connect · Migrate · SeedAdmin · SeedTicketCategories", C.platform),
+        N("l_wire", 158, 312, 564, 68, "app/dependencies.Wire()", "16 × repository → service → handler", C.platform),
+        N("l_engine", 158, 444, 564, 68, "app/router.New()", "gin.New · Logger · Recovery · GET /health", C.membership),
+        N("l_v1", 158, 532, 564, 68, "group /api/v1", "authrouter mounts public: /auth/login · /auth/refresh", C.membership),
+        N("l_auth", 158, 620, 564, 68, "middleware.Auth(botToken, authService)", "HMAC initData  ·  or  ·  JWT claims", C.membership),
+        N("l_guard", 158, 752, 564, 68, "per-route guards", "RequireTelegram · RequireAdmin · RequireAny", C.commerce),
+        N("l_route", 158, 840, 564, 68, "<module>/router.RegisterRoutes", "16 groups · 86 routes", C.commerce),
+        N("l_handler", 158, 928, 564, 68, "Handler", "bind DTO · read identity · map errors", C.commerce),
+        N("l_service", 158, 1016, 564, 68, "Service", "rules · cross-module repository calls", C.commerce),
+        N("l_repo", 158, 1148, 564, 68, "repository.Repository → PostgresRepository", "queries.go · pgx v5 · package-local ErrNotFound", C.infra),
+        N("l_store", 158, 1252, 564, 68, "postgres · minio", "24 tables · 2 buckets", C.infra)
+      ],
+      edges: [
+        ["l_client", "l_main"], ["l_main", "l_db"], ["l_db", "l_wire"], ["l_wire", "l_engine"],
+        ["l_engine", "l_v1"], ["l_v1", "l_auth"], ["l_auth", "l_guard"], ["l_guard", "l_route"],
+        ["l_route", "l_handler"], ["l_handler", "l_service"], ["l_service", "l_repo"], ["l_repo", "l_store"]
+      ]
+    },
+
+    flows: {
+      label: "Money flows",
+      idx: "04",
+      title: "Order → payment → callback",
+      text: "The three sequences that move money, step by step as the services actually call each other. The last block is the one that isn't written yet.",
+      count: "3",
+      zones: [
+        { x: 24, y: 44, w: 1936, h: 152, c: C.commerce, tag: "A · create order — POST /api/v1/order" },
+        { x: 24, y: 260, w: 1696, h: 152, c: C.commerce, tag: "B · start payment — POST /api/v1/payment/create" },
+        { x: 24, y: 476, w: 1696, h: 152, c: C.infra, tag: "C · gateway callback — POST /api/v1/payment/verify/:provider" }
+      ],
+      nodes: [
+        N("a1", 48, 84, 220, 72, "POST /order", "guard: RequireTelegram", C.commerce, { step: 1 }),
+        N("a2", 288, 84, 220, 72, "orders.Handler.Create", "bind CreateRequest", C.commerce, { step: 2 }),
+        N("a3", 528, 84, 220, 72, "users.Repo", "GetByTelegramID → uuid", C.commerce, { step: 3 }),
+        N("a4", 768, 84, 220, 72, "products.Repo", "GetByID · price × qty", C.commerce, { step: 4 }),
+        N("a5", 1008, 84, 220, 72, "coupons.Repo", "GetByID · Validate", C.commerce, { step: 5 }),
+        N("a6", 1248, 84, 220, 72, "coupon.CalculateDiscount", "then IncrementUsage", C.commerce, { step: 6 }),
+        N("a7", 1488, 84, 220, 72, "model.NewOrder", "status = pending", C.commerce, { step: 7 }),
+        N("a8", 1728, 84, 208, 72, "orders.Repo.Create", "201 · order json", C.commerce, { step: 8 }),
+
+        N("b1", 48, 300, 220, 72, "POST /payment/create", "guard: RequireTelegram", C.commerce, { step: 1 }),
+        N("b2", 288, 300, 220, 72, "orders.Repo.GetByID", "reject if already paid", C.commerce, { step: 2 }),
+        N("b3", 528, 300, 220, 72, "GatewayRegistry.Get", "RWMutex map lookup", C.commerce, { step: 3 }),
+        N("b4", 768, 300, 220, 72, "Zarinpal.CreatePayment", "outbound https", C.infra, { step: 4 }),
+        N("b5", 1008, 300, 220, 72, "payments.Repo.Create", "status = pending", C.commerce, { step: 5 }),
+        N("b6", 1248, 300, 220, 72, "orders.Repo", "UpdatePaymentMethod", C.commerce, { step: 6 }),
+        N("b7", 1488, 300, 208, 72, "→ PaymentURL", "client redirects", C.commerce, { step: 7 }),
+
+        N("c1", 48, 516, 220, 72, "POST /payment/verify/:provider", "no guard — gateway calls in", C.infra, { step: 1 }),
+        N("c2", 288, 516, 220, 72, "payments.Repo.GetByID", "resolve provider", C.commerce, { step: 2 }),
+        N("c3", 528, 516, 220, 72, "gateway.VerifyPayment", "outbound https", C.infra, { step: 3 }),
+        N("c4", 768, 516, 220, 72, "payments.Repo.UpdateStatus", "trx id + raw callback json", C.commerce, { step: 4 }),
+        N("c5", 1008, 516, 220, 72, "orders.Repo.UpdateStatus", "paid + paid_at, or failed", C.commerce, { step: 5 }),
+        N("f_gap", 1248, 516, 448, 72, "Flow ends here", "no fulfilment · no wallet credit · no message sent", C.alert, { step: 6, alarm: true })
+      ],
+      edges: [
+        ["a1","a2"],["a2","a3"],["a3","a4"],["a4","a5"],["a5","a6"],["a6","a7"],["a7","a8"],
+        ["b1","b2"],["b2","b3"],["b3","b4"],["b4","b5"],["b5","b6"],["b6","b7"],
+        ["c1","c2"],["c2","c3"],["c3","c4"],["c4","c5"],["c5","f_gap","", "alert"]
+      ]
+    }
+  };
+
+  // ── render ────────────────────────────────────────────
+  const viewport = document.getElementById("viewport");
+  const world = document.getElementById("world");
+  const wires = document.getElementById("wires");
+  const layer = document.getElementById("layer");
+  const inspector = document.getElementById("inspector");
+
+  let sheet = "system", scale = 1, tx = 0, ty = 0, byId = {}, adj = {}, selected = null;
+
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+  function buildTabs() {
+    const t = document.getElementById("tabs");
+    t.innerHTML = Object.entries(SHEETS).map(([k, s]) =>
+      `<button class="tab" role="tab" data-sheet="${k}" aria-selected="${k === sheet}">
+         <i>${s.idx}</i><b>${esc(s.label)}</b><em>${s.count}</em></button>`).join("");
+    t.querySelectorAll(".tab").forEach(b => b.onclick = () => draw(b.dataset.sheet, true));
+  }
+
+  function anchors(a, b) {
+    const ac = { x: a.x + a.w / 2, y: a.y + a.h / 2 }, bc = { x: b.x + b.w / 2, y: b.y + b.h / 2 };
+    const dx = bc.x - ac.x, dy = bc.y - ac.y;
+    if (Math.abs(dx) * 0.85 > Math.abs(dy)) {
+      const s = dx > 0 ? { x: a.x + a.w, y: ac.y } : { x: a.x, y: ac.y };
+      const e = dx > 0 ? { x: b.x, y: bc.y } : { x: b.x + b.w, y: bc.y };
+      return [s, e, "h"];
+    }
+    const s = dy > 0 ? { x: ac.x, y: a.y + a.h } : { x: ac.x, y: a.y };
+    const e = dy > 0 ? { x: bc.x, y: b.y } : { x: bc.x, y: b.y + b.h };
+    return [s, e, "v"];
+  }
+
+  function arrow(p, dir, cls) {
+    const r = 4.5;
+    const pts = dir === "left" ? `${p.x + r},${p.y - r} ${p.x + r},${p.y + r} ${p.x},${p.y}`
+      : dir === "right" ? `${p.x - r},${p.y - r} ${p.x - r},${p.y + r} ${p.x},${p.y}`
+      : dir === "up" ? `${p.x - r},${p.y + r} ${p.x + r},${p.y + r} ${p.x},${p.y}`
+      : `${p.x - r},${p.y - r} ${p.x + r},${p.y - r} ${p.x},${p.y}`;
+    return `<polygon class="cap ${cls}" points="${pts}"></polygon>`;
+  }
+
+  function draw(key, resetView) {
+    sheet = key;
+    const s = SHEETS[key];
+    document.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", b.dataset.sheet === key));
+    document.getElementById("capTitle").textContent = s.title;
+    document.getElementById("capText").textContent = s.text;
+    closeInspector();
+
+    byId = {}; adj = {};
+    s.nodes.forEach(n => { byId[n.id] = n; adj[n.id] = new Set(); });
+
+    // zones + nodes
+    let html = "";
+    (s.zones || []).forEach(z => {
+      html += `<div class="zone" style="--c:${z.c};left:${z.x}px;top:${z.y}px;width:${z.w}px;height:${z.h}px"></div>`;
+      html += `<div class="zone-tag" style="--c:${z.c};left:${z.x + 10}px;top:${z.y - 16}px">${esc(z.tag)}</div>`;
+    });
+    s.nodes.forEach(n => {
+      const cls = ["node", n.ghost ? "ghost" : "", n.alarm ? "alarm" : ""].filter(Boolean).join(" ");
+      const badge = n.chip ? `<span class="n-chip">${esc(n.chip)}</span>`
+        : n.step ? `<span class="n-step">${String(n.step).padStart(2, "0")}</span>` : "";
+      html += `<button class="${cls}" data-id="${n.id}" tabindex="0"
+        style="--c:${n.group};left:${n.x}px;top:${n.y}px;width:${n.w}px;height:${n.h}px">
+        ${badge}<span class="n-title">${esc(n.title)}</span>
+        <span class="n-sub">${esc(n.sub)}</span></button>`;
+    });
+
+    // wires
+    let svg = "";
+    (s.edges || []).forEach(([from, to, label, style, both]) => {
+      const a = byId[from], b = byId[to];
+      if (!a || !b) return;
+      adj[from].add(to); adj[to].add(from);
+      const [p, q, axis] = anchors(a, b);
+      const k = axis === "h" ? Math.max(28, Math.abs(q.x - p.x) * 0.42) : Math.max(28, Math.abs(q.y - p.y) * 0.42);
+      const c1 = axis === "h" ? { x: p.x + (q.x > p.x ? k : -k), y: p.y } : { x: p.x, y: p.y + (q.y > p.y ? k : -k) };
+      const c2 = axis === "h" ? { x: q.x + (q.x > p.x ? -k : k), y: q.y } : { x: q.x, y: q.y + (q.y > p.y ? -k : k) };
+      const cls = [style === "dashed" ? "dashed" : "", style === "alert" ? "alert" : ""].filter(Boolean).join(" ");
+      const alertCls = style === "alert" ? "alert" : "";
+      svg += `<path class="${cls}" data-a="${from}" data-b="${to}"
+              d="M${p.x},${p.y} C${c1.x},${c1.y} ${c2.x},${c2.y} ${q.x},${q.y}"></path>`;
+      const dirTo = axis === "h" ? (q.x > p.x ? "right" : "left") : (q.y > p.y ? "down" : "up");
+      svg += `<g data-a="${from}" data-b="${to}">${arrow(q, dirTo, alertCls)}</g>`;
+      if (both) {
+        const dirBack = axis === "h" ? (q.x > p.x ? "left" : "right") : (q.y > p.y ? "up" : "down");
+        svg += `<g data-a="${from}" data-b="${to}">${arrow(p, dirBack, alertCls)}</g>`;
+      }
+      if (label) {
+        const mx = (p.x + 3 * c1.x + 3 * c2.x + q.x) / 8, my = (p.y + 3 * c1.y + 3 * c2.y + q.y) / 8;
+        html += `<div class="elabel" data-a="${from}" data-b="${to}" style="left:${mx}px;top:${my}px">${esc(label)}</div>`;
+      }
+    });
+
+    const maxX = Math.max(...s.nodes.map(n => n.x + n.w), ...(s.zones || []).map(z => z.x + z.w)) + 48;
+    const maxY = Math.max(...s.nodes.map(n => n.y + n.h), ...(s.zones || []).map(z => z.y + z.h)) + 48;
+    wires.setAttribute("width", maxX); wires.setAttribute("height", maxY);
+    wires.innerHTML = svg;
+    layer.innerHTML = html;
+    world.style.width = maxX + "px"; world.style.height = maxY + "px";
+    world.dataset.w = maxX; world.dataset.h = maxY;
+
+    layer.querySelectorAll(".node").forEach(el => {
+      el.onclick = e => { e.stopPropagation(); select(el.dataset.id); };
+      el.onmouseenter = () => { if (!selected) highlight(el.dataset.id); };
+      el.onmouseleave = () => { if (!selected) highlight(null); };
+      el.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(el.dataset.id); } };
+    });
+
+    if (resetView !== false) fit();
+  }
+
+  function highlight(id) {
+    if (!id) { world.classList.remove("focus"); document.querySelectorAll(".hot,.sel").forEach(e => e.classList.remove("hot", "sel")); return; }
+    world.classList.add("focus");
+    document.querySelectorAll(".hot,.sel").forEach(e => e.classList.remove("hot", "sel"));
+    const el = layer.querySelector(`.node[data-id="${id}"]`);
+    if (el) { el.classList.add("hot"); if (selected === id) el.classList.add("sel"); }
+    adj[id] && adj[id].forEach(n => {
+      const o = layer.querySelector(`.node[data-id="${n}"]`);
+      if (o) o.classList.add("hot");
+    });
+    document.querySelectorAll(`[data-a="${id}"],[data-b="${id}"]`).forEach(e => e.classList.add("hot"));
+  }
+
+  // ── inspector ─────────────────────────────────────────
+  const GUARD = { open: "public", any: "admin or user", tma: "telegram user", admin: "admin only" };
+
+  function select(id) {
+    const n = byId[id], d = D[id] || {};
+    if (!n) return;
+    selected = id;
+    highlight(id);
+
+    document.getElementById("iKind").textContent = d.kind || "Block";
+    document.getElementById("iKind").style.setProperty("--c", n.group);
+    document.getElementById("iTitle").textContent = d.title || n.title;
+    document.getElementById("iPath").textContent = d.path || "";
+
+    let h = "";
+    if (d.note) h += `<div class="i-sec"><h4>Reading</h4><p>${d.note.replace(/<b>/g, "<b>")}</p></div>`;
+
+    const kv = d.kv ? Object.entries(d.kv) : [];
+    if (d.files !== undefined) {
+      kv.unshift(["Go files", String(d.files)], ["Lines", d.loc ? d.loc.toLocaleString() : "0"],
+        ["Layout", d.layers || "—"], ["Routes", String((d.routes || []).length)]);
+    }
+    if (kv.length) {
+      h += `<div class="i-sec"><h4>Facts</h4><dl class="kv">` +
+        kv.map(([k, v]) => `<dt>${esc(k)}</dt><dd class="${/unused|scaffold|^0$/.test(v) ? "warn" : ""}">${esc(v)}</dd>`).join("") +
+        `</dl></div>`;
+    }
+    if (d.ctor) h += `<div class="i-sec"><h4>Constructed as</h4><p><code>${esc(d.ctor)}</code></p></div>`;
+
+    if (d.deps && d.deps.length) {
+      h += `<div class="i-sec"><h4>Imports</h4><div class="tags">` +
+        d.deps.map(x => `<span class="tag flat">${esc(x)}</span>`).join("") + `</div></div>`;
+    }
+    if (d.usedBy && d.usedBy.length) {
+      h += `<div class="i-sec"><h4>Imported by</h4><div class="tags">` +
+        d.usedBy.map(x => byId[x] ? `<button class="tag" data-goto="${x}">${esc(x)}</button>`
+          : `<span class="tag flat">${esc(x)}</span>`).join("") + `</div></div>`;
+    }
+    if (d.routes && d.routes.length) {
+      h += `<div class="i-sec"><h4>Routes · /api/v1</h4><div class="rt">` +
+        d.routes.map(([v, p, g]) =>
+          `<div class="rt-row"><span class="verb ${v}">${v}</span><code>${esc(p)}</code><em>${GUARD[g] || g}</em></div>`).join("") +
+        `</div></div>`;
+    }
+    if (d.orphan) h += `<div class="i-sec"><p class="note">Not referenced by dependencies.Wire() or router.New() — dead at runtime.</p></div>`;
+    if (d.stub) h += `<div class="i-sec"><p class="note">Directory contains no Go files.</p></div>`;
+
+    document.getElementById("iBody").innerHTML = h;
+    document.getElementById("iBody").querySelectorAll("[data-goto]").forEach(b =>
+      b.onclick = () => select(b.dataset.goto));
+    inspector.classList.add("open");
+  }
+
+  function closeInspector() {
+    selected = null;
+    inspector.classList.remove("open");
+    highlight(null);
+  }
+  document.getElementById("iClose").onclick = closeInspector;
+
+  // ── pan / zoom ────────────────────────────────────────
+  function apply() {
+    world.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+    const g = 24 * scale, G = 120 * scale;
+    viewport.style.backgroundSize = `${g}px ${g}px, ${g}px ${g}px, ${G}px ${G}px, ${G}px ${G}px`;
+    viewport.style.backgroundPosition = `${tx}px ${ty}px, ${tx}px ${ty}px, ${tx}px ${ty}px, ${tx}px ${ty}px`;
+    document.getElementById("zPct").textContent = Math.round(scale * 100) + "%";
+  }
+
+  function fit() {
+    const r = viewport.getBoundingClientRect();
+    const w = +world.dataset.w, h = +world.dataset.h;
+    const pad = 56;
+    scale = Math.min((r.width - pad * 2) / w, (r.height - pad * 2) / h, 1.15);
+    scale = Math.max(scale, 0.12);
+    tx = (r.width - w * scale) / 2;
+    ty = (r.height - h * scale) / 2;
+    apply();
+  }
+
+  function zoomAt(f, cx, cy) {
+    const next = Math.min(2.6, Math.max(0.12, scale * f));
+    const r = viewport.getBoundingClientRect();
+    const px = (cx - r.left - tx) / scale, py = (cy - r.top - ty) / scale;
+    scale = next;
+    tx = cx - r.left - px * scale;
+    ty = cy - r.top - py * scale;
+    apply();
+  }
+
+  viewport.addEventListener("wheel", e => {
+    e.preventDefault();
+    if (e.ctrlKey || e.metaKey || Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+      zoomAt(Math.pow(0.999, e.deltaY * (e.ctrlKey ? 3 : 1.4)), e.clientX, e.clientY);
+    } else { tx -= e.deltaX; apply(); }
+  }, { passive: false });
+
+  let dragging = false, sx = 0, sy = 0;
+  viewport.addEventListener("pointerdown", e => {
+    if (e.target.closest(".node")) return;
+    dragging = true; sx = e.clientX - tx; sy = e.clientY - ty;
+    viewport.classList.add("grabbing"); viewport.setPointerCapture(e.pointerId);
+    if (selected) closeInspector();
+  });
+  viewport.addEventListener("pointermove", e => {
+    if (!dragging) return;
+    tx = e.clientX - sx; ty = e.clientY - sy; apply();
+  });
+  const endDrag = () => { dragging = false; viewport.classList.remove("grabbing"); };
+  viewport.addEventListener("pointerup", endDrag);
+  viewport.addEventListener("pointercancel", endDrag);
+
+  document.getElementById("zIn").onclick = () => { const r = viewport.getBoundingClientRect(); zoomAt(1.25, r.left + r.width / 2, r.top + r.height / 2); };
+  document.getElementById("zOut").onclick = () => { const r = viewport.getBoundingClientRect(); zoomAt(0.8, r.left + r.width / 2, r.top + r.height / 2); };
+  document.getElementById("zFit").onclick = fit;
+
+  document.getElementById("themeBtn").onclick = () => {
+    const cur = document.documentElement.getAttribute("data-theme");
+    const dark = cur ? cur === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.setAttribute("data-theme", dark ? "light" : "dark");
+  };
+
+  addEventListener("keydown", e => {
+    if (e.target.matches("input,textarea")) return;
+    const keys = Object.keys(SHEETS);
+    if (e.key >= "1" && e.key <= String(keys.length)) draw(keys[+e.key - 1], true);
+    else if (e.key === "f") fit();
+    else if (e.key === "Escape") closeInspector();
+    else if (e.key === "+" || e.key === "=") document.getElementById("zIn").click();
+    else if (e.key === "-") document.getElementById("zOut").click();
+  });
+
+  addEventListener("resize", () => { if (!dragging) fit(); });
+
+  buildTabs();
+  draw("system", true);
+})();
+</script>
