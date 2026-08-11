@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # ── Infrastructure ──────────────────────────────────
   postgres:
@@ -96,6 +94,7 @@ services:
       CATEGORY_ICONS_PUBLIC_URL: ${CATEGORY_ICONS_PUBLIC_URL:-http://localhost:9000/categories-icons}
       PRODUCT_FILES_BUCKET: ${PRODUCT_FILES_BUCKET:-product-files}
       PRODUCT_FILES_PUBLIC_URL: ${PRODUCT_FILES_PUBLIC_URL:-http://localhost:9000/product-files}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001}
       ADDR: ":8080"
     ports:
       - "8080:8080"
@@ -152,7 +151,9 @@ services:
     build:
       context: ./backoffice
       args:
-        VITE_API_BASE_URL: ${BACKOFFICE_API_URL:-http://localhost:8080/api/admin}
+        # Use the backoffice origin and let nginx proxy /api to the API container.
+        # This avoids browser CORS entirely in the production Docker setup.
+        VITE_API_BASE_URL: ${BACKOFFICE_API_URL:-/api/v1}
     depends_on:
       - api
     ports:
