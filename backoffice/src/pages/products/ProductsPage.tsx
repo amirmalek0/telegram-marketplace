@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { useForm, Controller, Control, FieldErrors, UseFormRegister } from 'react-hook-form';

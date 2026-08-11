@@ -36,15 +36,15 @@ export function DataTable<T>({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="overflow-x-auto rounded-2xl border border-[rgb(var(--color-border))]">
+      <div className="overflow-x-auto rounded-2xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] shadow-[0_8px_30px_rgba(15,23,42,0.03)]">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg))]">
+            <tr className="border-b border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface-2))]">
               {columns.map((col) => (
                 <th
                   key={col.key}
                   className={cn(
-                    'px-4 py-3 text-right font-medium text-[rgb(var(--color-text-secondary))] whitespace-nowrap',
+                    'px-5 py-3.5 text-right text-[11px] font-bold tracking-wide text-[rgb(var(--color-text-secondary))] whitespace-nowrap',
                     col.className
                   )}
                 >
@@ -73,12 +73,12 @@ export function DataTable<T>({
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.03 }}
-                  className="border-b border-[rgb(var(--color-border))] last:border-0 hover:bg-[rgb(var(--color-bg))] transition-colors"
+                  className="border-b border-[rgb(var(--color-border))] last:border-0 hover:bg-[rgb(var(--color-primary))]/[0.025] transition-colors"
                 >
                   {columns.map((col) => (
                     <td
                       key={col.key}
-                      className={cn('px-4 py-3 text-[rgb(var(--color-text))]', col.className)}
+                      className={cn('px-5 py-4 text-[rgb(var(--color-text))]', col.className)}
                     >
                       {col.render
                         ? col.render((row as Record<string, unknown>)[col.key], row)

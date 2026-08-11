@@ -12,3 +12,4 @@ export { DataTable } from './DataTable';
 export type { Column } from './DataTable';
 export { FileUpload } from './FileUpload';
 export { SortableItem } from './SortableItem';
+export { PageHeader } from './PageHeader';

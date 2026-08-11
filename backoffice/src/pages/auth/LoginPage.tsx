@@ -9,7 +9,6 @@ import toast from 'react-hot-toast';
 import { authApi } from '@/api';
 import { useAuthStore } from '@/stores/authStore';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 
 const loginSchema = z.object({
   username: z.string().min(1, 'نام کاربری الزامی است'),

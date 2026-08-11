@@ -5,8 +5,11 @@ type Theme = 'light' | 'dark';
 
 interface UIState {
   sidebarCollapsed: boolean;
+  mobileSidebarOpen: boolean;
   theme: Theme;
   toggleSidebar: () => void;
+  toggleMobileSidebar: () => void;
+  closeMobileSidebar: () => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
   setTheme: (theme: Theme) => void;
   toggleTheme: () => void;
@@ -16,10 +19,16 @@ export const useUIStore = create<UIState>()(
   persist(
     (set, get) => ({
       sidebarCollapsed: false,
+      mobileSidebarOpen: false,
       theme: 'light',
 
       toggleSidebar: () =>
         set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
+
+      toggleMobileSidebar: () =>
+        set((state) => ({ mobileSidebarOpen: !state.mobileSidebarOpen })),
+
+      closeMobileSidebar: () => set({ mobileSidebarOpen: false }),
 
       setSidebarCollapsed: (collapsed: boolean) =>
         set({ sidebarCollapsed: collapsed }),
