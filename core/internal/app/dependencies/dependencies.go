@@ -39,6 +39,8 @@ import (
 	ticketrepo "telegram-marketplace/internal/core/membership/tickets/repository"
 	"telegram-marketplace/internal/core/membership/users"
 	userrepo "telegram-marketplace/internal/core/membership/users/repository"
+	"telegram-marketplace/internal/core/membership/vip"
+	viprepo "telegram-marketplace/internal/core/membership/vip/repository"
 	"telegram-marketplace/pkg/storage"
 )
 
@@ -159,6 +161,11 @@ func Wire(ctx context.Context, db *pgxpool.Pool, cfg config.Config) router.Handl
 	paymentsService := payments.NewService(paymentsRepo, ordersRepo, gatewayRegistry)
 	paymentsHandler := payments.NewHandler(paymentsService, cfg.CallbackURL)
 
+	// --- membership/vip ---
+	vipPlanRepo := viprepo.NewPostgresRepository(db)
+	vipService := vip.NewService(vipPlanRepo)
+	vipHandler := vip.NewHandler(vipService)
+
 	// --- membership/ticket-categories ---
 	ticketCategoryRepo := ticketcategoryrepo.NewPostgresRepository(db)
 	ticketCategoryService := ticketcategories.NewService(ticketCategoryRepo)
@@ -187,5 +194,6 @@ func Wire(ctx context.Context, db *pgxpool.Pool, cfg config.Config) router.Handl
 		Payments:         paymentsHandler,
 		Tickets:          ticketHandler,
 		TicketCategories: ticketCategoryHandler,
+		VIP:              vipHandler,
 	}
 }

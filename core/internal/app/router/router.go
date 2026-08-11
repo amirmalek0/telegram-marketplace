@@ -38,6 +38,8 @@ import (
 	ticketrouter "telegram-marketplace/internal/core/membership/tickets/router"
 	"telegram-marketplace/internal/core/membership/users"
 	userrouter "telegram-marketplace/internal/core/membership/users/router"
+	"telegram-marketplace/internal/core/membership/vip"
+	viprouter "telegram-marketplace/internal/core/membership/vip/router"
 )
 
 // Handlers groups all domain handlers that the router needs.
@@ -60,6 +62,7 @@ type Handlers struct {
 	Payments         *payments.Handler
 	Tickets          *tickets.Handler
 	TicketCategories *ticketcategories.Handler
+	VIP              *vip.Handler
 }
 
 // New creates and configures the gin.Engine:
@@ -103,6 +106,7 @@ func New(botToken string, h Handlers) *gin.Engine {
 			paymentsrouter.RegisterRoutes(domain, h.Payments)
 			ticketrouter.RegisterRoutes(domain, h.Tickets)
 			ticketcategoryrouter.RegisterRoutes(domain, h.TicketCategories)
+			viprouter.RegisterRoutes(domain, h.VIP)
 		}
 	}
 
