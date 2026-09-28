@@ -70,8 +70,9 @@ type Response struct {
 }
 
 // toResponse converts a model.Product to a Response and resolves its image key
-// to a time-limited URL.
-func (s *Service) toResponse(ctx context.Context, p *model.Product) (Response, error) {
+// to a time-limited URL. Delivery source identifiers are only included for
+// authenticated admin callers; shopper responses must never expose them.
+func (s *Service) toResponse(ctx context.Context, p *model.Product, includeDeliveryReferences bool) (Response, error) {
 	imageURL := ""
 	if p.ImageStorageID != "" {
 		var err error
@@ -81,7 +82,7 @@ func (s *Service) toResponse(ctx context.Context, p *model.Product) (Response, e
 		}
 	}
 
-	return Response{
+	response := Response{
 		ID:           p.ID,
 		Title:        p.Title,
 		Description:  p.Description,
@@ -89,15 +90,20 @@ func (s *Service) toResponse(ctx context.Context, p *model.Product) (Response, e
 		CategoryID:   p.CategoryID,
 		ImageURL:     imageURL,
 		DeliveryType: p.DeliveryType,
-		FileID:       p.FileID,
-		MessageID:    p.MessageID,
-		InventoryID:  p.InventoryID,
-		BundleID:     p.BundleID,
-		APIID:        p.APIID,
 		DemoURL:      p.DemoURL,
 		VIPOnly:      p.VIPOnly,
 		ViewsCount:   p.ViewsCount,
 		Status:       p.Status,
 		CreatedAt:    p.CreatedAt,
-	}, nil
+	}
+
+	if includeDeliveryReferences {
+		response.FileID = p.FileID
+		response.MessageID = p.MessageID
+		response.InventoryID = p.InventoryID
+		response.BundleID = p.BundleID
+		response.APIID = p.APIID
+	}
+
+	return response, nil
 }

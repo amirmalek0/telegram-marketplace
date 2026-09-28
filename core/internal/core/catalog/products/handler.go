@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"telegram-marketplace/internal/app/middleware"
 	"telegram-marketplace/internal/core/catalog/products/repository"
 	"telegram-marketplace/pkg/pagination"
 )
@@ -50,7 +51,7 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	response, err := h.service.toResponse(c.Request.Context(), product)
+	response, err := h.service.toResponse(c.Request.Context(), product, true)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -62,7 +63,8 @@ func (h *Handler) Create(c *gin.Context) {
 func (h *Handler) List(c *gin.Context) {
 	params := pagination.FromQuery(c)
 
-	result, err := h.service.List(c.Request.Context(), params)
+	includeDeliveryReferences := middleware.GetAdminClaims(c) != nil
+	result, err := h.service.List(c.Request.Context(), params, includeDeliveryReferences)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -89,7 +91,8 @@ func (h *Handler) GetByID(c *gin.Context) {
 	_ = h.service.IncrementViews(c.Request.Context(), id)
 	product.ViewsCount++
 
-	response, err := h.service.toResponse(c.Request.Context(), product)
+	includeDeliveryReferences := middleware.GetAdminClaims(c) != nil
+	response, err := h.service.toResponse(c.Request.Context(), product, includeDeliveryReferences)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -121,7 +124,7 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
-	response, err := h.service.toResponse(c.Request.Context(), product)
+	response, err := h.service.toResponse(c.Request.Context(), product, true)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -153,7 +156,7 @@ func (h *Handler) UploadImage(c *gin.Context) {
 		return
 	}
 
-	response, err := h.service.toResponse(c.Request.Context(), product)
+	response, err := h.service.toResponse(c.Request.Context(), product, true)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

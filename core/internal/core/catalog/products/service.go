@@ -123,7 +123,7 @@ func (s *Service) GetByID(ctx context.Context, id string) (*model.Product, error
 }
 
 // List returns a paginated list of products ordered by creation date.
-func (s *Service) List(ctx context.Context, params pagination.Params) (*PaginatedResponse, error) {
+func (s *Service) List(ctx context.Context, params pagination.Params, includeDeliveryReferences bool) (*PaginatedResponse, error) {
 	products, err := s.repo.List(ctx, params.PerPage, params.Offset())
 	if err != nil {
 		return nil, fmt.Errorf("products.service.List: %w", err)
@@ -136,7 +136,7 @@ func (s *Service) List(ctx context.Context, params pagination.Params) (*Paginate
 
 	data := make([]Response, 0, len(products))
 	for _, p := range products {
-		response, err := s.toResponse(ctx, p)
+		response, err := s.toResponse(ctx, p, includeDeliveryReferences)
 		if err != nil {
 			return nil, fmt.Errorf("products.service.List image URL: %w", err)
 		}
