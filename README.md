@@ -106,6 +106,8 @@ npm run dev
 - `STORAGE_ENDPOINT` - MinIO/S3 endpoint
 - `MINIO_ACCESS_KEY` - MinIO access key
 - `MINIO_SECRET_KEY` - MinIO secret key
+- `PRODUCT_IMAGES_BUCKET` - Bucket for product storefront images (default: `product-images`)
+- `PRODUCT_IMAGES_PUBLIC_URL` - Public base URL for product images
 
 ### Optional
 

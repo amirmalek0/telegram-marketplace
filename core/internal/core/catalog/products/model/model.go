@@ -37,20 +37,21 @@ func (dt DeliveryType) IsValid() bool {
 
 // Product represents a product in the catalog.
 type Product struct {
-	ID           string       `db:"id"`
-	Title        string       `db:"title"`
-	Description  string       `db:"description"`
-	Price        float64      `db:"price"`
-	CategoryID   string       `db:"category_id"`
-	DeliveryType DeliveryType `db:"delivery_type"`
-	FileID       *string      `db:"file_id"`
-	MessageID    *string      `db:"message_id"`
-	InventoryID  *string      `db:"inventory_id"`
-	BundleID     *string      `db:"bundle_id"`
-	APIID        *string      `db:"api_id"`
-	DemoURL      *string      `db:"demo_url"`
-	VIPOnly      bool         `db:"vip_only"`
-	ViewsCount   int          `db:"views_count"`
-	Status       string       `db:"status"`
-	CreatedAt    time.Time    `db:"created_at"`
+	ID             string       `db:"id"`
+	Title          string       `db:"title"`
+	Description    string       `db:"description"`
+	Price          float64      `db:"price"`
+	CategoryID     string       `db:"category_id"`
+	ImageStorageID string       `db:"image_storage_id"`
+	DeliveryType   DeliveryType `db:"delivery_type"`
+	FileID         *string      `db:"file_id"`
+	MessageID      *string      `db:"message_id"`
+	InventoryID    *string      `db:"inventory_id"`
+	BundleID       *string      `db:"bundle_id"`
+	APIID          *string      `db:"api_id"`
+	DemoURL        *string      `db:"demo_url"`
+	VIPOnly        bool         `db:"vip_only"`
+	ViewsCount     int          `db:"views_count"`
+	Status         string       `db:"status"`
+	CreatedAt      time.Time    `db:"created_at"`
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Image as ImageIcon, Plus, Pencil, Trash2 } from 'lucide-react';
 import { useForm, Controller, Control, FieldErrors, UseFormRegister } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -32,6 +32,7 @@ import { Textarea } from '@/components/ui/Textarea';
 import { Select } from '@/components/ui/Select';
 import { Toggle } from '@/components/ui/Toggle';
 import { Badge } from '@/components/ui/Badge';
+import { FileUpload } from '@/components/ui/FileUpload';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -59,6 +60,16 @@ const formatPrice = (price: number) =>
   new Intl.NumberFormat('fa-IR').format(price) + ' تومان';
 
 const PER_PAGE = 20;
+
+const publicAssetURL = (value: string) => {
+  try {
+    const url = new URL(value);
+    if (url.hostname === 'minio') return `/storage${url.pathname}${url.search}`;
+  } catch {
+    return value;
+  }
+  return value;
+};
 
 // ─── Zod Schema ──────────────────────────────────────────────────────────────
 
@@ -407,6 +418,10 @@ export default function ProductsPage() {
   const [editing, setEditing] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  // Product storefront image for create/edit.
+  const [createImageFile, setCreateImageFile] = useState<File | null>(null);
+  const [editImageFile, setEditImageFile] = useState<File | null>(null);
+
   const defaultValues: ProductForm = {
     title: '',
     description: '',
@@ -478,7 +493,12 @@ export default function ProductsPage() {
 
   // ── Create ──
   const handleCreate = async (data: ProductForm) => {
+    if (!createImageFile) {
+      toast.error('انتخاب تصویر محصول الزامی است');
+      return;
+    }
     setCreating(true);
+    let createdProduct: ProductResponse | null = null;
     try {
       const payload = {
         title: data.title,
@@ -495,12 +515,17 @@ export default function ProductsPage() {
         bundle_id: data.delivery_type === 'bundle' ? data.bundle_id || undefined : undefined,
         api_id: data.delivery_type === 'api' ? data.api_id || undefined : undefined,
       };
-      await productsApi.create(payload);
+      createdProduct = await productsApi.create(payload);
+      await productsApi.uploadImage(createdProduct.id, createImageFile);
       toast.success('محصول با موفقیت ایجاد شد');
       setCreateOpen(false);
       createForm.reset(defaultValues);
+      setCreateImageFile(null);
       setRefreshKey(k => k + 1);
     } catch {
+      if (createdProduct) {
+        await productsApi.delete(createdProduct.id).catch(() => undefined);
+      }
       toast.error('خطا در ایجاد محصول');
     } finally {
       setCreating(false);
@@ -510,6 +535,7 @@ export default function ProductsPage() {
   // ── Edit open ──
   const handleEditOpen = (product: ProductResponse) => {
     setSelected(product);
+    setEditImageFile(null);
     editForm.reset({
       title: product.title,
       description: product.description,
@@ -550,9 +576,13 @@ export default function ProductsPage() {
         api_id: data.delivery_type === 'api' ? data.api_id || undefined : undefined,
       };
       await productsApi.update(selected.id, payload);
+      if (editImageFile) {
+        await productsApi.uploadImage(selected.id, editImageFile);
+      }
       toast.success('محصول با موفقیت ویرایش شد');
       setEditOpen(false);
       setSelected(null);
+      setEditImageFile(null);
       setRefreshKey(k => k + 1);
     } catch {
       toast.error('خطا در ویرایش محصول');
@@ -596,6 +626,23 @@ export default function ProductsPage() {
 
   // ── Table columns ──
   const columns: Column<ProductResponse>[] = [
+    {
+      key: 'image_url',
+      title: 'تصویر',
+      render: (value, row) => (
+        <div className="w-12 h-12 rounded-xl overflow-hidden bg-[rgb(var(--color-border))] flex items-center justify-center">
+          {value ? (
+            <img
+              src={publicAssetURL(value as string)}
+              alt={row.title}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <ImageIcon size={18} className="text-[rgb(var(--color-text-secondary))]" />
+          )}
+        </div>
+      ),
+    },
     {
       key: 'title',
       title: 'نام',
@@ -692,6 +739,7 @@ export default function ProductsPage() {
           variant="primary"
           onClick={() => {
             createForm.reset(defaultValues);
+            setCreateImageFile(null);
             setCreateOpen(true);
           }}
         >
@@ -742,6 +790,15 @@ export default function ProductsPage() {
           </div>
         }
       >
+        <div className="mb-4">
+          <FileUpload
+            onFileSelect={setCreateImageFile}
+            accept="image/*"
+            maxSize={5}
+            label="تصویر محصول"
+            hint="برای نمایش در کارت‌ها و صفحه محصول؛ حداکثر ۵ مگابایت"
+          />
+        </div>
         <ProductFormFields
           register={createForm.register}
           control={createForm.control}
@@ -785,6 +842,27 @@ export default function ProductsPage() {
           </div>
         }
       >
+        <div className="mb-4 space-y-4">
+          {selected?.image_url && (
+            <div>
+              <label className="text-sm font-medium text-[rgb(var(--color-text))] block mb-1.5">
+                تصویر فعلی
+              </label>
+              <img
+                src={publicAssetURL(selected.image_url)}
+                alt={selected.title}
+                className="w-full h-40 rounded-xl object-cover border border-[rgb(var(--color-border))]"
+              />
+            </div>
+          )}
+          <FileUpload
+            onFileSelect={setEditImageFile}
+            accept="image/*"
+            maxSize={5}
+            label={selected?.image_url ? 'تغییر تصویر' : 'افزودن تصویر'}
+            hint="در صورت انتخاب، تصویر قبلی جایگزین می‌شود"
+          />
+        </div>
         <ProductFormFields
           register={editForm.register}
           control={editForm.control}

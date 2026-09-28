@@ -22,6 +22,11 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           secure: false,
         },
+        '/storage': {
+          target: env.VITE_STORAGE_PROXY_TARGET || 'http://localhost:9000',
+          changeOrigin: true,
+          rewrite: (requestPath) => requestPath.replace(/^\/storage/, ''),
+        },
       },
     },
     build: {

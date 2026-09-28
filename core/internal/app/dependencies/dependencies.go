@@ -26,8 +26,8 @@ import (
 	"telegram-marketplace/internal/core/commerce/orders"
 	ordersrepo "telegram-marketplace/internal/core/commerce/orders/repository"
 	"telegram-marketplace/internal/core/commerce/payments"
-	paymentsrepo "telegram-marketplace/internal/core/commerce/payments/repository"
 	"telegram-marketplace/internal/core/commerce/payments/provider"
+	paymentsrepo "telegram-marketplace/internal/core/commerce/payments/repository"
 	"telegram-marketplace/internal/core/commerce/wallets"
 	walletrepo "telegram-marketplace/internal/core/commerce/wallets/repository"
 	"telegram-marketplace/internal/core/membership/admins"
@@ -80,10 +80,14 @@ func Wire(ctx context.Context, db *pgxpool.Pool, cfg config.Config) router.Handl
 	if err := storageClient.EnsureBucket(ctx, cfg.ProductFilesBucket); err != nil {
 		log.Fatalf("storage: %v", err)
 	}
+	if err := storageClient.EnsureBucket(ctx, cfg.ProductImagesBucket); err != nil {
+		log.Fatalf("storage: %v", err)
+	}
 
 	// Per-entity bucket-scoped Storage instances.
 	categoryIconsStore := storageClient.Bucket(cfg.CategoryIconsBucket, cfg.CategoryIconsPublicURL)
 	productFilesStore := storageClient.Bucket(cfg.ProductFilesBucket, cfg.ProductFilesPublicURL)
+	productImagesStore := storageClient.Bucket(cfg.ProductImagesBucket, cfg.ProductImagesPublicURL)
 
 	// --- membership/users ---
 	userRepo := userrepo.NewPostgresRepository(db)
@@ -131,6 +135,7 @@ func Wire(ctx context.Context, db *pgxpool.Pool, cfg config.Config) router.Handl
 		invRepo,
 		bundleRepo,
 		apiRepo,
+		productImagesStore,
 	)
 	productHandler := products.NewHandler(productService)
 

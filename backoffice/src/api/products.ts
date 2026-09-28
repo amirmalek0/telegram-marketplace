@@ -19,6 +19,15 @@ export const productsApi = {
   update: (id: string, data: UpdateProductRequest, signal?: AbortSignal) =>
     apiClient.patch<ProductResponse>(`/product/${id}`, data, { signal }).then((r) => r.data),
 
+  uploadImage: (id: string, file: File, signal?: AbortSignal) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    return apiClient.post<ProductResponse>(`/product/${id}/image`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      signal,
+    }).then((r) => r.data);
+  },
+
   delete: (id: string, signal?: AbortSignal) =>
     apiClient.delete<void>(`/product/${id}`, { signal }).then((r) => r.data),
 };

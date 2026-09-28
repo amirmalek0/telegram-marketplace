@@ -24,6 +24,7 @@ type Repository interface {
 	List(ctx context.Context, limit, offset int) ([]*model.Product, error)
 	Count(ctx context.Context) (int64, error)
 	Update(ctx context.Context, p *model.Product) error
+	UpdateImageStorageID(ctx context.Context, id, storageID string) error
 	Delete(ctx context.Context, id string) error
 	IncrementViews(ctx context.Context, id string) error
 }
@@ -43,7 +44,7 @@ var _ Repository = (*postgresRepository)(nil)
 
 func (r *postgresRepository) Create(ctx context.Context, p *model.Product) error {
 	err := r.db.QueryRow(ctx, queryCreateProduct,
-		p.Title, p.Description, p.Price, p.CategoryID, p.DeliveryType,
+		p.Title, p.Description, p.Price, p.CategoryID, p.ImageStorageID, p.DeliveryType,
 		p.FileID, p.MessageID, p.InventoryID, p.BundleID, p.APIID,
 		p.DemoURL, p.VIPOnly, p.ViewsCount, p.Status, p.CreatedAt,
 	).Scan(&p.ID)
@@ -96,12 +97,23 @@ func (r *postgresRepository) Count(ctx context.Context) (int64, error) {
 
 func (r *postgresRepository) Update(ctx context.Context, p *model.Product) error {
 	_, err := r.db.Exec(ctx, queryUpdateProduct,
-		p.Title, p.Description, p.Price, p.CategoryID, p.DeliveryType,
+		p.Title, p.Description, p.Price, p.CategoryID, p.ImageStorageID, p.DeliveryType,
 		p.FileID, p.MessageID, p.InventoryID, p.BundleID, p.APIID,
 		p.DemoURL, p.VIPOnly, p.Status, p.ID,
 	)
 	if err != nil {
 		return fmt.Errorf("products.repository.Update: %w", err)
+	}
+	return nil
+}
+
+func (r *postgresRepository) UpdateImageStorageID(ctx context.Context, id, storageID string) error {
+	commandTag, err := r.db.Exec(ctx, queryUpdateProductImage, storageID, id)
+	if err != nil {
+		return fmt.Errorf("products.repository.UpdateImageStorageID: %w", err)
+	}
+	if commandTag.RowsAffected() == 0 {
+		return ErrNotFound
 	}
 	return nil
 }

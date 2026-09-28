@@ -1,8 +1,10 @@
 package products
 
 import (
+	"context"
 	"telegram-marketplace/internal/core/catalog/products/model"
 	"telegram-marketplace/pkg/pagination"
+	"telegram-marketplace/pkg/storage"
 	"time"
 )
 
@@ -53,6 +55,7 @@ type Response struct {
 	Description  string             `json:"description"`
 	Price        float64            `json:"price"`
 	CategoryID   string             `json:"category_id"`
+	ImageURL     string             `json:"image_url"`
 	DeliveryType model.DeliveryType `json:"delivery_type"`
 	FileID       *string            `json:"file_id,omitempty"`
 	MessageID    *string            `json:"message_id,omitempty"`
@@ -66,14 +69,25 @@ type Response struct {
 	CreatedAt    time.Time          `json:"created_at"`
 }
 
-// toResponse converts a model.Product to a Response.
-func toResponse(p *model.Product) Response {
+// toResponse converts a model.Product to a Response and resolves its image key
+// to a time-limited URL.
+func (s *Service) toResponse(ctx context.Context, p *model.Product) (Response, error) {
+	imageURL := ""
+	if p.ImageStorageID != "" {
+		var err error
+		imageURL, err = s.imageStorage.PresignedURL(ctx, p.ImageStorageID, storage.PresignedURLTTL)
+		if err != nil {
+			return Response{}, err
+		}
+	}
+
 	return Response{
 		ID:           p.ID,
 		Title:        p.Title,
 		Description:  p.Description,
 		Price:        p.Price,
 		CategoryID:   p.CategoryID,
+		ImageURL:     imageURL,
 		DeliveryType: p.DeliveryType,
 		FileID:       p.FileID,
 		MessageID:    p.MessageID,
@@ -85,5 +99,5 @@ func toResponse(p *model.Product) Response {
 		ViewsCount:   p.ViewsCount,
 		Status:       p.Status,
 		CreatedAt:    p.CreatedAt,
-	}
+	}, nil
 }

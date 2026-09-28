@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"mime/multipart"
+	"strings"
 	apisrepo "telegram-marketplace/internal/core/catalog/apis/repository"
 	bundlesrepo "telegram-marketplace/internal/core/catalog/bundles/repository"
 	filesrepo "telegram-marketplace/internal/core/catalog/files/repository"
@@ -12,6 +14,7 @@ import (
 	"telegram-marketplace/internal/core/catalog/products/model"
 	"telegram-marketplace/internal/core/catalog/products/repository"
 	"telegram-marketplace/pkg/pagination"
+	"telegram-marketplace/pkg/storage"
 	"time"
 )
 
@@ -33,6 +36,12 @@ var ErrInvalidBundleID = errors.New("selected bundle is not valid")
 // ErrInvalidAPIID is returned when the api_id does not exist.
 var ErrInvalidAPIID = errors.New("selected api is not valid")
 
+// ErrInvalidImage is returned when an uploaded product image is not an image.
+var ErrInvalidImage = errors.New("product image must be an image file")
+
+// ErrImageTooLarge is returned when an uploaded image exceeds 5 MiB.
+var ErrImageTooLarge = errors.New("product image must not exceed 5 MB")
+
 // Service holds the business logic for the products domain.
 type Service struct {
 	repo          repository.Repository
@@ -41,6 +50,7 @@ type Service struct {
 	inventoryRepo inventoryrepo.Repository
 	bundlesRepo   bundlesrepo.Repository
 	apisRepo      apisrepo.Repository
+	imageStorage  storage.Storage
 }
 
 // NewService constructs a Service with the given repositories.
@@ -51,6 +61,7 @@ func NewService(
 	inventoryRepo inventoryrepo.Repository,
 	bundlesRepo bundlesrepo.Repository,
 	apisRepo apisrepo.Repository,
+	imageStorage storage.Storage,
 ) *Service {
 	return &Service{
 		repo:          repo,
@@ -59,6 +70,7 @@ func NewService(
 		inventoryRepo: inventoryRepo,
 		bundlesRepo:   bundlesRepo,
 		apisRepo:      apisRepo,
+		imageStorage:  imageStorage,
 	}
 }
 
@@ -124,11 +136,44 @@ func (s *Service) List(ctx context.Context, params pagination.Params) (*Paginate
 
 	data := make([]Response, 0, len(products))
 	for _, p := range products {
-		data = append(data, toResponse(p))
+		response, err := s.toResponse(ctx, p)
+		if err != nil {
+			return nil, fmt.Errorf("products.service.List image URL: %w", err)
+		}
+		data = append(data, response)
 	}
 
 	result := pagination.NewResponse(data, total, params)
 	return &result, nil
+}
+
+// UploadImage replaces the storefront image for an existing product.
+func (s *Service) UploadImage(ctx context.Context, id string, image *multipart.FileHeader) (*model.Product, error) {
+	product, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("products.service.UploadImage: %w", err)
+	}
+
+	if !strings.HasPrefix(strings.ToLower(image.Header.Get("Content-Type")), "image/") {
+		return nil, ErrInvalidImage
+	}
+	if image.Size > 5*1024*1024 {
+		return nil, ErrImageTooLarge
+	}
+
+	storageID, err := storage.UploadFile(ctx, s.imageStorage, image)
+	if err != nil {
+		return nil, fmt.Errorf("products.service.UploadImage: %w", err)
+	}
+
+	if err := s.repo.UpdateImageStorageID(ctx, id, storageID); err != nil {
+		_ = storage.DeleteFile(ctx, s.imageStorage, storageID)
+		return nil, fmt.Errorf("products.service.UploadImage: %w", err)
+	}
+
+	_ = storage.DeleteFile(ctx, s.imageStorage, product.ImageStorageID)
+	product.ImageStorageID = storageID
+	return product, nil
 }
 
 // Update modifies an existing product.
@@ -197,8 +242,12 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) (*mo
 
 // Delete removes a product from the database.
 func (s *Service) Delete(ctx context.Context, id string) error {
+	product, getErr := s.repo.GetByID(ctx, id)
 	if err := s.repo.Delete(ctx, id); err != nil {
 		return fmt.Errorf("products.service.Delete: %w", err)
+	}
+	if getErr == nil {
+		_ = storage.DeleteFile(ctx, s.imageStorage, product.ImageStorageID)
 	}
 	return nil
 }

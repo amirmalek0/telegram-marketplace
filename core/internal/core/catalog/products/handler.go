@@ -17,6 +17,8 @@ func isValidationError(err error) bool {
 		errors.Is(err, ErrInvalidInventoryID) ||
 		errors.Is(err, ErrInvalidBundleID) ||
 		errors.Is(err, ErrInvalidAPIID) ||
+		errors.Is(err, ErrInvalidImage) ||
+		errors.Is(err, ErrImageTooLarge) ||
 		errors.Is(err, ErrInvalidDeliveryType)
 }
 
@@ -48,7 +50,12 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, toResponse(product))
+	response, err := h.service.toResponse(c.Request.Context(), product)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, response)
 }
 
 // List returns a paginated list of products.
@@ -82,7 +89,12 @@ func (h *Handler) GetByID(c *gin.Context) {
 	_ = h.service.IncrementViews(c.Request.Context(), id)
 	product.ViewsCount++
 
-	c.JSON(http.StatusOK, toResponse(product))
+	response, err := h.service.toResponse(c.Request.Context(), product)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, response)
 }
 
 // Update modifies an existing product.
@@ -109,7 +121,44 @@ func (h *Handler) Update(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, toResponse(product))
+	response, err := h.service.toResponse(c.Request.Context(), product)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, response)
+}
+
+// UploadImage accepts a multipart image and replaces the product storefront image.
+func (h *Handler) UploadImage(c *gin.Context) {
+	id := c.Param("id")
+
+	image, err := c.FormFile("image")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "field 'image' is required (multipart/form-data)"})
+		return
+	}
+
+	product, err := h.service.UploadImage(c.Request.Context(), id, image)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+			return
+		}
+		if errors.Is(err, ErrInvalidImage) || errors.Is(err, ErrImageTooLarge) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		return
+	}
+
+	response, err := h.service.toResponse(c.Request.Context(), product)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, response)
 }
 
 // Delete permanently removes a product from the database.

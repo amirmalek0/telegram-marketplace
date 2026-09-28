@@ -23,6 +23,7 @@ func RegisterRoutes(rg *gin.RouterGroup, h *products.Handler) {
 	admin := g.Group("", middleware.RequireAdmin())
 	{
 		admin.POST("", h.Create)
+		admin.POST("/:id/image", h.UploadImage)
 		admin.PATCH("/:id", h.Update)
 		admin.DELETE("/:id", h.Delete)
 	}

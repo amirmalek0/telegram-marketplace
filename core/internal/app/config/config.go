@@ -36,6 +36,9 @@ type Config struct {
 	ProductFilesBucket    string // e.g. "product-files"
 	ProductFilesPublicURL string // e.g. "http://localhost:9000/product-files"
 
+	ProductImagesBucket    string // e.g. "product-images"
+	ProductImagesPublicURL string // e.g. "http://localhost:9000/product-images"
+
 	// Payment Gateway Configuration
 	CallbackURL string // Base URL for gateway verify callbacks, e.g. http://localhost:8080/api/v1/payment/verify
 
@@ -75,6 +78,9 @@ func Load() Config {
 
 		ProductFilesBucket:    getEnv("PRODUCT_FILES_BUCKET", "product-files"),
 		ProductFilesPublicURL: mustEnv("PRODUCT_FILES_PUBLIC_URL"),
+
+		ProductImagesBucket:    getEnv("PRODUCT_IMAGES_BUCKET", "product-images"),
+		ProductImagesPublicURL: mustEnv("PRODUCT_IMAGES_PUBLIC_URL"),
 
 		// Payment Gateway Configuration
 		CallbackURL: getEnv("CALLBACK_URL", "http://localhost:8080/api/v1/payment/verify"),

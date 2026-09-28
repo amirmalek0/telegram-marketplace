@@ -179,6 +179,7 @@ var migrations = []string{
 		description   TEXT        NOT NULL DEFAULT '',
 		price         DOUBLE PRECISION NOT NULL,
 		category_id   UUID        NOT NULL REFERENCES categories(id),
+		image_storage_id TEXT      NOT NULL DEFAULT '',
 		delivery_type TEXT        NOT NULL
 		                          CHECK (delivery_type IN ('file','message','inventory','bundle','api')),
 		file_id       UUID        REFERENCES files(id),
@@ -193,6 +194,8 @@ var migrations = []string{
 		                          CHECK (status IN ('active','draft','archived')),
 		created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 	)`,
+	// Upgrade path for databases created before product images were introduced.
+	`ALTER TABLE products ADD COLUMN IF NOT EXISTS image_storage_id TEXT NOT NULL DEFAULT ''`,
 	`CREATE INDEX IF NOT EXISTS idx_products_category_id ON products(category_id)`,
 	`CREATE INDEX IF NOT EXISTS idx_products_status       ON products(status)`,
 

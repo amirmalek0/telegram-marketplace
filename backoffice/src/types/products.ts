@@ -40,6 +40,7 @@ export interface ProductResponse {
   description: string;
   price: number;
   category_id: string;
+  image_url: string;
   delivery_type: DeliveryType;
   file_id?: string;
   message_id?: string;

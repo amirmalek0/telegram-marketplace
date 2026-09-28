@@ -4,7 +4,7 @@ import { Upload, X, File as FileIcon, Image } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
 interface FileUploadProps {
-  onFileSelect: (file: File) => void;
+  onFileSelect: (file: File | null) => void;
   accept?: string;
   maxSize?: number; // in MB
   label?: string;
@@ -75,8 +75,9 @@ export function FileUpload({
     setSelectedFile(null);
     setPreviewUrl(null);
     setInternalError(null);
+    onFileSelect(null);
     if (previewUrl) URL.revokeObjectURL(previewUrl);
-  }, [previewUrl]);
+  }, [onFileSelect, previewUrl]);
 
   const isImage = selectedFile?.type.startsWith('image/');
 
