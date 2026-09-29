@@ -1,7 +1,12 @@
-import HomePage from './pages/HomePage'
+import { BrowserRouter } from 'react-router-dom'
+import { Marketplace } from './app/Marketplace'
 
 function App() {
-  return <HomePage />
+  return (
+    <BrowserRouter>
+      <Marketplace />
+    </BrowserRouter>
+  )
 }
 
 export default App
