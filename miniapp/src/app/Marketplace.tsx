@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { TelegramRequired } from '../components/feedback/TelegramRequired'
 import { AppHeader } from '../components/layout/AppHeader'
 import { BottomNavigation } from '../components/layout/BottomNavigation'
+import { ScrollToTop } from '../components/layout/ScrollToTop'
 import { useCatalog } from '../features/catalog/useCatalog'
 import { useTelegramAuth } from '../hooks/useTelegramAuth'
 import { CategoryPage } from '../pages/CategoryPage'
@@ -17,6 +18,7 @@ export function Marketplace() {
 
   return (
     <div className="app-shell">
+      <ScrollToTop />
       <AppHeader categories={catalog.categories} products={catalog.products} />
       <main className="app-content">
         <Routes>

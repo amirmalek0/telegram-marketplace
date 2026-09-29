@@ -16,7 +16,10 @@
   box-shadow: 0 14px 38px rgba(28,28,30,.12), inset 0 1px rgba(255,255,255,.96);
   backdrop-filter: blur(24px) saturate(150%);
   -webkit-backdrop-filter: blur(24px) saturate(150%);
+  transition: height .26s cubic-bezier(.2,.8,.2,1), border-radius .26s cubic-bezier(.2,.8,.2,1), padding .26s cubic-bezier(.2,.8,.2,1);
 }
+
+.bottom-nav.is-compact { height: 48px; padding-block: 4px; border-radius: 18px; }
 
 .nav-item {
   position: relative;
@@ -48,6 +51,7 @@
   height: 29px;
   display: grid;
   place-items: center;
+  transition: height .24s cubic-bezier(.2,.8,.2,1);
 }
 
 .nav-icon .icon {
@@ -61,9 +65,16 @@
 
 .nav-item > span:last-child {
   max-width: 100%;
+  max-height: 14px;
   overflow: hidden;
+  opacity: 1;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transform: translateY(0);
+  transition: max-height .22s ease, opacity .18s ease, transform .22s ease;
 }
 
 .nav-item.active > span:last-child { font-weight: 800; }
+.bottom-nav.is-compact .nav-item { gap: 0; padding-block: 1px; }
+.bottom-nav.is-compact .nav-icon { height: 36px; }
+.bottom-nav.is-compact .nav-item > span:last-child { max-height: 0; opacity: 0; transform: translateY(4px); }
