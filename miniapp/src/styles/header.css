@@ -5,6 +5,11 @@
 .header-title-icon::after { content: ''; position: absolute; width: 30px; height: 30px; left: -13px; bottom: -13px; border-radius: 50%; background: rgba(255,255,255,.22); }
 .header-title-copy { min-width: 0; }
 .header-title-copy h1 { max-width: 46vw; margin: 0; overflow: hidden; color: var(--text); font-size: 18px; line-height: 1.35; letter-spacing: -.35px; text-overflow: ellipsis; white-space: nowrap; }
+.header-navigation.is-detail { min-height: 54px; }
+.header-navigation.is-detail .header-title-group { gap: 8px; }
+.header-navigation.is-detail .header-title-icon { width: 39px; height: 39px; flex-basis: 39px; border-radius: 13px; }
+.header-navigation.is-detail .header-title-icon .icon { width: 19px; height: 19px; }
+.header-navigation.is-detail .header-title-copy h1 { max-width: 48vw; overflow-wrap: anywhere; font-size: 14px; letter-spacing: -.2px; line-height: 1.45; white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .header-actions { margin-inline-start: auto; display: flex; align-items: center; gap: 6px; direction: rtl; }
 .header-back { height: 39px; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 0 10px; border: 0; border-radius: 13px; background: var(--surface-soft); color: var(--accent); font-size: 10px; font-weight: 750; }
 .theme-toggle { width: 39px; height: 39px; flex: 0 0 39px; display: grid; place-items: center; padding: 0; border: 1px solid rgba(60,60,67,.08); border-radius: 13px; background: rgba(118,118,128,.09); color: #58585e; box-shadow: inset 0 1px rgba(255,255,255,.70); transition: color .2s, background .2s, transform .18s; }

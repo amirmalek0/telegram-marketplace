@@ -26,7 +26,7 @@ function resolveHeader(pathname: string, categories: Category[], products: Produ
   return {
     ...header,
     isDetail: Boolean(categoryId || productId),
-    showSearch: pathname === '/' || Boolean(categoryId),
+    showSearch: pathname === '/',
   }
 }
 
@@ -37,19 +37,22 @@ export function AppHeader({ categories, products }: AppHeaderProps) {
 
   return (
     <header className="top-region">
-      <div className="header-navigation">
+      <div className={`header-navigation ${header.isDetail ? 'is-detail' : ''}`}>
         <div className="header-title-group">
           <span className="header-title-icon"><Icon name={header.icon} size={22} /></span>
           <div className="header-title-copy"><h1>{header.title}</h1></div>
         </div>
         <div className="header-actions">
-          {header.isDetail && (
+          {header.isDetail ? (
             <button className="header-back" onClick={() => navigate(-1)} aria-label="بازگشت">
               <span>بازگشت</span><Icon name="back" size={18} />
             </button>
+          ) : (
+            <>
+              <ThemeToggle />
+              {header.showSearch && <ProductSearch products={products} />}
+            </>
           )}
-          <ThemeToggle />
-          {header.showSearch && <ProductSearch products={products} />}
         </div>
       </div>
     </header>

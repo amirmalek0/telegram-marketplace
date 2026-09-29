@@ -21,7 +21,7 @@ export function ProductCard({ product, category }: ProductCardProps) {
         <h3>{product.title}</h3>
         <p className="product-description">{product.description || 'محصول دیجیتال با تحویل سریع و امن'}</p>
         <div className="product-meta-row">
-          <span className="views"><Icon name="eye" size={14} /> {product.views_count.toLocaleString('fa-IR')}</span>
+          <span className="views"><span>{product.views_count.toLocaleString('fa-IR')}</span><Icon name="eye" size={14} /></span>
         </div>
         <div className="product-card-footer">
           <strong>{formatPrice(product.price)}</strong>

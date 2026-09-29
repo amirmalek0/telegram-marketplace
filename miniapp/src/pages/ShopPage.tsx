@@ -10,7 +10,7 @@ export function ShopPage({ categories, products, categoryById, loading, error }:
 
   return (
     <div className="page shop-page">
-      <SectionHeading title="دسته‌بندی‌ها" meta={`${categories.length.toLocaleString('fa-IR')} دسته`} icon="box" tone="purple" />
+      <SectionHeading title="دسته‌بندی‌ها" icon="box" tone="purple" />
       {categories.length > 0 ? (
         <div className="category-rail horizontal-scroll">
           {categories.map((category) => (
@@ -22,7 +22,7 @@ export function ShopPage({ categories, products, categoryById, loading, error }:
         </div>
       ) : <InlineEmpty text="دسته‌بندی‌ای با این جست‌وجو پیدا نشد." />}
 
-      <SectionHeading title="تازه‌ترین محصولات" meta={`${products.length.toLocaleString('fa-IR')} محصول`} icon="sparkles" tone="blue" />
+      <SectionHeading title="تازه‌ترین محصولات" icon="sparkles" tone="blue" />
       {products.length > 0 ? (
         <div className="product-rail">
           {products.map((product) => (
