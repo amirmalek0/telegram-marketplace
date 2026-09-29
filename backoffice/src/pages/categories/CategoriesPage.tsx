@@ -35,6 +35,7 @@ import { Badge } from '@/components/ui/Badge';
 import { FileUpload } from '@/components/ui/FileUpload';
 import { SortableItem } from '@/components/ui/SortableItem';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
+import { publicAssetURL } from '@/utils/assets';
 
 // --- Zod Schemas ---
 const createSchema = z.object({
@@ -193,8 +194,8 @@ export default function CategoriesPage() {
   };
 
   const handleOpenSort = () => {
-    // Sort by sort_order descending for display
-    const sorted = [...categories].sort((a, b) => b.sort_order - a.sort_order);
+    // The API and storefront both treat the lowest sort_order as the first item.
+    const sorted = [...categories].sort((a, b) => a.sort_order - b.sort_order);
     setSortableItems(sorted);
     setSortOpen(true);
   };
@@ -213,10 +214,10 @@ export default function CategoriesPage() {
   const handleSaveOrder = async () => {
     setReordering(true);
     try {
-      // Assign sort_order: highest number = first in list (descending)
+      // Persist the visible top-to-bottom order using one-based ascending positions.
       const items = sortableItems.map((item, index) => ({
         id: item.id,
-        sort_order: sortableItems.length - index,
+        sort_order: index + 1,
       }));
       await categoriesApi.reorder({ items });
       toast.success('ترتیب دسته‌بندی‌ها با موفقیت ذخیره شد');
@@ -237,7 +238,7 @@ export default function CategoriesPage() {
       render: (value) => (
         <div className="w-10 h-10 rounded-xl overflow-hidden bg-[rgb(var(--color-border))] flex items-center justify-center">
           {value ? (
-            <img src={value as string} alt="" className="w-full h-full object-cover" />
+            <img src={publicAssetURL(value as string)} alt="" className="w-full h-full object-cover" />
           ) : (
             <ImageIcon size={18} className="text-[rgb(var(--color-text-secondary))]" />
           )}
@@ -439,7 +440,7 @@ export default function CategoriesPage() {
                 تصویر فعلی
               </label>
               <img
-                src={selected.icon_url}
+                src={publicAssetURL(selected.icon_url)}
                 alt={selected.title}
                 className="w-20 h-20 rounded-xl object-cover border border-[rgb(var(--color-border))]"
               />
@@ -480,7 +481,7 @@ export default function CategoriesPage() {
         {selected?.icon_url && (
           <div className="flex items-center gap-3 p-3 rounded-xl bg-[rgb(var(--color-bg))] border border-[rgb(var(--color-border))]">
             <img
-              src={selected.icon_url}
+              src={publicAssetURL(selected.icon_url)}
               alt={selected.title}
               className="w-12 h-12 rounded-lg object-cover"
             />
@@ -529,7 +530,7 @@ export default function CategoriesPage() {
                     <div className="flex items-center gap-3">
                       {item.icon_url ? (
                         <img
-                          src={item.icon_url}
+                          src={publicAssetURL(item.icon_url)}
                           alt={item.title}
                           className="w-8 h-8 rounded-lg object-cover"
                         />

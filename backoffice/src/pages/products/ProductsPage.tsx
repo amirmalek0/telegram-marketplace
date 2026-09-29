@@ -33,6 +33,7 @@ import { Select } from '@/components/ui/Select';
 import { Toggle } from '@/components/ui/Toggle';
 import { Badge } from '@/components/ui/Badge';
 import { FileUpload } from '@/components/ui/FileUpload';
+import { publicAssetURL } from '@/utils/assets';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -60,16 +61,6 @@ const formatPrice = (price: number) =>
   new Intl.NumberFormat('fa-IR').format(price) + ' تومان';
 
 const PER_PAGE = 20;
-
-const publicAssetURL = (value: string) => {
-  try {
-    const url = new URL(value);
-    if (url.hostname === 'minio') return `/storage${url.pathname}${url.search}`;
-  } catch {
-    return value;
-  }
-  return value;
-};
 
 // ─── Zod Schema ──────────────────────────────────────────────────────────────
 
