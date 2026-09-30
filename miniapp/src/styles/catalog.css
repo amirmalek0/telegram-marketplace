@@ -109,3 +109,6 @@
 .product-fact-copy strong { overflow: hidden; color: var(--text); font-size: 10px; line-height: 1.5; text-overflow: ellipsis; white-space: nowrap; }
 .product-demo-link { min-height: 44px; display: flex; align-items: center; justify-content: space-between; margin-top: 10px; padding: 0 13px; border: 1px solid color-mix(in srgb, var(--accent) 15%, var(--line)); border-radius: 14px; background: var(--accent-soft); color: var(--accent); font-size: 10px; font-weight: 750; }
 .product-demo-link .icon { transform: rotate(180deg); }
+.related-products-section { margin-top: 18px; }
+.related-products-section .section-heading { margin-top: 0; }
+.related-products-list { padding-bottom: 4px; }

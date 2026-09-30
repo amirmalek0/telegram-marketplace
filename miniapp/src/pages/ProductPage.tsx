@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { ApiClient } from '../api/client'
 import { ProductArtwork } from '../components/catalog/ProductArtwork'
+import { RelatedProducts } from '../components/catalog/RelatedProducts'
 import { ShopSkeleton, StateCard } from '../components/feedback/CatalogStates'
 import { Icon, type IconName } from '../components/ui/Icon'
 import { deliveryLabels } from '../features/catalog/constants'
@@ -105,6 +106,8 @@ export function ProductPage({ products, categoryById, initDataRaw }: ProductPage
           </a>
         )}
       </section>
+
+      <RelatedProducts currentProduct={product} products={products} category={category} />
     </div>
   )
 }
