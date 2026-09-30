@@ -23,6 +23,7 @@ import UsersPage from '@/pages/users/UsersPage';
 import WalletsPage from '@/pages/wallets/WalletsPage';
 import VipPage from '@/pages/vip/VipPage';
 import TicketsPage from '@/pages/tickets/TicketsPage';
+import UserTicketsPage from '@/pages/tickets/UserTicketsPage';
 
 void PageLoader;
 
@@ -75,6 +76,7 @@ function App() {
             <Route path="payments" element={<PaymentsPage />} />
             <Route path="coupons" element={<CouponsPage />} />
             <Route path="users" element={<UsersPage />} />
+            <Route path="users/:userId/tickets" element={<UserTicketsPage />} />
             <Route path="wallets" element={<WalletsPage />} />
             <Route path="vip" element={<VipPage />} />
             <Route path="messages" element={<MessagesPage />} />

@@ -12,6 +12,7 @@ import {
   TicketPriority,
   TicketResponse,
   TicketStatus,
+  TicketWithMessagesResponse,
   TicketsPaginatedResponse,
   UpdateCouponRequest,
   UpdateUserRequest,
@@ -69,8 +70,10 @@ export const vipApi = {
 };
 
 export const ticketsApi = {
-  list: (params?: PageParams & { status?: TicketStatus | ''; priority?: TicketPriority | ''; category?: string }, signal?: AbortSignal) =>
+  list: (params?: PageParams & { status?: TicketStatus | ''; priority?: TicketPriority | ''; category?: string; user_id?: string }, signal?: AbortSignal) =>
     apiClient.get<TicketsPaginatedResponse>('/ticket', { params, signal }).then(r => r.data),
+  get: (id: string, signal?: AbortSignal) =>
+    apiClient.get<TicketWithMessagesResponse>(`/ticket/${id}`, { signal }).then(r => r.data),
   update: (id: string, data: Partial<Pick<TicketResponse, 'status' | 'priority' | 'category' | 'subject'>>) =>
     apiClient.patch<TicketResponse>(`/ticket/${id}`, data).then(r => r.data),
   addMessage: (id: string, message: string) => apiClient.post<TicketMessageResponse>(`/ticket/${id}/messages`, { message }).then(r => r.data),

@@ -127,6 +127,7 @@ export interface TicketResponse {
   updated_at: string;
   closed_at?: string;
   last_message_at: string;
+  user?: UserResponse;
 }
 export type TicketsPaginatedResponse = PaginatedResponse<TicketResponse>;
 export interface TicketMessageResponse {
@@ -136,6 +137,10 @@ export interface TicketMessageResponse {
   sender_id: string;
   message: string;
   created_at: string;
+}
+export interface TicketWithMessagesResponse {
+  ticket: TicketResponse;
+  messages: TicketMessageResponse[];
 }
 export interface TicketCategoryResponse { id: string; name: string; created_at: string }
 export type TicketCategoriesPaginatedResponse = PaginatedResponse<TicketCategoryResponse>;
