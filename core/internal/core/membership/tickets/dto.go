@@ -35,22 +35,42 @@ type TicketListFilters struct {
 	Status   *string `form:"status"`
 	Priority *string `form:"priority"`
 	Category *string `form:"category"`
+	UserID   *string `form:"user_id"`
 }
 
 // --- Response DTOs ---
 
 // TicketResponse represents a ticket in API responses.
 type TicketResponse struct {
+	ID            string              `json:"id"`
+	UserID        string              `json:"user_id"`
+	Subject       string              `json:"subject"`
+	Status        string              `json:"status"`
+	Priority      string              `json:"priority"`
+	Category      string              `json:"category"`
+	CreatedAt     time.Time           `json:"created_at"`
+	UpdatedAt     time.Time           `json:"updated_at"`
+	ClosedAt      *time.Time          `json:"closed_at,omitempty"`
+	LastMessageAt time.Time           `json:"last_message_at"`
+	User          *TicketUserResponse `json:"user,omitempty"`
+}
+
+// TicketUserResponse contains the complete user profile shown to administrators.
+// It is omitted from Telegram user responses.
+type TicketUserResponse struct {
 	ID            string     `json:"id"`
-	UserID        string     `json:"user_id"`
-	Subject       string     `json:"subject"`
-	Status        string     `json:"status"`
-	Priority      string     `json:"priority"`
-	Category      string     `json:"category"`
+	FirstName     string     `json:"first_name"`
+	LastName      string     `json:"last_name"`
+	Username      string     `json:"username"`
+	TelegramID    int64      `json:"telegram_id"`
+	PhoneNumber   string     `json:"phone_number"`
+	HasActivePlan bool       `json:"has_active_plan"`
+	ActivePlanID  *string    `json:"active_plan_id,omitempty"`
+	WalletBalance float64    `json:"wallet_balance"`
+	PlanExpireAt  *time.Time `json:"plan_expire_at,omitempty"`
+	ReferredBy    *int64     `json:"referred_by,omitempty"`
+	IsBanned      bool       `json:"is_banned"`
 	CreatedAt     time.Time  `json:"created_at"`
-	UpdatedAt     time.Time  `json:"updated_at"`
-	ClosedAt      *time.Time `json:"closed_at,omitempty"`
-	LastMessageAt time.Time  `json:"last_message_at"`
 }
 
 // TicketMessageResponse represents a ticket message in API responses.

@@ -77,15 +77,17 @@ const (
 		WHERE ($1::text IS NULL OR status = $1)
 		  AND ($2::text IS NULL OR priority = $2)
 		  AND ($3::text IS NULL OR category = $3)
+		  AND ($4::uuid IS NULL OR user_id = $4)
 		ORDER BY last_message_at DESC
-		LIMIT $4 OFFSET $5`
+		LIMIT $5 OFFSET $6`
 
 	// queryCountAllTickets returns the total number of tickets with optional filters.
 	queryCountAllTickets = `
 		SELECT COUNT(*) FROM tickets
 		WHERE ($1::text IS NULL OR status = $1)
 		  AND ($2::text IS NULL OR priority = $2)
-		  AND ($3::text IS NULL OR category = $3)`
+		  AND ($3::text IS NULL OR category = $3)
+		  AND ($4::uuid IS NULL OR user_id = $4)`
 
 	// queryCreateMessage inserts a new ticket message.
 	queryCreateMessage = `

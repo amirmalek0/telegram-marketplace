@@ -2,6 +2,7 @@ package tickets
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -83,9 +84,19 @@ func (h *Handler) Create(c *gin.Context) {
 // Get handles GET /tickets/:id - retrieves a ticket with its messages.
 func (h *Handler) Get(c *gin.Context) {
 	id := c.Param("id")
+	adminID, _ := getAdminID(c)
+	telegramID, _ := getTelegramUserID(c)
+	if adminID == "" && telegramID == 0 {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "not authenticated"})
+		return
+	}
 
-	result, err := h.service.GetTicketWithMessages(c.Request.Context(), id)
+	result, err := h.service.GetTicketWithMessages(c.Request.Context(), id, adminID, telegramID)
 	if err != nil {
+		if errors.Is(err, ErrTicketAccessDenied) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "ticket access denied"})
+			return
+		}
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
@@ -102,6 +113,10 @@ func (h *Handler) List(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	filters.Status = nonEmptyFilter(filters.Status)
+	filters.Priority = nonEmptyFilter(filters.Priority)
+	filters.Category = nonEmptyFilter(filters.Category)
+	filters.UserID = nonEmptyFilter(filters.UserID)
 
 	adminID, _ := getAdminID(c)
 	telegramID, _ := getTelegramUserID(c)
@@ -171,6 +186,10 @@ func (h *Handler) AddMessage(c *gin.Context) {
 
 	message, err := h.service.AddMessage(c.Request.Context(), id, adminID, telegramID, req.Message)
 	if err != nil {
+		if errors.Is(err, ErrTicketAccessDenied) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "ticket access denied"})
+			return
+		}
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
 		return
 	}
@@ -181,9 +200,18 @@ func (h *Handler) AddMessage(c *gin.Context) {
 // ListMessages handles GET /tickets/:id/messages - retrieves all messages for a ticket.
 func (h *Handler) ListMessages(c *gin.Context) {
 	id := c.Param("id")
+	telegramID, ok := getTelegramUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not authenticated"})
+		return
+	}
 
-	messages, err := h.service.ListMessages(c.Request.Context(), id)
+	messages, err := h.service.ListMessages(c.Request.Context(), id, telegramID)
 	if err != nil {
+		if errors.Is(err, ErrTicketAccessDenied) {
+			c.JSON(http.StatusForbidden, gin.H{"error": "ticket access denied"})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -194,4 +222,11 @@ func (h *Handler) ListMessages(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, response)
+}
+
+func nonEmptyFilter(value *string) *string {
+	if value == nil || *value == "" {
+		return nil
+	}
+	return value
 }

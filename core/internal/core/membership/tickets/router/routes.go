@@ -16,7 +16,6 @@ func RegisterRoutes(rg *gin.RouterGroup, h *tickets.Handler) {
 	tma := g.Group("", middleware.RequireTelegram())
 	{
 		tma.POST("", h.Create)
-		tma.GET("/:id", h.Get)
 		tma.GET("/:id/messages", h.ListMessages)
 	}
 
@@ -25,6 +24,7 @@ func RegisterRoutes(rg *gin.RouterGroup, h *tickets.Handler) {
 	{
 		any.POST("/:id/messages", h.AddMessage)
 		any.GET("", h.List)
+		any.GET("/:id", h.Get)
 	}
 
 	// Admin only - admin ticket management operations

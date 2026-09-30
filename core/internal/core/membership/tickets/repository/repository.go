@@ -18,6 +18,7 @@ type TicketFilters struct {
 	Status   *string
 	Priority *string
 	Category *string
+	UserID   *string
 }
 
 // Repository defines the data-access contract for the tickets domain.
@@ -127,7 +128,7 @@ func (r *postgresRepository) CountByUser(ctx context.Context, userID string) (in
 
 func (r *postgresRepository) ListAll(ctx context.Context, filters TicketFilters, limit, offset int) ([]*model.Ticket, error) {
 	rows, err := r.db.Query(ctx, queryListAllTickets,
-		filters.Status, filters.Priority, filters.Category, limit, offset,
+		filters.Status, filters.Priority, filters.Category, filters.UserID, limit, offset,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("tickets.repository.ListAll: %w", err)
@@ -148,7 +149,7 @@ func (r *postgresRepository) ListAll(ctx context.Context, filters TicketFilters,
 func (r *postgresRepository) CountAll(ctx context.Context, filters TicketFilters) (int64, error) {
 	var total int64
 	err := r.db.QueryRow(ctx, queryCountAllTickets,
-		filters.Status, filters.Priority, filters.Category,
+		filters.Status, filters.Priority, filters.Category, filters.UserID,
 	).Scan(&total)
 	if err != nil {
 		return 0, fmt.Errorf("tickets.repository.CountAll: %w", err)

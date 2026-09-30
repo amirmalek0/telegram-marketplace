@@ -16,6 +16,10 @@ import (
 // ErrInvalidCategory is returned when a ticket category does not exist.
 var ErrInvalidCategory = fmt.Errorf("invalid ticket category")
 
+// ErrTicketAccessDenied is returned when a Telegram user tries to access
+// a ticket that belongs to another user.
+var ErrTicketAccessDenied = fmt.Errorf("ticket access denied")
+
 // Service holds the business logic for the tickets domain.
 type Service struct {
 	repo         ticketrepo.Repository
@@ -94,11 +98,18 @@ func (s *Service) GetTicket(ctx context.Context, id string) (*model.Ticket, erro
 	return ticket, nil
 }
 
-// GetTicketWithMessages retrieves a ticket and all its messages.
-func (s *Service) GetTicketWithMessages(ctx context.Context, id string) (*TicketWithMessagesResponse, error) {
+// GetTicketWithMessages retrieves a ticket and all its messages. Telegram users
+// may only access their own tickets, while authenticated admins may access any ticket.
+func (s *Service) GetTicketWithMessages(ctx context.Context, id string, adminID string, telegramID int64) (*TicketWithMessagesResponse, error) {
 	ticket, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("tickets.service.GetTicketWithMessages: %w", err)
+	}
+
+	if adminID == "" {
+		if err := s.ensureUserOwnsTicket(ctx, ticket, telegramID); err != nil {
+			return nil, fmt.Errorf("tickets.service.GetTicketWithMessages: %w", err)
+		}
 	}
 
 	messages, err := s.repo.ListMessages(ctx, id)
@@ -111,8 +122,15 @@ func (s *Service) GetTicketWithMessages(ctx context.Context, id string) (*Ticket
 		msgResponses[i] = toTicketMessageResponse(msg)
 	}
 
+	ticketResponse := toTicketResponse(ticket)
+	if adminID != "" {
+		if err := s.attachUser(ctx, &ticketResponse); err != nil {
+			return nil, fmt.Errorf("tickets.service.GetTicketWithMessages user: %w", err)
+		}
+	}
+
 	return &TicketWithMessagesResponse{
-		Ticket:   toTicketResponse(ticket),
+		Ticket:   ticketResponse,
 		Messages: msgResponses,
 	}, nil
 }
@@ -175,7 +193,7 @@ func (s *Service) DeleteTicket(ctx context.Context, id string) error {
 // Exactly one of adminID or telegramID must be non-zero.
 func (s *Service) AddMessage(ctx context.Context, ticketID string, adminID string, telegramID int64, message string) (*model.TicketMessage, error) {
 	// Verify ticket exists
-	_, err := s.repo.GetByID(ctx, ticketID)
+	ticket, err := s.repo.GetByID(ctx, ticketID)
 	if err != nil {
 		return nil, fmt.Errorf("tickets.service.AddMessage: %w", err)
 	}
@@ -190,6 +208,9 @@ func (s *Service) AddMessage(ctx context.Context, ticketID string, adminID strin
 		user, err := s.userService.GetByTelegramID(ctx, telegramID)
 		if err != nil {
 			return nil, fmt.Errorf("tickets.service.AddMessage: user not found: %w", err)
+		}
+		if ticket.UserID != user.ID {
+			return nil, fmt.Errorf("tickets.service.AddMessage: %w", ErrTicketAccessDenied)
 		}
 		senderID = user.ID
 	}
@@ -215,13 +236,32 @@ func (s *Service) AddMessage(ctx context.Context, ticketID string, adminID strin
 	return msg, nil
 }
 
-// ListMessages retrieves all messages for a ticket.
-func (s *Service) ListMessages(ctx context.Context, ticketID string) ([]*model.TicketMessage, error) {
+// ListMessages retrieves all messages for a Telegram user's ticket.
+func (s *Service) ListMessages(ctx context.Context, ticketID string, telegramID int64) ([]*model.TicketMessage, error) {
+	ticket, err := s.repo.GetByID(ctx, ticketID)
+	if err != nil {
+		return nil, fmt.Errorf("tickets.service.ListMessages: %w", err)
+	}
+	if err := s.ensureUserOwnsTicket(ctx, ticket, telegramID); err != nil {
+		return nil, fmt.Errorf("tickets.service.ListMessages: %w", err)
+	}
+
 	messages, err := s.repo.ListMessages(ctx, ticketID)
 	if err != nil {
 		return nil, fmt.Errorf("tickets.service.ListMessages: %w", err)
 	}
 	return messages, nil
+}
+
+func (s *Service) ensureUserOwnsTicket(ctx context.Context, ticket *model.Ticket, telegramID int64) error {
+	user, err := s.userService.GetByTelegramID(ctx, telegramID)
+	if err != nil {
+		return fmt.Errorf("resolve user: %w", err)
+	}
+	if ticket.UserID != user.ID {
+		return ErrTicketAccessDenied
+	}
+	return nil
 }
 
 // ListTickets retrieves tickets based on the caller's role.
@@ -272,6 +312,7 @@ func (s *Service) listAllTickets(ctx context.Context, filters TicketListFilters,
 		Status:   filters.Status,
 		Priority: filters.Priority,
 		Category: filters.Category,
+		UserID:   filters.UserID,
 	}
 
 	tickets, err := s.repo.ListAll(ctx, repoFilters, params.PerPage, params.Offset())
@@ -287,8 +328,35 @@ func (s *Service) listAllTickets(ctx context.Context, filters TicketListFilters,
 	data := make([]TicketResponse, len(tickets))
 	for i, t := range tickets {
 		data[i] = toTicketResponse(t)
+		if err := s.attachUser(ctx, &data[i]); err != nil {
+			return nil, fmt.Errorf("tickets.service.listAllTickets user: %w", err)
+		}
 	}
 
 	result := pagination.NewResponse(data, total, params)
 	return &result, nil
+}
+
+func (s *Service) attachUser(ctx context.Context, ticket *TicketResponse) error {
+	user, err := s.userService.GetByID(ctx, ticket.UserID)
+	if err != nil {
+		return err
+	}
+
+	ticket.User = &TicketUserResponse{
+		ID:            user.ID,
+		FirstName:     user.FirstName,
+		LastName:      user.LastName,
+		Username:      user.Username,
+		TelegramID:    user.TelegramID,
+		PhoneNumber:   user.PhoneNumber,
+		HasActivePlan: user.HasActivePlan,
+		ActivePlanID:  user.ActivePlanID,
+		WalletBalance: user.WalletBalance,
+		PlanExpireAt:  user.PlanExpireAt,
+		ReferredBy:    user.ReferredBy,
+		IsBanned:      user.IsBanned,
+		CreatedAt:     user.CreatedAt,
+	}
+	return nil
 }
