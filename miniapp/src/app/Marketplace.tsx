@@ -6,8 +6,11 @@ import { ScrollToTop } from '../components/layout/ScrollToTop'
 import { useCatalog } from '../features/catalog/useCatalog'
 import { useTelegramAuth } from '../hooks/useTelegramAuth'
 import { CategoryPage } from '../pages/CategoryPage'
+import { NewTicketPage } from '../pages/NewTicketPage'
 import { ProductPage } from '../pages/ProductPage'
 import { ShopPage } from '../pages/ShopPage'
+import { TicketPage } from '../pages/TicketPage'
+import { TicketsPage } from '../pages/TicketsPage'
 import { UnderConstructionPage } from '../pages/UnderConstructionPage'
 
 export function Marketplace() {
@@ -27,7 +30,9 @@ export function Marketplace() {
           <Route path="/products/:productId" element={<ProductPage {...catalog} initDataRaw={auth.initDataRaw} />} />
           <Route path="/orders" element={<UnderConstructionPage icon="orders" title="سفارش‌ها" />} />
           <Route path="/downloads" element={<UnderConstructionPage icon="download" title="دانلودها" />} />
-          <Route path="/tickets" element={<UnderConstructionPage icon="tickets" title="تیکت‌ها" />} />
+          <Route path="/tickets" element={<TicketsPage initDataRaw={auth.initDataRaw} ready={!catalog.loading} />} />
+          <Route path="/tickets/new" element={<NewTicketPage initDataRaw={auth.initDataRaw} ready={!catalog.loading} />} />
+          <Route path="/tickets/:ticketId" element={<TicketPage initDataRaw={auth.initDataRaw} ready={!catalog.loading} />} />
           <Route path="/profile" element={<UnderConstructionPage icon="profile" title="پروفایل" />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

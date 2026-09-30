@@ -15,6 +15,10 @@ export type IconName =
   | 'sun'
   | 'moon'
   | 'sparkles'
+  | 'plus'
+  | 'send'
+  | 'clock'
+  | 'check'
 
 const iconPaths: Record<IconName, ReactNode> = {
   shop: <><path d="M6.5 8.5V6a5.5 5.5 0 0 1 11 0v2.5"/><path d="M4 8.5h16l-1 12H5l-1-12Z"/></>,
@@ -31,6 +35,10 @@ const iconPaths: Record<IconName, ReactNode> = {
   sun: <><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"/></>,
   moon: <path d="M20.5 14.2A8.2 8.2 0 0 1 9.8 3.5 8.5 8.5 0 1 0 20.5 14.2Z"/>,
   sparkles: <><path d="m12 3 1.2 3.8L17 8l-3.8 1.2L12 13l-1.2-3.8L7 8l3.8-1.2L12 3Z"/><path d="m19 14 .7 2.3L22 17l-2.3.7L19 20l-.7-2.3L16 17l2.3-.7L19 14ZM5 13l.8 2.2L8 16l-2.2.8L5 19l-.8-2.2L2 16l2.2-.8L5 13Z"/></>,
+  plus: <><path d="M12 5v14"/><path d="M5 12h14"/></>,
+  send: <><path d="m22 2-7 20-4-9-9-4 20-7Z"/><path d="M22 2 11 13"/></>,
+  clock: <><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></>,
+  check: <><circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16 9"/></>,
 }
 
 interface IconProps {
