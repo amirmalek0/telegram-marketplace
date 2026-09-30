@@ -397,7 +397,7 @@
     products: [["GET","/product","any"],["GET","/product/:id","any"],["POST","/product","admin"],["POST","/product/:id/image","admin"],["PATCH","/product/:id","admin"],["DELETE","/product/:id","admin"]],
     coupons: [["POST","/coupon/validate","tma"],["POST","/coupon","admin"],["GET","/coupon","admin"],["GET","/coupon/:id","admin"],["PATCH","/coupon/:id","admin"],["DELETE","/coupon/:id","admin"]],
     orders: [["POST","/order","tma"],["GET","/order","tma"],["GET","/order/:id","tma"],["GET","/order/all","admin"],["PATCH","/order/:id/status","admin"]],
-    payments: [["POST","/payment/verify/:provider","open"],["POST","/payment/create","tma"],["GET","/payment/:id","tma"],["GET","/payment/gateways","tma"],["GET","/payment/all","admin"]],
+    payments: [["GET","/payment/all","admin"]],
     wallets: [["GET","/wallet/balance","tma"],["GET","/wallet/transactions","tma"],["GET","/wallet/users/:id/balance","admin"],["GET","/wallet/users/:id/transactions","admin"],["POST","/wallet/adjust","admin"]],
     admins: [["POST","/admin","admin"],["GET","/admin","admin"],["GET","/admin/:id","admin"],["PUT","/admin/:id","admin"],["DELETE","/admin/:id","admin"]],
     auth: [["POST","/auth/login","open"],["POST","/auth/refresh","open"]],
@@ -420,7 +420,7 @@
 
   mod("coupons",    { path:"internal/core/commerce/coupons", files:7, loc:741, deps:[], usedBy:["orders"], routes:R.coupons, ctor:"coupons.NewService(couponsRepo)", note:"Validate() and CalculateDiscount() live on the model, so orders can apply a coupon without going through this service." });
   mod("orders",     { path:"internal/core/commerce/orders", files:7, loc:682, deps:["products/repository","coupons/repository","users/repository"], usedBy:["payments"], routes:R.orders, ctor:"orders.NewService(ordersRepo, productRepo, couponsRepo, userRepo)", note:"Single product per order. Amount is computed server-side as price × quantity minus discount; status starts at pending. Coupon usage is incremented at order creation, before any money moves." });
-  mod("payments",   { path:"internal/core/commerce/payments", files:9, loc:911, deps:["orders/repository","provider/"], usedBy:[], routes:R.payments, layers:"model · provider · repository · router", ctor:"payments.NewService(paymentsRepo, ordersRepo, gatewayRegistry)", note:"Holds GatewayRegistry, a mutex-guarded map of provider.Provider. Zarinpal registers only when ZARINPAL_MERCHANT_ID is set, so /payment/gateways can legitimately return an empty list." });
+  mod("payments",   { path:"internal/core/commerce/payments", files:8, loc:0, deps:[], usedBy:[], routes:R.payments, layers:"model · processor · repository · router", ctor:"payments.NewService(paymentsRepo)", note:"Provider-neutral persistence plus a processor contract. No processor is currently registered, so checkout routes remain closed." });
   mod("wallets",    { path:"internal/core/commerce/wallets", files:7, loc:543, deps:["users/repository","*pgxpool.Pool"], usedBy:[], routes:R.wallets, ctor:"wallets.NewService(walletTxRepo, userRepo, db)", note:"The only service handed the raw connection pool — it needs its own transactions to move a balance and write the ledger row atomically." });
   mod("refunds",    { path:"internal/core/commerce/refunds", files:0, loc:0, deps:[], usedBy:[], routes:[], stub:true, note:"Empty directory. Payment refunds are not implemented." });
 
@@ -449,7 +449,7 @@
     pg:         { kind:"Datastore", path:"postgres:16", note:"24 tables, migrated in-process at boot by database.Migrate. Every repository is a PostgresRepository over pgxpool.", kv:{ Tables:"24", Migration:"in-process" } },
     minio:      { kind:"Object storage", path:"minio", note:"Two buckets created on start: category icons and product files. Reached through the AWS S3 SDK, so a real S3 endpoint drops in unchanged.", kv:{ Buckets:"2" } },
     redis:      { kind:"Provisioned, unused", path:"redis", alarm:true, note:"A service and a named volume in docker-compose. No Go file imports a Redis client.", kv:{ References:"0" } },
-    zarinpal:   { kind:"External gateway", path:"payments/provider/zarinpal.go", note:"The only implementation of provider.Provider. Registered at wiring time only when ZARINPAL_MERCHANT_ID is non-empty, sandbox toggled by config.", kv:{ Methods:"4" } },
+    payapi:     { kind:"External platform", path:"Payment processor", note:"Placeholder for a future adapter. No external checkout call is currently wired.", kv:{ Status:"not configured" } },
 
     l_client:   { kind:"Layer 1", path:"miniapp / backoffice", note:"Authorization: tma <initData> from the mini app, Bearer <jwt> from the console." },
     l_main:     { kind:"Layer 2", path:"cmd/api/main.go", note:"config.Load() reads .env through godotenv, then boot.Start(cfg)." },
@@ -500,14 +500,14 @@
         N("pg", 1188, 70, 178, 62, "postgres", "24 tables", C.infra),
         N("minio", 1188, 200, 178, 62, "minio / s3", "2 buckets", C.infra),
         N("redis", 1188, 330, 178, 62, "redis", "unused", C.infra, { ghost: true, chip: "0 refs" }),
-        N("zarinpal", 1188, 500, 178, 62, "zarinpal", "payment gateway", C.infra)
+        N("payapi", 1188, 500, 178, 62, "Payment processor", "not configured", C.infra, { ghost: true, chip: "none" })
       ],
       edges: [
         ["shopper", "miniapp"], ["shopper", "tgchat"], ["operator", "backoffice"],
         ["miniapp", "api", "tma initData"], ["backoffice", "api", "Bearer JWT"],
         ["tgchat", "bot", "", "dashed"], ["api", "appl"], ["bot", "appl", "same Wire()", "dashed"],
         ["appl", "corel"], ["corel", "pkgl"],
-        ["corel", "pg", "pgx"], ["pkgl", "minio", "s3 sdk"], ["corel", "zarinpal", "provider"]
+        ["corel", "pg", "pgx"], ["pkgl", "minio", "s3 sdk"], ["corel", "payapi", "processor", "dashed"]
       ]
     },
 
@@ -599,13 +599,13 @@
     flows: {
       label: "Money flows",
       idx: "04",
-      title: "Order → payment → callback",
-      text: "The three sequences that move money, step by step as the services actually call each other. The last block is the one that isn't written yet.",
+      title: "Order → planned payment processor",
+      text: "Order creation exists. Processor-specific checkout and settlement are intentionally not exposed until a concrete adapter is implemented.",
       count: "3",
       zones: [
         { x: 24, y: 44, w: 1936, h: 152, c: C.commerce, tag: "A · create order — POST /api/v1/order" },
-        { x: 24, y: 260, w: 1696, h: 152, c: C.commerce, tag: "B · start payment — POST /api/v1/payment/create" },
-        { x: 24, y: 476, w: 1696, h: 152, c: C.infra, tag: "C · gateway callback — POST /api/v1/payment/verify/:provider" }
+        { x: 24, y: 260, w: 1696, h: 152, c: C.commerce, tag: "B · planned — create external checkout" },
+        { x: 24, y: 476, w: 1696, h: 152, c: C.infra, tag: "C · planned — process verified settlement" }
       ],
       nodes: [
         N("a1", 48, 84, 220, 72, "POST /order", "guard: RequireTelegram", C.commerce, { step: 1 }),
@@ -617,20 +617,20 @@
         N("a7", 1488, 84, 220, 72, "model.NewOrder", "status = pending", C.commerce, { step: 7 }),
         N("a8", 1728, 84, 208, 72, "orders.Repo.Create", "201 · order json", C.commerce, { step: 8 }),
 
-        N("b1", 48, 300, 220, 72, "POST /payment/create", "guard: RequireTelegram", C.commerce, { step: 1 }),
-        N("b2", 288, 300, 220, 72, "orders.Repo.GetByID", "reject if already paid", C.commerce, { step: 2 }),
-        N("b3", 528, 300, 220, 72, "GatewayRegistry.Get", "RWMutex map lookup", C.commerce, { step: 3 }),
-        N("b4", 768, 300, 220, 72, "Zarinpal.CreatePayment", "outbound https", C.infra, { step: 4 }),
-        N("b5", 1008, 300, 220, 72, "payments.Repo.Create", "status = pending", C.commerce, { step: 5 }),
-        N("b6", 1248, 300, 220, 72, "orders.Repo", "UpdatePaymentMethod", C.commerce, { step: 6 }),
-        N("b7", 1488, 300, 208, 72, "→ PaymentURL", "client redirects", C.commerce, { step: 7 }),
+        N("b1", 48, 300, 220, 72, "POST /payment/checkout", "guard: RequireTelegram", C.commerce, { step: 1 }),
+        N("b2", 288, 300, 220, 72, "Validate order", "owner · pending · amount", C.commerce, { step: 2 }),
+        N("b3", 528, 300, 220, 72, "payments.Repo.Create", "pending · unique payload", C.commerce, { step: 3 }),
+        N("b4", 768, 300, 220, 72, "Processor.CreateCheckout", "external request", C.infra, { step: 4 }),
+        N("b5", 1008, 300, 220, 72, "Return checkout URL", "no order paid yet", C.commerce, { step: 5 }),
+        N("b6", 1248, 300, 220, 72, "Open checkout", "processor-specific UI", C.commerce, { step: 6 }),
+        N("b7", 1488, 300, 208, 72, "Await verified event", "UI result is not proof", C.commerce, { step: 7 }),
 
-        N("c1", 48, 516, 220, 72, "POST /payment/verify/:provider", "no guard — gateway calls in", C.infra, { step: 1 }),
-        N("c2", 288, 516, 220, 72, "payments.Repo.GetByID", "resolve provider", C.commerce, { step: 2 }),
-        N("c3", 528, 516, 220, 72, "gateway.VerifyPayment", "outbound https", C.infra, { step: 3 }),
-        N("c4", 768, 516, 220, 72, "payments.Repo.UpdateStatus", "trx id + raw callback json", C.commerce, { step: 4 }),
-        N("c5", 1008, 516, 220, 72, "orders.Repo.UpdateStatus", "paid + paid_at, or failed", C.commerce, { step: 5 }),
-        N("f_gap", 1248, 516, 448, 72, "Flow ends here", "no fulfilment · no wallet credit · no message sent", C.alert, { step: 6, alarm: true })
+        N("c1", 48, 516, 220, 72, "Processor event", "authenticated externally", C.infra, { step: 1 }),
+        N("c2", 288, 516, 220, 72, "Validate payment", "payload · amount · order", C.commerce, { step: 2 }),
+        N("c3", 528, 516, 220, 72, "Verify event", "processor-specific proof", C.infra, { step: 3 }),
+        N("c4", 768, 516, 220, 72, "Normalized settlement", "only source of truth", C.infra, { step: 4 }),
+        N("c5", 1008, 516, 220, 72, "Atomic settlement", "payment + order · idempotent", C.commerce, { step: 5 }),
+        N("f_gap", 1248, 516, 448, 72, "Fulfil order", "deliver file/message/inventory exactly once", C.alert, { step: 6, alarm: true })
       ],
       edges: [
         ["a1","a2"],["a2","a3"],["a3","a4"],["a4","a5"],["a5","a6"],["a6","a7"],["a7","a8"],

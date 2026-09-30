@@ -70,12 +70,17 @@ export type OrdersPaginatedResponse = PaginatedResponse<OrderResponse>;
 export interface PaymentResponse {
   id: string;
   order_id: string;
-  provider: string;
-  gateway_trx_id?: string;
-  amount: number;
+  method: string;
+  currency: string;
+  amount_minor: number;
+  checkout_reference: string;
+  external_transaction_id?: string;
+  provider_transaction_id?: string;
   status: string;
   created_at: string;
   updated_at: string;
+  paid_at?: string;
+  refunded_at?: string;
 }
 export type PaymentsPaginatedResponse = PaginatedResponse<PaymentResponse>;
 

@@ -2,6 +2,9 @@ package model
 
 import "time"
 
+// PaymentMethod identifies the checkout integration used for a payment.
+type PaymentMethod string
+
 // PaymentStatus represents the status of a payment.
 type PaymentStatus string
 
@@ -10,6 +13,7 @@ const (
 	StatusPending   PaymentStatus = "pending"
 	StatusSucceeded PaymentStatus = "succeeded"
 	StatusFailed    PaymentStatus = "failed"
+	StatusRefunded  PaymentStatus = "refunded"
 )
 
 // ValidPaymentStatuses returns all valid payment statuses.
@@ -18,6 +22,7 @@ func ValidPaymentStatuses() []PaymentStatus {
 		StatusPending,
 		StatusSucceeded,
 		StatusFailed,
+		StatusRefunded,
 	}
 }
 
@@ -33,30 +38,18 @@ func (s PaymentStatus) IsValid() bool {
 
 // Payment represents a payment in the system.
 type Payment struct {
-	ID            string        `db:"id" json:"id"`
-	OrderID       string        `db:"order_id" json:"order_id"`
-	Provider      string        `db:"provider" json:"provider"`
-	GatewayTrxID  *string       `db:"gateway_trx_id" json:"gateway_trx_id,omitempty"`
-	Amount        float64       `db:"amount" json:"amount"`
-	Status        PaymentStatus `db:"status" json:"status"`
-	CallbackData  []byte        `db:"callback_data" json:"callback_data,omitempty"`
-	CreatedAt     time.Time     `db:"created_at" json:"created_at"`
-	UpdatedAt     time.Time     `db:"updated_at" json:"updated_at"`
-}
-
-// PaymentResult represents the result of creating a payment.
-type PaymentResult struct {
-	PaymentURL   string `json:"payment_url,omitempty"`
-	Authority    string `json:"authority,omitempty"`
-	TrackingCode string `json:"tracking_code,omitempty"`
-	Message      string `json:"message,omitempty"`
-}
-
-// VerificationResult represents the result of verifying a payment.
-type VerificationResult struct {
-	Success      bool    `json:"success"`
-	Amount       float64 `json:"amount"`
-	TrackingCode string  `json:"tracking_code,omitempty"`
-	CardNumber   string  `json:"card_number,omitempty"`
-	Message      string  `json:"message,omitempty"`
+	ID                    string        `db:"id" json:"id"`
+	OrderID               string        `db:"order_id" json:"order_id"`
+	Method                PaymentMethod `db:"method" json:"method"`
+	Currency              string        `db:"currency" json:"currency"`
+	AmountMinor           int64         `db:"amount_minor" json:"amount_minor"`
+	CheckoutReference     string        `db:"checkout_reference" json:"checkout_reference"`
+	ExternalTransactionID *string       `db:"external_transaction_id" json:"external_transaction_id,omitempty"`
+	ProviderTransactionID *string       `db:"provider_transaction_id" json:"provider_transaction_id,omitempty"`
+	Status                PaymentStatus `db:"status" json:"status"`
+	ProviderData          []byte        `db:"provider_data" json:"-"`
+	CreatedAt             time.Time     `db:"created_at" json:"created_at"`
+	UpdatedAt             time.Time     `db:"updated_at" json:"updated_at"`
+	PaidAt                *time.Time    `db:"paid_at" json:"paid_at,omitempty"`
+	RefundedAt            *time.Time    `db:"refunded_at" json:"refunded_at,omitempty"`
 }

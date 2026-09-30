@@ -2,8 +2,10 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"telegram-marketplace/internal/core/commerce/payments/model"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -12,16 +14,21 @@ import (
 // ErrNotFound is returned when a requested payment does not exist.
 var ErrNotFound = fmt.Errorf("payment not found")
 
+// ErrInvalidTransition is returned when an idempotent payment state change no
+// longer applies to the current record.
+var ErrInvalidTransition = errors.New("payment state transition is not allowed")
+
 // Repository defines the data-access contract for the payments domain.
 type Repository interface {
 	Create(ctx context.Context, p *model.Payment) error
 	GetByID(ctx context.Context, id string) (*model.Payment, error)
-	GetByGatewayTrxID(ctx context.Context, gatewayTrxID, provider string) (*model.Payment, error)
+	GetByCheckoutReference(ctx context.Context, reference string) (*model.Payment, error)
+	GetByExternalTransactionID(ctx context.Context, method model.PaymentMethod, transactionID string) (*model.Payment, error)
 	ListByOrderID(ctx context.Context, orderID string) ([]*model.Payment, error)
 	ListAll(ctx context.Context, limit, offset int) ([]*model.Payment, error)
 	CountAll(ctx context.Context) (int64, error)
-	UpdateStatus(ctx context.Context, id string, status model.PaymentStatus, gatewayTrxID *string, callbackData []byte) error
-	UpdateCallbackData(ctx context.Context, id string, callbackData []byte) error
+	MarkSucceeded(ctx context.Context, id, externalTransactionID, providerTransactionID string, providerData []byte, paidAt time.Time) error
+	MarkRefunded(ctx context.Context, id string, refundedAt time.Time) error
 }
 
 // postgresRepository is the Postgres implementation of Repository.
@@ -39,7 +46,7 @@ var _ Repository = (*postgresRepository)(nil)
 
 func (r *postgresRepository) Create(ctx context.Context, p *model.Payment) error {
 	err := r.db.QueryRow(ctx, queryCreatePayment,
-		p.OrderID, p.Provider, p.GatewayTrxID, p.Amount, p.Status, p.CallbackData, p.CreatedAt, p.UpdatedAt,
+		p.OrderID, p.Method, p.Currency, p.AmountMinor, p.CheckoutReference, p.Status, p.CreatedAt, p.UpdatedAt,
 	).Scan(&p.ID)
 	if err != nil {
 		return fmt.Errorf("payments.repository.Create: %w", err)
@@ -60,15 +67,28 @@ func (r *postgresRepository) GetByID(ctx context.Context, id string) (*model.Pay
 	return &payment, nil
 }
 
-func (r *postgresRepository) GetByGatewayTrxID(ctx context.Context, gatewayTrxID, provider string) (*model.Payment, error) {
-	rows, err := r.db.Query(ctx, queryGetPaymentByGatewayTrxID, gatewayTrxID, provider)
+func (r *postgresRepository) GetByCheckoutReference(ctx context.Context, reference string) (*model.Payment, error) {
+	rows, err := r.db.Query(ctx, queryGetPaymentByCheckoutReference, reference)
 	if err != nil {
-		return nil, fmt.Errorf("payments.repository.GetByGatewayTrxID: %w", err)
+		return nil, fmt.Errorf("payments.repository.GetByCheckoutReference: %w", err)
 	}
 
 	payment, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[model.Payment])
 	if err != nil {
-		return nil, fmt.Errorf("payments.repository.GetByGatewayTrxID: %w", ErrNotFound)
+		return nil, fmt.Errorf("payments.repository.GetByCheckoutReference: %w", ErrNotFound)
+	}
+	return &payment, nil
+}
+
+func (r *postgresRepository) GetByExternalTransactionID(ctx context.Context, method model.PaymentMethod, transactionID string) (*model.Payment, error) {
+	rows, err := r.db.Query(ctx, queryGetPaymentByExternalTransactionID, method, transactionID)
+	if err != nil {
+		return nil, fmt.Errorf("payments.repository.GetByExternalTransactionID: %w", err)
+	}
+
+	payment, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[model.Payment])
+	if err != nil {
+		return nil, fmt.Errorf("payments.repository.GetByExternalTransactionID: %w", ErrNotFound)
 	}
 	return &payment, nil
 }
@@ -118,18 +138,24 @@ func (r *postgresRepository) CountAll(ctx context.Context) (int64, error) {
 	return count, nil
 }
 
-func (r *postgresRepository) UpdateStatus(ctx context.Context, id string, status model.PaymentStatus, gatewayTrxID *string, callbackData []byte) error {
-	_, err := r.db.Exec(ctx, queryUpdatePaymentStatus, status, gatewayTrxID, callbackData, id)
+func (r *postgresRepository) MarkSucceeded(ctx context.Context, id, externalTransactionID, providerTransactionID string, providerData []byte, paidAt time.Time) error {
+	tag, err := r.db.Exec(ctx, queryMarkPaymentSucceeded, externalTransactionID, providerTransactionID, providerData, paidAt, id)
 	if err != nil {
-		return fmt.Errorf("payments.repository.UpdateStatus: %w", err)
+		return fmt.Errorf("payments.repository.MarkSucceeded: %w", err)
+	}
+	if tag.RowsAffected() != 1 {
+		return ErrInvalidTransition
 	}
 	return nil
 }
 
-func (r *postgresRepository) UpdateCallbackData(ctx context.Context, id string, callbackData []byte) error {
-	_, err := r.db.Exec(ctx, queryUpdatePaymentCallbackData, callbackData, id)
+func (r *postgresRepository) MarkRefunded(ctx context.Context, id string, refundedAt time.Time) error {
+	tag, err := r.db.Exec(ctx, queryMarkPaymentRefunded, refundedAt, id)
 	if err != nil {
-		return fmt.Errorf("payments.repository.UpdateCallbackData: %w", err)
+		return fmt.Errorf("payments.repository.MarkRefunded: %w", err)
+	}
+	if tag.RowsAffected() != 1 {
+		return ErrInvalidTransition
 	}
 	return nil
 }

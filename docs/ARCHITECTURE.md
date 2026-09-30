@@ -56,18 +56,13 @@ updated at
 "enable_referrals": true,
 "enable_vip": true,
 "enable_support": true,
-"payment_methods": [
-"zarinpal",
-"zibal",
-"idpay",
-"payping",
-"crypto",
-"ton",
-"stars",
-"manual_card"
-]
+"payment_methods": []
 }
 }
+
+No payment processor is currently enabled. The payment domain stores neutral
+method, currency, amount and transaction references so processors can be added
+through the processor contract without changing the payment table.
 
 **Broadcasts**
 id

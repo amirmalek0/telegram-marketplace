@@ -266,7 +266,7 @@ const nodes = [
   },
   {
     id: 'payment', label: 'Payment', type: 'entity', x: 1300, y: 290,
-    fields: ['id', 'order_id → Order', 'provider', 'gateway_trx_id', 'amount', 'status']
+    fields: ['id', 'order_id → Order', 'method', 'currency', 'amount_minor', 'checkout_reference', 'external_transaction_id', 'status']
   },
   {
     id: 'coupon', label: 'Coupon', type: 'entity', x: 1300, y: 490,
@@ -281,15 +281,8 @@ const nodes = [
     fields: ['id', 'user_id → User', 'type (purchase/pay/reward)', 'amount', 'balance_before', 'balance_after', 'created_at']
   },
 
-  // ── PAYMENT PROVIDERS ─────────────────────────────────────────────────────
-  { id: 'pay_zarinpal', label: 'Zarinpal',      type: 'payment', x: 1300, y: 1080, fields: ['provider: zarinpal',  'payments/zarinpal.go'] },
-  { id: 'pay_zibal',    label: 'Zibal',          type: 'payment', x: 1300, y: 1180, fields: ['provider: zibal',     'payments/zibal.go'] },
-  { id: 'pay_idpay',    label: 'IDPay',          type: 'payment', x: 1300, y: 1280, fields: ['provider: idpay',     'payments/idpay.go'] },
-  { id: 'pay_payping',  label: 'PayPing',        type: 'payment', x: 1300, y: 1380, fields: ['provider: payping',   'payments/payping.go'] },
-  { id: 'pay_crypto',   label: 'Crypto',         type: 'payment', x: 1300, y: 1480, fields: ['provider: crypto',    'payments/crypto.go'] },
-  { id: 'pay_ton',      label: 'TON',            type: 'payment', x: 1300, y: 1580, fields: ['provider: ton',       'payments/ton.go'] },
-  { id: 'pay_stars',    label: 'Telegram Stars', type: 'payment', x: 1300, y: 1680, fields: ['provider: stars',     'payments/telegram_stars.go'] },
-  { id: 'pay_manual',   label: 'Manual Card',    type: 'payment', x: 1300, y: 1780, fields: ['provider: manual_card','payments/manual_card.go'] },
+  // ── PAYMENT PROCESSOR BOUNDARY ────────────────────────────────────────────
+  { id: 'payment_processor', label: 'Processor contract', type: 'payment', x: 1300, y: 1080, fields: ['CreateCheckout', 'Refund', 'future payment adapters'] },
 ];
 
 const relations = [
@@ -327,14 +320,7 @@ const relations = [
   ['user', 'order'],
   ['product', 'order'],
   ['order', 'payment'],
-  ['payment', 'pay_zarinpal'],
-  ['payment', 'pay_zibal'],
-  ['payment', 'pay_idpay'],
-  ['payment', 'pay_payping'],
-  ['payment', 'pay_crypto'],
-  ['payment', 'pay_ton'],
-  ['payment', 'pay_stars'],
-  ['payment', 'pay_manual'],
+  ['payment', 'payment_processor'],
 ];
 
 // ─── CANVAS SETUP ────────────────────────────────────────────────────────────

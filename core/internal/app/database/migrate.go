@@ -267,21 +267,91 @@ var migrations = []string{
 	`CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at DESC)`,
 
 	`CREATE TABLE IF NOT EXISTS payments (
-		id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-		order_id        UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-		provider        TEXT NOT NULL,
-		gateway_trx_id  TEXT,
-		amount          DOUBLE PRECISION NOT NULL CHECK (amount > 0),
-		status          TEXT NOT NULL DEFAULT 'pending'
-		                          CHECK (status IN ('pending', 'succeeded', 'failed', 'refunded')),
-		callback_data   JSONB,
-		created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-		updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+		id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+		order_id                UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+		method                  TEXT NOT NULL,
+		currency                TEXT NOT NULL,
+		amount_minor            BIGINT NOT NULL,
+		checkout_reference      TEXT NOT NULL UNIQUE,
+		external_transaction_id TEXT,
+		provider_transaction_id TEXT,
+		status                  TEXT NOT NULL DEFAULT 'pending'
+		                                CHECK (status IN ('pending', 'succeeded', 'failed', 'refunded')),
+		provider_data           JSONB,
+		created_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
+		updated_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
+		paid_at                 TIMESTAMPTZ,
+		refunded_at             TIMESTAMPTZ,
+		CONSTRAINT payments_amount_minor_check CHECK (amount_minor > 0)
 	)`,
+	// Upgrade path from the unfinished gateway schema. Provider-specific legacy
+	// columns remain nullable for audit/history, while new code uses this neutral
+	// shape so another processor can be added without another table redesign.
+	`ALTER TABLE payments ADD COLUMN IF NOT EXISTS method TEXT`,
+	`ALTER TABLE payments ADD COLUMN IF NOT EXISTS currency TEXT`,
+	`ALTER TABLE payments ADD COLUMN IF NOT EXISTS amount_minor BIGINT`,
+	`ALTER TABLE payments ADD COLUMN IF NOT EXISTS checkout_reference TEXT`,
+	`ALTER TABLE payments ADD COLUMN IF NOT EXISTS external_transaction_id TEXT`,
+	`ALTER TABLE payments ADD COLUMN IF NOT EXISTS provider_transaction_id TEXT`,
+	`ALTER TABLE payments ADD COLUMN IF NOT EXISTS provider_data JSONB`,
+	`ALTER TABLE payments ADD COLUMN IF NOT EXISTS paid_at TIMESTAMPTZ`,
+	`ALTER TABLE payments ADD COLUMN IF NOT EXISTS refunded_at TIMESTAMPTZ`,
+	`DO $$
+	 BEGIN
+		IF EXISTS (
+			SELECT 1 FROM information_schema.columns
+			WHERE table_schema = 'public' AND table_name = 'payments' AND column_name = 'provider'
+		) THEN
+			EXECUTE 'UPDATE payments SET method = provider WHERE (method IS NULL OR method = '''') AND provider IS NOT NULL AND provider <> ''''';
+			EXECUTE 'UPDATE payments SET currency = ''IRR'' WHERE provider IS NOT NULL AND provider <> '''' AND (currency IS NULL OR currency = '''')';
+			EXECUTE 'ALTER TABLE payments ALTER COLUMN provider DROP NOT NULL';
+		END IF;
+		IF EXISTS (
+			SELECT 1 FROM information_schema.columns
+			WHERE table_schema = 'public' AND table_name = 'payments' AND column_name = 'amount'
+		) THEN
+			EXECUTE 'UPDATE payments SET amount_minor = GREATEST(1, ROUND(amount)::BIGINT) WHERE amount_minor IS NULL';
+			EXECUTE 'ALTER TABLE payments ALTER COLUMN amount DROP NOT NULL';
+		END IF;
+		IF EXISTS (
+			SELECT 1 FROM information_schema.columns
+			WHERE table_schema = 'public' AND table_name = 'payments' AND column_name = 'gateway_trx_id'
+		) THEN
+			EXECUTE 'UPDATE payments SET external_transaction_id = gateway_trx_id WHERE external_transaction_id IS NULL AND gateway_trx_id IS NOT NULL';
+		END IF;
+		IF EXISTS (
+			SELECT 1 FROM information_schema.columns
+			WHERE table_schema = 'public' AND table_name = 'payments' AND column_name = 'callback_data'
+		) THEN
+			EXECUTE 'UPDATE payments SET provider_data = callback_data WHERE provider_data IS NULL AND callback_data IS NOT NULL';
+		END IF;
+	 END
+	 $$`,
+	`UPDATE payments SET method = 'legacy' WHERE method IS NULL OR method = ''`,
+	`ALTER TABLE payments ALTER COLUMN method SET NOT NULL`,
+	`UPDATE payments SET currency = 'UNKNOWN' WHERE currency IS NULL OR currency = ''`,
+	`ALTER TABLE payments ALTER COLUMN currency SET NOT NULL`,
+	`ALTER TABLE payments ALTER COLUMN currency DROP DEFAULT`,
+	`UPDATE payments SET amount_minor = 1 WHERE amount_minor IS NULL`,
+	`ALTER TABLE payments ALTER COLUMN amount_minor SET NOT NULL`,
+	`UPDATE payments SET checkout_reference = 'legacy:' || id::text WHERE checkout_reference IS NULL OR checkout_reference = ''`,
+	`ALTER TABLE payments ALTER COLUMN checkout_reference SET NOT NULL`,
+	`ALTER TABLE payments DROP CONSTRAINT IF EXISTS payments_currency_check`,
+	`DO $$
+	 BEGIN
+		IF NOT EXISTS (
+			SELECT 1 FROM pg_constraint
+			WHERE conrelid = 'payments'::regclass AND conname = 'payments_amount_minor_check'
+		) THEN
+			ALTER TABLE payments ADD CONSTRAINT payments_amount_minor_check CHECK (amount_minor > 0);
+		END IF;
+	 END
+	 $$`,
 	`CREATE INDEX IF NOT EXISTS idx_payments_order_id ON payments(order_id)`,
-	`CREATE INDEX IF NOT EXISTS idx_payments_provider ON payments(provider)`,
+	`CREATE INDEX IF NOT EXISTS idx_payments_method ON payments(method)`,
 	`CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status)`,
-	`CREATE INDEX IF NOT EXISTS idx_payments_gateway_trx_id ON payments(gateway_trx_id)`,
+	`CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_checkout_reference ON payments(checkout_reference)`,
+	`CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_external_transaction ON payments(method, external_transaction_id) WHERE external_transaction_id IS NOT NULL`,
 
 	`CREATE TABLE IF NOT EXISTS settings (
 		id UUID PRIMARY KEY DEFAULT gen_random_uuid()

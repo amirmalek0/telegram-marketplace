@@ -26,7 +26,6 @@ import (
 	"telegram-marketplace/internal/core/commerce/orders"
 	ordersrepo "telegram-marketplace/internal/core/commerce/orders/repository"
 	"telegram-marketplace/internal/core/commerce/payments"
-	"telegram-marketplace/internal/core/commerce/payments/provider"
 	paymentsrepo "telegram-marketplace/internal/core/commerce/payments/repository"
 	"telegram-marketplace/internal/core/commerce/wallets"
 	walletrepo "telegram-marketplace/internal/core/commerce/wallets/repository"
@@ -156,15 +155,8 @@ func Wire(ctx context.Context, db *pgxpool.Pool, cfg config.Config) router.Handl
 
 	// --- commerce/payments ---
 	paymentsRepo := paymentsrepo.NewPostgresRepository(db)
-	gatewayRegistry := payments.NewGatewayRegistry()
-
-	// Register payment gateways based on configuration
-	if cfg.ZarinpalMerchantID != "" {
-		gatewayRegistry.Register(provider.NewZarinpal(cfg.ZarinpalMerchantID, cfg.ZarinpalSandbox, cfg.ZarinpalCallbackURL))
-	}
-
-	paymentsService := payments.NewService(paymentsRepo, ordersRepo, gatewayRegistry)
-	paymentsHandler := payments.NewHandler(paymentsService, cfg.CallbackURL)
+	paymentsService := payments.NewService(paymentsRepo)
+	paymentsHandler := payments.NewHandler(paymentsService)
 
 	// --- membership/vip ---
 	vipPlanRepo := viprepo.NewPostgresRepository(db)
