@@ -59,12 +59,38 @@ var migrations = []string{
 		subject         TEXT NOT NULL,
 		status          TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'closed', 'resolved')),
 		priority        TEXT NOT NULL DEFAULT 'medium' CHECK (priority IN ('low', 'medium', 'high', 'urgent')),
-		category        TEXT NOT NULL DEFAULT 'general' REFERENCES ticket_categories(name),
+		category        TEXT NOT NULL DEFAULT 'general' REFERENCES ticket_categories(name) ON UPDATE CASCADE ON DELETE RESTRICT,
 		created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
 		updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
 		closed_at       TIMESTAMPTZ,
 		last_message_at TIMESTAMPTZ NOT NULL DEFAULT now()
 	)`,
+
+	// Upgrade path for databases that used a fixed English-only category check.
+	// Preserve any category already referenced by a ticket before replacing that
+	// check with the dynamic ticket_categories foreign key.
+	`INSERT INTO ticket_categories (id, name, created_at)
+	 SELECT gen_random_uuid(), used.category, now()
+	 FROM (SELECT DISTINCT category FROM tickets WHERE category IS NOT NULL) AS used
+	 ON CONFLICT (name) DO NOTHING`,
+	`ALTER TABLE tickets DROP CONSTRAINT IF EXISTS tickets_category_check`,
+	`DO $$
+	 BEGIN
+		IF NOT EXISTS (
+			SELECT 1
+			FROM pg_constraint
+			WHERE conrelid = 'tickets'::regclass
+			  AND conname = 'tickets_category_fkey'
+		) THEN
+			ALTER TABLE tickets
+				ADD CONSTRAINT tickets_category_fkey
+				FOREIGN KEY (category)
+				REFERENCES ticket_categories(name)
+				ON UPDATE CASCADE
+				ON DELETE RESTRICT;
+		END IF;
+	 END
+	 $$`,
 	`CREATE INDEX IF NOT EXISTS idx_tickets_user_id ON tickets(user_id)`,
 	`CREATE INDEX IF NOT EXISTS idx_tickets_status ON tickets(status)`,
 	`CREATE INDEX IF NOT EXISTS idx_tickets_created_at ON tickets(created_at DESC)`,
