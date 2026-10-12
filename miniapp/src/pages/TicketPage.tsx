@@ -84,7 +84,7 @@ export function TicketPage({ initDataRaw, ready }: TicketPageProps) {
   const isClosed = ticket.status === 'closed'
 
   return (
-    <div className="page ticket-thread-page">
+    <div className={`page ticket-thread-page ${isClosed ? 'is-closed' : 'has-fixed-reply'}`}>
       <section className="ticket-thread-summary">
         <div className="ticket-thread-overline"><span>{ticketCategoryLabel(ticket.category)}</span><time dateTime={ticket.created_at}>{formatDateTime(ticket.created_at)}</time></div>
         <h2>{ticket.subject}</h2>

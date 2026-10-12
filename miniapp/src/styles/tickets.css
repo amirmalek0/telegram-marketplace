@@ -103,7 +103,7 @@
 .ticket-field { position: relative; display: grid; gap: 7px; padding: 13px 14px; }
 .ticket-field + .ticket-field { border-top: 1px solid color-mix(in srgb, var(--line) 78%, transparent); }
 .ticket-field > span, .ticket-reply > label { color: var(--secondary); font-size: 8px; font-weight: 700; }
-.ticket-field input, .ticket-field select, .ticket-field textarea, .ticket-reply textarea { width: 100%; padding: 0; border: 0; outline: 0; background: transparent; color: var(--text); font-size: 12px; }
+.ticket-field input, .ticket-field select, .ticket-field textarea, .ticket-reply textarea { width: 100%; padding: 0; border: 0; outline: 0; background: transparent; color: var(--text); font-size: 16px; }
 .ticket-field input, .ticket-field select { height: 28px; }
 .ticket-field select { cursor: pointer; }
 .ticket-field textarea { min-height: 132px; resize: vertical; line-height: 1.9; }
@@ -145,9 +145,10 @@
 .ticket-message p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 10px; line-height: 1.9; }
 .ticket-message time { display: block; margin-top: 4px; font-size: 6px; opacity: .58; }
 .ticket-message.is-user time { text-align: left; }
-.ticket-reply { position: sticky; z-index: 10; bottom: calc(78px + env(safe-area-inset-bottom)); display: grid; gap: 8px; margin-top: 12px; padding: 11px 12px 12px; border: 1px solid color-mix(in srgb, var(--line) 90%, transparent); border-radius: 20px; background: color-mix(in srgb, var(--surface-solid) 92%, transparent); box-shadow: 0 12px 30px rgba(28,28,30,.10), inset 0 1px rgba(255,255,255,.70); backdrop-filter: blur(22px) saturate(150%); -webkit-backdrop-filter: blur(22px) saturate(150%); }
+.ticket-thread-page.has-fixed-reply { padding-bottom: calc(178px + env(safe-area-inset-bottom)); }
+.ticket-reply { position: fixed; z-index: 45; right: max(18px, calc((100vw - 724px) / 2)); left: max(18px, calc((100vw - 724px) / 2)); bottom: calc(86px + env(safe-area-inset-bottom)); display: grid; gap: 8px; margin: 0; padding: 11px 12px 12px; border: 1px solid color-mix(in srgb, var(--line) 90%, transparent); border-radius: 20px; background: color-mix(in srgb, var(--surface-solid) 92%, transparent); box-shadow: 0 12px 30px rgba(28,28,30,.10), inset 0 1px rgba(255,255,255,.70); backdrop-filter: blur(22px) saturate(150%); -webkit-backdrop-filter: blur(22px) saturate(150%); }
 .ticket-reply-control { display: flex; align-items: flex-end; gap: 8px; }
-.ticket-reply textarea { min-height: 48px; max-height: 120px; resize: none; padding: 9px 10px; border-radius: 13px; background: var(--surface-soft); line-height: 1.7; }
+.ticket-reply textarea { min-height: 48px; max-height: 120px; resize: none; padding: 9px 10px; border-radius: 13px; background: var(--surface-soft); font-size: 16px; line-height: 1.55; }
 .ticket-reply-button { width: 43px; height: 43px; flex: 0 0 43px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 14px; background: var(--accent); color: #fff; box-shadow: 0 7px 15px rgba(0,122,255,.20); }
 .ticket-closed-note { display: flex; align-items: center; gap: 10px; margin-top: 12px; padding: 12px 14px; border-radius: 17px; background: rgba(52,199,89,.09); color: #218a3c; }
 .ticket-closed-note > div { display: flex; flex-direction: column; gap: 2px; }
