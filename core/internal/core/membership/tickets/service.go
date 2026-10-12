@@ -352,7 +352,6 @@ func (s *Service) attachUser(ctx context.Context, ticket *TicketResponse) error 
 		PhoneNumber:   user.PhoneNumber,
 		HasActivePlan: user.HasActivePlan,
 		ActivePlanID:  user.ActivePlanID,
-		WalletBalance: user.WalletBalance,
 		PlanExpireAt:  user.PlanExpireAt,
 		ReferredBy:    user.ReferredBy,
 		IsBanned:      user.IsBanned,

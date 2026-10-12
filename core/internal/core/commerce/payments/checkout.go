@@ -22,7 +22,6 @@ type checkoutProduct struct {
 	ID           string
 	Title        string
 	Description  string
-	Price        float64
 	StarsPrice   int64
 	DeliveryType string
 	FileID       *string
@@ -64,10 +63,10 @@ func (s *Service) CreateStarsInvoice(ctx context.Context, telegramID int64, prod
 
 	var product checkoutProduct
 	err = tx.QueryRow(ctx, `
-		SELECT id, title, description, price, stars_price, delivery_type,
+		SELECT id, title, description, stars_price, delivery_type,
 		       file_id, message_id, inventory_id, bundle_id, api_id
 		FROM products WHERE id = $1 AND status = 'active' FOR SHARE`, productID).Scan(
-		&product.ID, &product.Title, &product.Description, &product.Price, &product.StarsPrice,
+		&product.ID, &product.Title, &product.Description, &product.StarsPrice,
 		&product.DeliveryType, &product.FileID, &product.MessageID, &product.InventoryID,
 		&product.BundleID, &product.APIID,
 	)
@@ -79,7 +78,7 @@ func (s *Service) CreateStarsInvoice(ctx context.Context, telegramID int64, prod
 	err = tx.QueryRow(ctx, `
 		INSERT INTO orders (user_id, product_id, quantity, amount, discount_amount, payment_method, status, created_at, updated_at)
 		VALUES ($1, $2, 1, $3, 0, $4, 'pending', now(), now()) RETURNING id`,
-		userID, product.ID, product.Price, string(paymentsmodel.MethodTelegramStars),
+		userID, product.ID, float64(product.StarsPrice), string(paymentsmodel.MethodTelegramStars),
 	).Scan(&orderID)
 	if err != nil {
 		return nil, fmt.Errorf("payments checkout create order: %w", err)
@@ -110,7 +109,7 @@ func (s *Service) CreateStarsInvoice(ctx context.Context, telegramID int64, prod
 	if testMode {
 		return &CreateStarsInvoiceResponse{
 			OrderID: orderID, PaymentID: paymentID, InvoiceURL: "",
-			Stars: product.StarsPrice, Currency: paymentsmodel.StarsCurrency,
+			Stars:             product.StarsPrice,
 			SimulationEnabled: true,
 		}, nil
 	}
@@ -136,7 +135,7 @@ func (s *Service) CreateStarsInvoice(ctx context.Context, telegramID int64, prod
 
 	return &CreateStarsInvoiceResponse{
 		OrderID: orderID, PaymentID: paymentID, InvoiceURL: invoiceURL,
-		Stars: product.StarsPrice, Currency: paymentsmodel.StarsCurrency,
+		Stars:             product.StarsPrice,
 		SimulationEnabled: false,
 	}, nil
 }

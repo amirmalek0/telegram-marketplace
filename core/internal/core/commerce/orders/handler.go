@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"telegram-marketplace/internal/app/middleware"
-	"telegram-marketplace/internal/core/commerce/orders/model"
 	"telegram-marketplace/internal/core/commerce/orders/repository"
 	"telegram-marketplace/pkg/pagination"
 )
@@ -19,37 +18,6 @@ type Handler struct {
 // NewHandler constructs a Handler with the given Service.
 func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
-}
-
-// Create accepts a JSON payload and creates a new order.
-func (h *Handler) Create(c *gin.Context) {
-	telegramID, ok := middleware.GetTelegramUserID(c)
-	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "telegram user not found"})
-		return
-	}
-
-	var req CreateRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	order, err := h.service.Create(c.Request.Context(), telegramID, req)
-	if err != nil {
-		if errors.Is(err, ErrUserNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-			return
-		}
-		if errors.Is(err, ErrProductNotFound) || errors.Is(err, ErrCouponInvalid) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusCreated, toResponse(order))
 }
 
 // GetByID returns a single order by its UUID.
@@ -108,32 +76,4 @@ func (h *Handler) AdminList(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, result)
-}
-
-// AdminUpdateStatus updates the status of an order (admin only).
-func (h *Handler) AdminUpdateStatus(c *gin.Context) {
-	id := c.Param("id")
-
-	var req UpdateStatusRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	status := model.OrderStatus(req.Status)
-	if !status.IsValid() {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid status"})
-		return
-	}
-
-	if err := h.service.UpdateStatus(c.Request.Context(), id, status); err != nil {
-		if errors.Is(err, repository.ErrNotFound) {
-			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.Status(http.StatusNoContent)
 }

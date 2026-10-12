@@ -16,8 +16,8 @@ func RegisterRoutes(rg *gin.RouterGroup, h *payments.Handler) {
 
 	admin := rg.Group("/payment", middleware.RequireAdmin())
 	{
-		admin.GET("/all", h.AdminList)
-		admin.GET("/config", h.AdminGetConfig)
-		admin.PATCH("/config", h.AdminUpdateConfig)
+		admin.GET("/stars", h.AdminListStars)
+		admin.GET("/stars/config", h.AdminGetConfig)
+		admin.PATCH("/stars/config", h.AdminUpdateConfig)
 	}
 }

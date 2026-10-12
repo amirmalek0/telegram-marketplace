@@ -7,15 +7,14 @@ import (
 )
 
 // RegisterRoutes mounts all order endpoints onto the provided RouterGroup.
-// Telegram users can create orders and view their own orders.
-// Admin-only operations include viewing all orders and updating order status.
+// Orders are created only by a payment provider checkout. Telegram users can
+// view their own orders, while administrators can view the full ledger.
 func RegisterRoutes(rg *gin.RouterGroup, h *orders.Handler) {
 	g := rg.Group("/order")
 
 	// Telegram users only - own order operations
 	tma := g.Group("", middleware.RequireTelegram())
 	{
-		tma.POST("", h.Create)
 		tma.GET("", h.List)
 		tma.GET("/:id", h.GetByID)
 	}
@@ -24,6 +23,5 @@ func RegisterRoutes(rg *gin.RouterGroup, h *orders.Handler) {
 	admin := g.Group("", middleware.RequireAdmin())
 	{
 		admin.GET("/all", h.AdminList)
-		admin.PATCH("/:id/status", h.AdminUpdateStatus)
 	}
 }

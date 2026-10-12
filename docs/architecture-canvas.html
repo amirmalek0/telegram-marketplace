@@ -331,7 +331,7 @@
       <p class="sec-label">What the code doesn't do yet</p>
       <div class="gaps">
         <div class="gap">Paid orders trigger no fulfilment — nothing hands over inventory items, files, or delivery messages.</div>
-        <div class="gap">Nothing credits <b>wallets</b> on payment success; it is admin-adjust only.</div>
+        <div class="gap"><b>Telegram Stars</b> is the only exposed payment method; wallet routes and manual settlement are disabled.</div>
         <div class="gap"><b>cmd/bot</b> wires every service, then returns nil from both start modes.</div>
         <div class="gap"><b>settings</b> has six files and is absent from Wire() and the router.</div>
         <div class="gap">Redis is provisioned in compose and imported nowhere.</div>
@@ -396,9 +396,8 @@
     messages: [["GET","/message","any"],["GET","/message/:id","any"],["POST","/message","admin"],["PATCH","/message/:id","admin"],["DELETE","/message/:id","admin"]],
     products: [["GET","/product","any"],["GET","/product/:id","any"],["POST","/product","admin"],["POST","/product/:id/image","admin"],["PATCH","/product/:id","admin"],["DELETE","/product/:id","admin"]],
     coupons: [["POST","/coupon/validate","tma"],["POST","/coupon","admin"],["GET","/coupon","admin"],["GET","/coupon/:id","admin"],["PATCH","/coupon/:id","admin"],["DELETE","/coupon/:id","admin"]],
-    orders: [["POST","/order","tma"],["GET","/order","tma"],["GET","/order/:id","tma"],["GET","/order/all","admin"],["PATCH","/order/:id/status","admin"]],
-    payments: [["POST","/payment/stars/invoice","telegram"],["GET","/payment/deliveries","telegram"],["GET","/payment/all","admin"]],
-    wallets: [["GET","/wallet/balance","tma"],["GET","/wallet/transactions","tma"],["GET","/wallet/users/:id/balance","admin"],["GET","/wallet/users/:id/transactions","admin"],["POST","/wallet/adjust","admin"]],
+    orders: [["GET","/order","tma"],["GET","/order/:id","tma"],["GET","/order/all","admin"]],
+    payments: [["POST","/payment/stars/invoice","telegram"],["GET","/payment/deliveries","telegram"],["GET","/payment/stars","admin"],["GET/PATCH","/payment/stars/config","admin"]],
     admins: [["POST","/admin","admin"],["GET","/admin","admin"],["GET","/admin/:id","admin"],["PUT","/admin/:id","admin"],["DELETE","/admin/:id","admin"]],
     auth: [["POST","/auth/login","open"],["POST","/auth/refresh","open"]],
     tickets: [["POST","/ticket","tma"],["GET","/ticket/:id","tma"],["GET","/ticket/:id/messages","tma"],["POST","/ticket/:id/messages","any"],["GET","/ticket","any"],["PATCH","/ticket/:id","admin"],["DELETE","/ticket/:id","admin"]],
@@ -419,17 +418,16 @@
   mod("products",   { path:"internal/core/catalog/products", files:7, loc:785, deps:["apis/repository","bundles/repository","files/repository","messages/repository","inventory/repository","storage"], usedBy:["orders"], routes:R.products, ctor:"products.NewService(productRepo, fileRepo, msgRepo, invRepo, bundleRepo, apiRepo, productImagesStore)", note:"Product images are stored in the dedicated product-images bucket and exposed as presigned URLs." });
 
   mod("coupons",    { path:"internal/core/commerce/coupons", files:7, loc:741, deps:[], usedBy:["orders"], routes:R.coupons, ctor:"coupons.NewService(couponsRepo)", note:"Validate() and CalculateDiscount() live on the model, so orders can apply a coupon without going through this service." });
-  mod("orders",     { path:"internal/core/commerce/orders", files:7, loc:682, deps:["products/repository","coupons/repository","users/repository"], usedBy:["payments"], routes:R.orders, ctor:"orders.NewService(ordersRepo, productRepo, couponsRepo, userRepo)", note:"Single product per order. Amount is computed server-side as price × quantity minus discount; status starts at pending. Coupon usage is incremented at order creation, before any money moves." });
+  mod("orders",     { path:"internal/core/commerce/orders", files:7, loc:682, deps:["users/repository"], usedBy:["payments"], routes:R.orders, ctor:"orders.NewService(ordersRepo, userRepo)", note:"Read-only order ledger. Orders are created atomically by an enabled payment provider checkout; no generic creation or manual paid-status endpoint is exposed." });
   mod("payments",   { path:"internal/core/commerce/payments", files:10, loc:0, deps:["orders","products","users","delivery sources","storage","Telegram Bot API"], usedBy:["Mini App","bot"], routes:R.payments, layers:"model · checkout · delivery · processor · repository · router", ctor:"payments.NewService(paymentsRepo, db, telegramAPI, apiService, productFilesStore)", note:"Telegram Stars checkout is implemented with pending order/payment records, inventory reservation, pre-checkout validation, idempotent successful-payment settlement, and buyer-only delivery responses. Persistence remains provider-neutral for future adapters." });
-  mod("wallets",    { path:"internal/core/commerce/wallets", files:7, loc:543, deps:["users/repository","*pgxpool.Pool"], usedBy:[], routes:R.wallets, ctor:"wallets.NewService(walletTxRepo, userRepo, db)", note:"The only service handed the raw connection pool — it needs its own transactions to move a balance and write the ledger row atomically." });
   mod("refunds",    { path:"internal/core/commerce/refunds", files:0, loc:0, deps:[], usedBy:[], routes:[], stub:true, note:"Empty directory. Payment refunds are not implemented." });
 
-  mod("users",      { path:"internal/core/membership/users", files:7, loc:633, deps:["pkg/pgconv"], usedBy:["orders","wallets","tickets"], routes:[["POST","/user","tma"],["GET","/user/t/:id","tma"],["GET","/user","admin"],["GET","/user/:id","admin"],["PATCH","/user/:id","admin"],["PATCH","/user/:id/ban","admin"],["DELETE","/user/:id","admin"]], ctor:"users.NewService(userRepo)", note:"The Telegram ID to UUID bridge. Every buyer-facing service starts with GetByTelegramID, because guards only put the Telegram ID on the context." });
+  mod("users",      { path:"internal/core/membership/users", files:7, loc:633, deps:["pkg/pgconv"], usedBy:["orders","tickets"], routes:[["POST","/user","tma"],["GET","/user/t/:id","tma"],["GET","/user","admin"],["GET","/user/:id","admin"],["PATCH","/user/:id","admin"],["PATCH","/user/:id/ban","admin"],["DELETE","/user/:id","admin"]], ctor:"users.NewService(userRepo)", note:"The Telegram ID to UUID bridge. Every buyer-facing service starts with GetByTelegramID, because guards only put the Telegram ID on the context." });
   mod("admins",     { path:"internal/core/membership/admins", files:7, loc:427, deps:[], usedBy:["auth"], routes:R.admins, ctor:"admins.NewService(adminRepo)", note:"Seeded at boot from ADMIN_SEED_USERNAME / ADMIN_SEED_PASSWORD. Passwords hash with golang.org/x/crypto." });
   mod("auth",       { path:"internal/core/membership/auth", files:4, loc:215, deps:["admins/repository"], usedBy:["middleware.Auth"], routes:R.auth, layers:"router only", ctor:"auth.NewService(adminRepo, cfg.JWTSecret)", note:"The one module whose service is exported through router.Handlers as well as its handler — middleware.Auth needs it to verify Bearer tokens." });
   mod("tickets",    { path:"internal/core/membership/tickets", files:7, loc:1017, deps:["ticket-categories/repository","users (service)"], usedBy:[], routes:R.tickets, ctor:"tickets.NewService(ticketRepo, userService, ticketCategoryRepo)", note:"Largest module, and the only one that takes another module's Service rather than its Repository. Also absorbs ticket_messages, which is why the ticket-messages directory is empty." });
   mod("tcats",      { path:"internal/core/membership/ticket-categories", files:7, loc:477, deps:[], usedBy:["tickets"], routes:R.tcats, ctor:"ticketcategories.NewService(ticketCategoryRepo)", note:"Seeded at boot by database.SeedTicketCategories." });
-  mod("vip",        { path:"internal/core/membership/vip", files:7, loc:0, deps:[], usedBy:[], routes:R.vip, ctor:"vip.NewService(vipPlanRepo)", note:"VIP plan CRUD (title, price, duration days, active/inactive). Subscriptions and user plan sync are not wired yet." });
+  mod("vip",        { path:"internal/core/membership/vip", files:7, loc:0, deps:[], usedBy:[], routes:R.vip, ctor:"vip.NewService(vipPlanRepo)", note:"VIP plan CRUD (title, Stars price, duration days, active/inactive). Subscriptions and user plan sync are not wired yet." });
   mod("referrals",  { path:"internal/core/membership/referrals", files:0, loc:0, deps:[], usedBy:[], routes:[], stub:true, note:"Empty directory; the referrals table exists in the migration." });
   mod("broadcasts", { path:"internal/core/membership/broadcasts", files:0, loc:0, deps:[], usedBy:[], routes:[], stub:true, note:"Empty directory; the broadcasts table exists with sent/failed counters." });
   mod("tmsgs",      { path:"internal/core/membership/ticket-messages", files:0, loc:0, deps:[], usedBy:[], routes:[], stub:true, note:"Empty by design — ticket messages are served from the tickets module at /ticket/:id/messages." });
@@ -465,7 +463,7 @@
     l_repo:     { kind:"Layer 12", path:"<module>/repository", note:"An interface plus PostgresRepository, with SQL kept in queries.go. Each package exports its own ErrNotFound." },
     l_store:    { kind:"Layer 13", path:"postgres · minio", note:"pgxpool for data, the S3 SDK for blobs." },
 
-    f_gap:      { kind:"Gap", title:"Flow ends here", path:"no fulfilment step exists", alarm:true, note:"Once the order reads paid, nothing else runs. No inventory item is claimed, no file or delivery message is released, no wallet ledger row is written, and no Telegram message is sent — the bot handler that would send it is still a stub." }
+    f_gap:      { kind:"Commerce", title:"Delivery", path:"paid order fulfilment", note:"A verified successful_payment update atomically settles the Stars payment and releases the product delivery exactly once." }
   });
 
   // ── sheets ────────────────────────────────────────────
@@ -534,7 +532,6 @@
         N("coupons", 800, 112, 196, 64, "coupons", "7 files · 741 loc", C.commerce),
         N("orders", 800, 244, 196, 64, "orders", "7 files · 682 loc", C.commerce),
         N("payments", 1024, 244, 196, 64, "payments", "9 files · 911 loc", C.commerce),
-        N("wallets", 800, 376, 196, 64, "wallets", "7 files · 543 loc", C.commerce),
         N("refunds", 1024, 376, 196, 64, "refunds", "empty directory", C.commerce, { ghost: true }),
 
         N("settings", 1024, 504, 196, 64, "settings", "6 files · 22 loc", C.platform, { ghost: true, chip: "not wired", alarm: true }),
@@ -556,7 +553,7 @@
         ["products", "bundles"], ["products", "files"], ["products", "messages"],
         ["products", "inventory"], ["products", "apis"],
         ["orders", "products"], ["orders", "coupons"], ["orders", "users"],
-        ["payments", "orders"], ["wallets", "users"],
+        ["payments", "orders"],
         ["auth", "admins"], ["tickets", "tcats"],
         ["tickets", "users", "service ⚠", "dashed"]
       ]
@@ -603,19 +600,19 @@
       text: "The API creates an invoice-backed pending order and delivery snapshot; the bot is the only component allowed to settle it from Telegram's successful_payment update.",
       count: "3",
       zones: [
-        { x: 24, y: 44, w: 1936, h: 152, c: C.commerce, tag: "A · create order — POST /api/v1/order" },
+        { x: 24, y: 44, w: 1936, h: 152, c: C.commerce, tag: "A · create pending Stars checkout" },
         { x: 24, y: 260, w: 1696, h: 152, c: C.commerce, tag: "B · create Stars invoice" },
         { x: 24, y: 476, w: 1696, h: 152, c: C.infra, tag: "C · process Telegram payment updates" }
       ],
       nodes: [
-        N("a1", 48, 84, 220, 72, "POST /order", "guard: RequireTelegram", C.commerce, { step: 1 }),
-        N("a2", 288, 84, 220, 72, "orders.Handler.Create", "bind CreateRequest", C.commerce, { step: 2 }),
+        N("a1", 48, 84, 220, 72, "POST /payment/stars/invoice", "guard: RequireTelegram", C.commerce, { step: 1 }),
+        N("a2", 288, 84, 220, 72, "CreateStarsInvoice", "bind product_id", C.commerce, { step: 2 }),
         N("a3", 528, 84, 220, 72, "users.Repo", "GetByTelegramID → uuid", C.commerce, { step: 3 }),
-        N("a4", 768, 84, 220, 72, "products.Repo", "GetByID · price × qty", C.commerce, { step: 4 }),
-        N("a5", 1008, 84, 220, 72, "coupons.Repo", "GetByID · Validate", C.commerce, { step: 5 }),
-        N("a6", 1248, 84, 220, 72, "coupon.CalculateDiscount", "then IncrementUsage", C.commerce, { step: 6 }),
-        N("a7", 1488, 84, 220, 72, "model.NewOrder", "status = pending", C.commerce, { step: 7 }),
-        N("a8", 1728, 84, 208, 72, "orders.Repo.Create", "201 · order json", C.commerce, { step: 8 }),
+        N("a4", 768, 84, 220, 72, "products", "stars_price · stock", C.commerce, { step: 4 }),
+        N("a5", 1008, 84, 220, 72, "begin transaction", "reserve inventory", C.commerce, { step: 5 }),
+        N("a6", 1248, 84, 220, 72, "create order", "telegram_stars · pending", C.commerce, { step: 6 }),
+        N("a7", 1488, 84, 220, 72, "create payment", "XTR · unique payload", C.commerce, { step: 7 }),
+        N("a8", 1728, 84, 208, 72, "delivery snapshot", "commit atomically", C.commerce, { step: 8 }),
 
         N("b1", 48, 300, 220, 72, "POST /payment/stars/invoice", "guard: RequireTelegram", C.commerce, { step: 1 }),
         N("b2", 288, 300, 220, 72, "Validate order", "owner · pending · amount", C.commerce, { step: 2 }),
@@ -630,7 +627,7 @@
         N("c3", 528, 516, 220, 72, "answerPreCheckoutQuery", "within 10 seconds", C.infra, { step: 3 }),
         N("c4", 768, 516, 220, 72, "successful_payment", "only source of truth", C.infra, { step: 4 }),
         N("c5", 1008, 516, 220, 72, "Atomic settlement", "payment + order · idempotent", C.commerce, { step: 5 }),
-        N("f_gap", 1248, 516, 448, 72, "Fulfil order", "deliver file/message/inventory exactly once", C.alert, { step: 6, alarm: true })
+        N("f_gap", 1248, 516, 448, 72, "Fulfil order", "deliver file/message/inventory exactly once", C.commerce, { step: 6 })
       ],
       edges: [
         ["a1","a2"],["a2","a3"],["a3","a4"],["a4","a5"],["a5","a6"],["a6","a7"],["a7","a8"],

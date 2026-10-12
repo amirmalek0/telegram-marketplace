@@ -26,8 +26,6 @@ import (
 	ordersrouter "telegram-marketplace/internal/core/commerce/orders/router"
 	"telegram-marketplace/internal/core/commerce/payments"
 	paymentsrouter "telegram-marketplace/internal/core/commerce/payments/router"
-	"telegram-marketplace/internal/core/commerce/wallets"
-	walletrouter "telegram-marketplace/internal/core/commerce/wallets/router"
 	"telegram-marketplace/internal/core/membership/admins"
 	adminrouter "telegram-marketplace/internal/core/membership/admins/router"
 	"telegram-marketplace/internal/core/membership/auth"
@@ -56,7 +54,6 @@ type Handlers struct {
 	Bundles          *bundles.Handler
 	Products         *products.Handler
 	Admins           *admins.Handler
-	Wallets          *wallets.Handler
 	Coupons          *coupons.Handler
 	Orders           *orders.Handler
 	Payments         *payments.Handler
@@ -102,7 +99,6 @@ func New(botToken string, corsAllowedOrigins []string, h Handlers) *gin.Engine {
 			bundlerouter.RegisterRoutes(domain, h.Bundles)
 			productrouter.RegisterRoutes(domain, h.Products)
 			adminrouter.RegisterRoutes(domain, h.Admins)
-			walletrouter.RegisterRoutes(domain, h.Wallets)
 			couponsrouter.RegisterRoutes(domain, h.Coupons)
 			ordersrouter.RegisterRoutes(domain, h.Orders)
 			paymentsrouter.RegisterRoutes(domain, h.Payments)

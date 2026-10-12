@@ -15,7 +15,6 @@ type CreateStarsInvoiceResponse struct {
 	PaymentID         string `json:"payment_id"`
 	InvoiceURL        string `json:"invoice_url"`
 	Stars             int64  `json:"stars"`
-	Currency          string `json:"currency"`
 	SimulationEnabled bool   `json:"simulation_enabled"`
 }
 
@@ -67,9 +66,7 @@ type DeliveryResponse struct {
 type Response struct {
 	ID                    string     `json:"id"`
 	OrderID               string     `json:"order_id"`
-	Method                string     `json:"method"`
-	Currency              string     `json:"currency"`
-	AmountMinor           int64      `json:"amount_minor"`
+	Stars                 int64      `json:"stars"`
 	CheckoutReference     string     `json:"checkout_reference"`
 	ExternalTransactionID *string    `json:"external_transaction_id,omitempty"`
 	ProviderTransactionID *string    `json:"provider_transaction_id,omitempty"`
@@ -89,9 +86,7 @@ func toResponse(p *model.Payment) Response {
 	return Response{
 		ID:                    p.ID,
 		OrderID:               p.OrderID,
-		Method:                string(p.Method),
-		Currency:              p.Currency,
-		AmountMinor:           p.AmountMinor,
+		Stars:                 p.AmountMinor,
 		CheckoutReference:     p.CheckoutReference,
 		ExternalTransactionID: p.ExternalTransactionID,
 		ProviderTransactionID: p.ProviderTransactionID,

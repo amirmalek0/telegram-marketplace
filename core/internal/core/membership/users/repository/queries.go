@@ -8,12 +8,12 @@ const (
 	queryCreateUser = `
 		INSERT INTO users (
 			first_name, last_name, username, telegram_id, phone_number,
-			has_active_plan, active_plan_id, wallet_balance, plan_expire_at,
+			has_active_plan, active_plan_id, plan_expire_at,
 			referred_by, is_banned, created_at
 		) VALUES (
 			$1, $2, $3, $4, $5,
-			$6, $7, $8, $9,
-			$10, $11, $12
+			$6, $7, $8,
+			$9, $10, $11
 		)
 		RETURNING id`
 
@@ -35,21 +35,21 @@ const (
 	// queryGetUserByID retrieves a user by their UUID.
 	queryGetUserByID = `
 		SELECT id, first_name, last_name, username, telegram_id, phone_number,
-		       has_active_plan, active_plan_id, wallet_balance, plan_expire_at,
+		       has_active_plan, active_plan_id, plan_expire_at,
 		       referred_by, is_banned, created_at
 		FROM users WHERE id = $1`
 
 	// queryGetUserByTelegramID retrieves a user by their Telegram ID.
 	queryGetUserByTelegramID = `
 		SELECT id, first_name, last_name, username, telegram_id, phone_number,
-		       has_active_plan, active_plan_id, wallet_balance, plan_expire_at,
+		       has_active_plan, active_plan_id, plan_expire_at,
 		       referred_by, is_banned, created_at
 		FROM users WHERE telegram_id = $1`
 
 	// queryListUsers retrieves a paginated list of users ordered by creation date.
 	queryListUsers = `
 		SELECT id, first_name, last_name, username, telegram_id, phone_number,
-		       has_active_plan, active_plan_id, wallet_balance, plan_expire_at,
+		       has_active_plan, active_plan_id, plan_expire_at,
 		       referred_by, is_banned, created_at
 		FROM users
 		ORDER BY created_at DESC
@@ -57,10 +57,4 @@ const (
 
 	// queryCountUsers returns the total number of users.
 	queryCountUsers = `SELECT COUNT(*) FROM users`
-
-	// queryUpdateWalletBalance updates the wallet balance for a user.
-	queryUpdateWalletBalance = `UPDATE users SET wallet_balance = $1 WHERE id = $2`
-
-	// queryGetWalletBalance retrieves the wallet balance for a user.
-	queryGetWalletBalance = `SELECT wallet_balance FROM users WHERE id = $1`
 )

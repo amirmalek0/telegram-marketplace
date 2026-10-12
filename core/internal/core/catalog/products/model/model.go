@@ -40,7 +40,6 @@ type Product struct {
 	ID             string       `db:"id"`
 	Title          string       `db:"title"`
 	Description    string       `db:"description"`
-	Price          float64      `db:"price"`
 	StarsPrice     int64        `db:"stars_price"`
 	CategoryID     string       `db:"category_id"`
 	ImageStorageID string       `db:"image_storage_id"`

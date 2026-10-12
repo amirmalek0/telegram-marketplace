@@ -24,7 +24,7 @@ Entities:
 **Plans**
 id
 title
-price
+stars_price
 duration
 status
 
@@ -56,15 +56,15 @@ updated at
 "enable_referrals": true,
 "enable_vip": true,
 "enable_support": true,
-"payment_methods": [
-"telegram_stars"
-]
+"payment_method": "telegram_stars"
 }
 }
 
 Telegram Stars is the only enabled method. The payment domain stores neutral
 method, currency, amount and transaction references so future processors can be
 added through the processor contract without changing the payment table.
+Orders can only be created by an enabled provider checkout; there is no generic
+order-creation endpoint and administrators cannot manually mark an order paid.
 
 Stars checkout flow:
 

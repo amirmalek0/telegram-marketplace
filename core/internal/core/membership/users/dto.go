@@ -42,7 +42,6 @@ type Response struct {
 	PhoneNumber   string     `json:"phone_number"`
 	HasActivePlan bool       `json:"has_active_plan"`
 	ActivePlanID  *string    `json:"active_plan_id,omitempty"`
-	WalletBalance float64    `json:"wallet_balance"`
 	PlanExpireAt  *time.Time `json:"plan_expire_at,omitempty"`
 	ReferredBy    *int64     `json:"referred_by,omitempty"`
 	IsBanned      bool       `json:"is_banned"`
@@ -59,7 +58,6 @@ func toResponse(user *model.User) Response {
 		PhoneNumber:   user.PhoneNumber,
 		HasActivePlan: user.HasActivePlan,
 		ActivePlanID:  user.ActivePlanID,
-		WalletBalance: user.WalletBalance,
 		PlanExpireAt:  user.PlanExpireAt,
 		ReferredBy:    user.ReferredBy,
 		IsBanned:      user.IsBanned,

@@ -31,13 +31,14 @@ const (
 		WHERE order_id = $1
 		ORDER BY created_at DESC`
 
-	queryListAllPayments = `
+	queryListPaymentsByMethod = `
 		SELECT ` + paymentColumns + `
 		FROM payments
+		WHERE method = $1
 		ORDER BY created_at DESC
-		LIMIT $1 OFFSET $2`
+		LIMIT $2 OFFSET $3`
 
-	queryCountAllPayments = `SELECT COUNT(*) FROM payments`
+	queryCountPaymentsByMethod = `SELECT COUNT(*) FROM payments WHERE method = $1`
 
 	queryMarkPaymentSucceeded = `
 		UPDATE payments

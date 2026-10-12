@@ -25,8 +25,8 @@ type Repository interface {
 	GetByCheckoutReference(ctx context.Context, reference string) (*model.Payment, error)
 	GetByExternalTransactionID(ctx context.Context, method model.PaymentMethod, transactionID string) (*model.Payment, error)
 	ListByOrderID(ctx context.Context, orderID string) ([]*model.Payment, error)
-	ListAll(ctx context.Context, limit, offset int) ([]*model.Payment, error)
-	CountAll(ctx context.Context) (int64, error)
+	ListByMethod(ctx context.Context, method model.PaymentMethod, limit, offset int) ([]*model.Payment, error)
+	CountByMethod(ctx context.Context, method model.PaymentMethod) (int64, error)
 	MarkSucceeded(ctx context.Context, id, externalTransactionID, providerTransactionID string, providerData []byte, paidAt time.Time) error
 	MarkRefunded(ctx context.Context, id string, refundedAt time.Time) error
 }
@@ -111,15 +111,15 @@ func (r *postgresRepository) ListByOrderID(ctx context.Context, orderID string) 
 	return result, nil
 }
 
-func (r *postgresRepository) ListAll(ctx context.Context, limit, offset int) ([]*model.Payment, error) {
-	rows, err := r.db.Query(ctx, queryListAllPayments, limit, offset)
+func (r *postgresRepository) ListByMethod(ctx context.Context, method model.PaymentMethod, limit, offset int) ([]*model.Payment, error) {
+	rows, err := r.db.Query(ctx, queryListPaymentsByMethod, method, limit, offset)
 	if err != nil {
-		return nil, fmt.Errorf("payments.repository.ListAll: %w", err)
+		return nil, fmt.Errorf("payments.repository.ListByMethod: %w", err)
 	}
 
 	payments, err := pgx.CollectRows(rows, pgx.RowToStructByName[model.Payment])
 	if err != nil {
-		return nil, fmt.Errorf("payments.repository.ListAll: %w", err)
+		return nil, fmt.Errorf("payments.repository.ListByMethod: %w", err)
 	}
 
 	result := make([]*model.Payment, len(payments))
@@ -129,11 +129,11 @@ func (r *postgresRepository) ListAll(ctx context.Context, limit, offset int) ([]
 	return result, nil
 }
 
-func (r *postgresRepository) CountAll(ctx context.Context) (int64, error) {
+func (r *postgresRepository) CountByMethod(ctx context.Context, method model.PaymentMethod) (int64, error) {
 	var count int64
-	err := r.db.QueryRow(ctx, queryCountAllPayments).Scan(&count)
+	err := r.db.QueryRow(ctx, queryCountPaymentsByMethod, method).Scan(&count)
 	if err != nil {
-		return 0, fmt.Errorf("payments.repository.CountAll: %w", err)
+		return 0, fmt.Errorf("payments.repository.CountByMethod: %w", err)
 	}
 	return count, nil
 }

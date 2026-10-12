@@ -12,6 +12,22 @@ const (
 	StarsCurrency = "XTR"
 )
 
+// EnabledMethods is the single source of truth for payment integrations that
+// are currently exposed. Add a method here only after its processor and API
+// adapter are fully implemented.
+func EnabledMethods() []PaymentMethod {
+	return []PaymentMethod{MethodTelegramStars}
+}
+
+func (m PaymentMethod) IsEnabled() bool {
+	for _, enabled := range EnabledMethods() {
+		if m == enabled {
+			return true
+		}
+	}
+	return false
+}
+
 // PaymentStatus represents the status of a payment.
 type PaymentStatus string
 

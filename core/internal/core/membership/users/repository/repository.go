@@ -16,8 +16,8 @@ var ErrNotFound = fmt.Errorf("user not found")
 // Repository defines the data-access contract for the users domain.
 //
 // Methods are grouped by concern:
-//   - Writes  : Create, Update, SetBanned, Delete, UpdateWalletBalance
-//   - Single  : GetByID, GetByTelegramID, GetWalletBalance
+//   - Writes  : Create, Update, SetBanned, Delete
+//   - Single  : GetByID, GetByTelegramID
 //   - Many    : List
 type Repository interface {
 	// --- Writes ---
@@ -25,12 +25,10 @@ type Repository interface {
 	Update(ctx context.Context, u *model.User) error
 	SetBanned(ctx context.Context, id string, banned bool) error
 	Delete(ctx context.Context, id string) error
-	UpdateWalletBalance(ctx context.Context, userID string, newBalance float64) error
 
 	// --- Single reads ---
 	GetByID(ctx context.Context, id string) (*model.User, error)
 	GetByTelegramID(ctx context.Context, telegramID int64) (*model.User, error)
-	GetWalletBalance(ctx context.Context, userID string) (float64, error)
 
 	// --- Collection reads ---
 	List(ctx context.Context, limit, offset int) ([]*model.User, error)
@@ -57,7 +55,7 @@ var _ Repository = (*postgresRepository)(nil)
 func (r *postgresRepository) Create(ctx context.Context, u *model.User) error {
 	err := r.db.QueryRow(ctx, queryCreateUser,
 		u.FirstName, u.LastName, u.Username, u.TelegramID, u.PhoneNumber,
-		u.HasActivePlan, pgconv.TextPtr(u.ActivePlanID), u.WalletBalance, pgconv.TimestamptzPtr(u.PlanExpireAt),
+		u.HasActivePlan, pgconv.TextPtr(u.ActivePlanID), pgconv.TimestamptzPtr(u.PlanExpireAt),
 		pgconv.Int8Ptr(u.ReferredBy), u.IsBanned, u.CreatedAt,
 	).Scan(&u.ID)
 	if err != nil {
@@ -92,14 +90,6 @@ func (r *postgresRepository) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-func (r *postgresRepository) UpdateWalletBalance(ctx context.Context, userID string, newBalance float64) error {
-	_, err := r.db.Exec(ctx, queryUpdateWalletBalance, newBalance, userID)
-	if err != nil {
-		return fmt.Errorf("users.repository.UpdateWalletBalance: %w", err)
-	}
-	return nil
-}
-
 // ============================================================
 // Single reads
 // ============================================================
@@ -128,15 +118,6 @@ func (r *postgresRepository) GetByTelegramID(ctx context.Context, telegramID int
 		return nil, fmt.Errorf("users.repository.GetByTelegramID: %w", err)
 	}
 	return &u, nil
-}
-
-func (r *postgresRepository) GetWalletBalance(ctx context.Context, userID string) (float64, error) {
-	var balance float64
-	err := r.db.QueryRow(ctx, queryGetWalletBalance, userID).Scan(&balance)
-	if err != nil {
-		return 0, fmt.Errorf("users.repository.GetWalletBalance: %w", err)
-	}
-	return balance, nil
 }
 
 // ============================================================

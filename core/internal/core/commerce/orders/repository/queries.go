@@ -3,24 +3,32 @@ package repository
 // SQL query constants for the orders repository.
 
 const (
-	// queryCreateOrder inserts a new order and returns the generated UUID.
-	queryCreateOrder = `
-		INSERT INTO orders (user_id, product_id, quantity, coupon_id, amount, discount_amount, payment_method, status, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-		RETURNING id`
-
 	// queryGetOrderByID retrieves an order by its UUID.
 	queryGetOrderByID = `
-		SELECT id, user_id, product_id, quantity, coupon_id, amount, discount_amount, payment_method, status, paid_at, created_at, updated_at
-		FROM orders
-		WHERE id = $1`
+		SELECT o.id, o.user_id, o.product_id, o.quantity, o.coupon_id, o.amount,
+		       o.discount_amount, o.payment_method, COALESCE(p.amount_minor, 0) AS stars,
+		       o.status, o.paid_at, o.created_at, o.updated_at
+		FROM orders o
+		LEFT JOIN LATERAL (
+			SELECT amount_minor FROM payments
+			WHERE order_id = o.id AND method = 'telegram_stars'
+			ORDER BY created_at DESC LIMIT 1
+		) p ON true
+		WHERE o.id = $1`
 
 	// queryListOrdersByUserID retrieves a paginated list of orders for a user.
 	queryListOrdersByUserID = `
-		SELECT id, user_id, product_id, quantity, coupon_id, amount, discount_amount, payment_method, status, paid_at, created_at, updated_at
-		FROM orders
-		WHERE user_id = $1
-		ORDER BY created_at DESC
+		SELECT o.id, o.user_id, o.product_id, o.quantity, o.coupon_id, o.amount,
+		       o.discount_amount, o.payment_method, COALESCE(p.amount_minor, 0) AS stars,
+		       o.status, o.paid_at, o.created_at, o.updated_at
+		FROM orders o
+		LEFT JOIN LATERAL (
+			SELECT amount_minor FROM payments
+			WHERE order_id = o.id AND method = 'telegram_stars'
+			ORDER BY created_at DESC LIMIT 1
+		) p ON true
+		WHERE o.user_id = $1
+		ORDER BY o.created_at DESC
 		LIMIT $2 OFFSET $3`
 
 	// queryCountOrdersByUserID returns the total number of orders for a user.
@@ -28,21 +36,18 @@ const (
 
 	// queryListAllOrders retrieves a paginated list of all orders (admin).
 	queryListAllOrders = `
-		SELECT id, user_id, product_id, quantity, coupon_id, amount, discount_amount, payment_method, status, paid_at, created_at, updated_at
-		FROM orders
-		ORDER BY created_at DESC
+		SELECT o.id, o.user_id, o.product_id, o.quantity, o.coupon_id, o.amount,
+		       o.discount_amount, o.payment_method, COALESCE(p.amount_minor, 0) AS stars,
+		       o.status, o.paid_at, o.created_at, o.updated_at
+		FROM orders o
+		LEFT JOIN LATERAL (
+			SELECT amount_minor FROM payments
+			WHERE order_id = o.id AND method = 'telegram_stars'
+			ORDER BY created_at DESC LIMIT 1
+		) p ON true
+		ORDER BY o.created_at DESC
 		LIMIT $1 OFFSET $2`
 
 	// queryCountAllOrders returns the total number of orders.
 	queryCountAllOrders = `SELECT COUNT(*) FROM orders`
-
-	// queryUpdateOrderStatus updates the status of an order.
-	queryUpdateOrderStatus = `
-		UPDATE orders SET status = $1, paid_at = $2, updated_at = $3
-		WHERE id = $4`
-
-	// queryUpdateOrderPaymentMethod updates the payment method of an order.
-	queryUpdateOrderPaymentMethod = `
-		UPDATE orders SET payment_method = $1, updated_at = $2
-		WHERE id = $3`
 )

@@ -35,11 +35,11 @@ func (s *Service) Create(ctx context.Context, req CreatePlanRequest) (*model.Pla
 	}
 
 	plan := &model.Plan{
-		Title:     req.Title,
-		Price:     req.Price,
-		Duration:  req.Duration,
-		Status:    status,
-		CreatedAt: time.Now(),
+		Title:      req.Title,
+		StarsPrice: req.StarsPrice,
+		Duration:   req.Duration,
+		Status:     status,
+		CreatedAt:  time.Now(),
 	}
 
 	if err := s.repo.Create(ctx, plan); err != nil {
@@ -95,8 +95,8 @@ func (s *Service) Update(ctx context.Context, id string, req UpdatePlanRequest) 
 	if req.Title != nil {
 		plan.Title = *req.Title
 	}
-	if req.Price != nil {
-		plan.Price = *req.Price
+	if req.StarsPrice != nil {
+		plan.StarsPrice = *req.StarsPrice
 	}
 	if req.Duration != nil {
 		plan.Duration = *req.Duration

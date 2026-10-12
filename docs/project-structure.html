@@ -173,7 +173,7 @@ const nodes = [
     fields: [
       'id', 'first_name', 'last_name', 'username',
       'telegram_id', 'phone_number', 'has_active_plan',
-      'active_plan_id', 'wallet_balance', 'plan_expire_at',
+      'active_plan_id', 'plan_expire_at',
       'referred_by', 'is_banned', 'created_at'
     ]
   },
@@ -183,7 +183,7 @@ const nodes = [
   },
   {
     id: 'vip_plan', label: 'VIP Plan', type: 'entity', x: 420, y: 560,
-    fields: ['id', 'title', 'price', 'duration (days)', 'status']
+    fields: ['id', 'title', 'stars_price (XTR)', 'duration (days)', 'status']
   },
   {
     id: 'subscription', label: 'Subscription', type: 'entity', x: 420, y: 730,
@@ -214,7 +214,7 @@ const nodes = [
   {
     id: 'product', label: 'Product', type: 'entity', x: 860, y: 280,
     fields: [
-      'id', 'title', 'description', 'price', 'stars_price (XTR)',
+      'id', 'title', 'description', 'stars_price (XTR)',
       'category_id → Category', 'delivery_type',
       'file_id → File', 'message_id → Message',
       'inventory_id → Inventory', 'bundle_id → Bundle',
@@ -255,7 +255,7 @@ const nodes = [
     fields: [
       'key (TEXT)', 'value (JSONB)', 'updated_at',
       '— shop_mode', '— show_views', '— enable_referrals',
-      '— enable_vip', '— enable_support', '— payment_methods[]'
+      '— enable_vip', '— enable_support', '— payment_method: telegram_stars'
     ]
   },
 
@@ -276,15 +276,6 @@ const nodes = [
     id: 'coupon', label: 'Coupon', type: 'entity', x: 1300, y: 490,
     fields: ['id', 'code', 'discount_type (static/percentage)', 'discount_value', 'usage_limit', 'expires_at']
   },
-  {
-    id: 'wallet', label: 'Wallet', type: 'entity', x: 1300, y: 680,
-    fields: ['id', 'user_id → User', 'balance', 'created_at', 'updated_at']
-  },
-  {
-    id: 'wallet_tx', label: 'Wallet Transaction', type: 'entity', x: 1300, y: 860,
-    fields: ['id', 'user_id → User', 'type (purchase/pay/reward)', 'amount', 'balance_before', 'balance_after', 'created_at']
-  },
-
   // ── PAYMENT PROCESSOR BOUNDARY ────────────────────────────────────────────
   { id: 'payment_processor', label: 'Processor contract', type: 'payment', x: 1300, y: 1080, fields: ['CreateCheckout', 'Refund', 'Telegram Stars first', 'future third-party adapters'] },
 ];
@@ -306,8 +297,6 @@ const relations = [
   ['user', 'ticket'],
   ['ticket', 'ticket_msg'],
   ['admin', 'ticket_msg'],
-  ['user', 'wallet'],
-  ['user', 'wallet_tx'],
 
   // catalog
   ['category', 'product'],

@@ -137,7 +137,8 @@ var migrations = []string{
 	`CREATE TABLE IF NOT EXISTS vip_plans (
 		id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 		title      TEXT NOT NULL,
-		price      DOUBLE PRECISION NOT NULL CHECK (price >= 0),
+		price      DOUBLE PRECISION NOT NULL DEFAULT 0 CHECK (price >= 0),
+		stars_price BIGINT NOT NULL DEFAULT 0 CHECK (stars_price >= 0),
 		duration   INT NOT NULL CHECK (duration > 0),
 		status     TEXT NOT NULL DEFAULT 'active'
 		           CHECK (status IN ('active', 'inactive')),
@@ -150,6 +151,18 @@ var migrations = []string{
 	`ALTER TABLE vip_plans ADD COLUMN IF NOT EXISTS duration INT NOT NULL DEFAULT 30`,
 	`ALTER TABLE vip_plans ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'active'`,
 	`ALTER TABLE vip_plans ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now()`,
+	// Introduce the explicit Stars amount once and preserve whole legacy values.
+	`DO $$
+	 BEGIN
+		IF NOT EXISTS (
+			SELECT 1 FROM information_schema.columns
+			WHERE table_schema = 'public' AND table_name = 'vip_plans' AND column_name = 'stars_price'
+		) THEN
+			ALTER TABLE vip_plans ADD COLUMN stars_price BIGINT NOT NULL DEFAULT 0;
+			UPDATE vip_plans SET stars_price = GREATEST(0, ROUND(price)::BIGINT);
+		END IF;
+	 END
+	 $$`,
 
 	`CREATE TABLE IF NOT EXISTS categories (
 		id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -222,7 +235,7 @@ var migrations = []string{
 		id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
 		title         TEXT        NOT NULL,
 		description   TEXT        NOT NULL DEFAULT '',
-		price         DOUBLE PRECISION NOT NULL,
+		price         DOUBLE PRECISION NOT NULL DEFAULT 0,
 		stars_price   BIGINT      NOT NULL DEFAULT 0 CHECK (stars_price >= 0),
 		category_id   UUID        NOT NULL REFERENCES categories(id),
 		image_storage_id TEXT      NOT NULL DEFAULT '',
@@ -241,6 +254,9 @@ var migrations = []string{
 		created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 	)`,
 	// Upgrade path for databases created before product images were introduced.
+	// `price` is a retired fiat field. Keep it at zero for schema compatibility
+	// with existing databases while Stars remains the only catalog price.
+	`ALTER TABLE products ALTER COLUMN price SET DEFAULT 0`,
 	`ALTER TABLE products ADD COLUMN IF NOT EXISTS image_storage_id TEXT NOT NULL DEFAULT ''`,
 	`ALTER TABLE products ADD COLUMN IF NOT EXISTS stars_price BIGINT NOT NULL DEFAULT 0`,
 	`ALTER TABLE products DROP CONSTRAINT IF EXISTS products_stars_price_check`,

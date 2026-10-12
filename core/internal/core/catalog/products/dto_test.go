@@ -38,6 +38,9 @@ func TestPublicProductResponseOmitsDeliveryReferences(t *testing.T) {
 			t.Fatalf("public response exposed %s: %s", field, payload)
 		}
 	}
+	if strings.Contains(string(payload), `"price"`) {
+		t.Fatalf("public response exposed retired fiat price: %s", payload)
+	}
 }
 
 func TestAdminProductResponseIncludesDeliveryReferences(t *testing.T) {

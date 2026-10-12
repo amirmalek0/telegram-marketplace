@@ -45,24 +45,9 @@ type Order struct {
 	Amount         float64     `db:"amount" json:"amount"`
 	DiscountAmount float64     `db:"discount_amount" json:"discount_amount"`
 	PaymentMethod  *string     `db:"payment_method" json:"payment_method,omitempty"`
+	Stars          int64       `db:"stars" json:"stars"`
 	Status         OrderStatus `db:"status" json:"status"`
 	PaidAt         *time.Time  `db:"paid_at" json:"paid_at,omitempty"`
 	CreatedAt      time.Time   `db:"created_at" json:"created_at"`
 	UpdatedAt      time.Time   `db:"updated_at" json:"updated_at"`
-}
-
-// NewOrder constructs a new Order with pending status and current timestamps.
-func NewOrder(userID, productID string, quantity int, couponID *string, amount, discountAmount float64) *Order {
-	now := time.Now()
-	return &Order{
-		UserID:         userID,
-		ProductID:      productID,
-		Quantity:       quantity,
-		CouponID:       couponID,
-		Amount:         amount,
-		DiscountAmount: discountAmount,
-		Status:         StatusPending,
-		CreatedAt:      now,
-		UpdatedAt:      now,
-	}
 }

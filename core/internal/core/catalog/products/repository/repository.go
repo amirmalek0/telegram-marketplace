@@ -44,7 +44,7 @@ var _ Repository = (*postgresRepository)(nil)
 
 func (r *postgresRepository) Create(ctx context.Context, p *model.Product) error {
 	err := r.db.QueryRow(ctx, queryCreateProduct,
-		p.Title, p.Description, p.Price, p.StarsPrice, p.CategoryID, p.ImageStorageID, p.DeliveryType,
+		p.Title, p.Description, p.StarsPrice, p.CategoryID, p.ImageStorageID, p.DeliveryType,
 		p.FileID, p.MessageID, p.InventoryID, p.BundleID, p.APIID,
 		p.DemoURL, p.VIPOnly, p.ViewsCount, p.Status, p.CreatedAt,
 	).Scan(&p.ID)
@@ -97,7 +97,7 @@ func (r *postgresRepository) Count(ctx context.Context) (int64, error) {
 
 func (r *postgresRepository) Update(ctx context.Context, p *model.Product) error {
 	_, err := r.db.Exec(ctx, queryUpdateProduct,
-		p.Title, p.Description, p.Price, p.StarsPrice, p.CategoryID, p.ImageStorageID, p.DeliveryType,
+		p.Title, p.Description, p.StarsPrice, p.CategoryID, p.ImageStorageID, p.DeliveryType,
 		p.FileID, p.MessageID, p.InventoryID, p.BundleID, p.APIID,
 		p.DemoURL, p.VIPOnly, p.Status, p.ID,
 	)

@@ -14,7 +14,6 @@ import (
 type CreateRequest struct {
 	Title        string  `json:"title" binding:"required"`
 	Description  string  `json:"description"`
-	Price        float64 `json:"price" binding:"required,gt=0"`
 	StarsPrice   int64   `json:"stars_price" binding:"required,gt=0"`
 	CategoryID   string  `json:"category_id" binding:"required"`
 	DeliveryType string  `json:"delivery_type" binding:"required,oneof=file message inventory bundle api"`
@@ -29,20 +28,19 @@ type CreateRequest struct {
 
 // UpdateRequest represents the payload for updating a product.
 type UpdateRequest struct {
-	Title        *string  `json:"title"`
-	Description  *string  `json:"description"`
-	Price        *float64 `json:"price" binding:"omitempty,gt=0"`
-	StarsPrice   *int64   `json:"stars_price" binding:"omitempty,gt=0"`
-	CategoryID   *string  `json:"category_id"`
-	DeliveryType *string  `json:"delivery_type" binding:"omitempty,oneof=file message inventory bundle api"`
-	FileID       *string  `json:"file_id"`
-	MessageID    *string  `json:"message_id"`
-	InventoryID  *string  `json:"inventory_id"`
-	BundleID     *string  `json:"bundle_id"`
-	APIID        *string  `json:"api_id"`
-	DemoURL      *string  `json:"demo_url"`
-	VIPOnly      *bool    `json:"vip_only"`
-	Status       *string  `json:"status" binding:"omitempty,oneof=active draft archived"`
+	Title        *string `json:"title"`
+	Description  *string `json:"description"`
+	StarsPrice   *int64  `json:"stars_price" binding:"omitempty,gt=0"`
+	CategoryID   *string `json:"category_id"`
+	DeliveryType *string `json:"delivery_type" binding:"omitempty,oneof=file message inventory bundle api"`
+	FileID       *string `json:"file_id"`
+	MessageID    *string `json:"message_id"`
+	InventoryID  *string `json:"inventory_id"`
+	BundleID     *string `json:"bundle_id"`
+	APIID        *string `json:"api_id"`
+	DemoURL      *string `json:"demo_url"`
+	VIPOnly      *bool   `json:"vip_only"`
+	Status       *string `json:"status" binding:"omitempty,oneof=active draft archived"`
 }
 
 // --- Response DTOs ---
@@ -55,7 +53,6 @@ type Response struct {
 	ID           string             `json:"id"`
 	Title        string             `json:"title"`
 	Description  string             `json:"description"`
-	Price        float64            `json:"price"`
 	StarsPrice   int64              `json:"stars_price"`
 	CategoryID   string             `json:"category_id"`
 	ImageURL     string             `json:"image_url"`
@@ -89,7 +86,6 @@ func (s *Service) toResponse(ctx context.Context, p *model.Product, includeDeliv
 		ID:           p.ID,
 		Title:        p.Title,
 		Description:  p.Description,
-		Price:        p.Price,
 		StarsPrice:   p.StarsPrice,
 		CategoryID:   p.CategoryID,
 		ImageURL:     imageURL,

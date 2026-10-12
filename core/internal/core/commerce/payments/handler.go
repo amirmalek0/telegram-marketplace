@@ -113,11 +113,11 @@ func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
 }
 
-// AdminList returns all persisted payment attempts.
-func (h *Handler) AdminList(c *gin.Context) {
+// AdminListStars returns Telegram Stars payment attempts only.
+func (h *Handler) AdminListStars(c *gin.Context) {
 	params := pagination.FromQuery(c)
 
-	result, err := h.service.ListAll(c.Request.Context(), params)
+	result, err := h.service.ListStars(c.Request.Context(), params)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

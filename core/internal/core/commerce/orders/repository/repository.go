@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"telegram-marketplace/internal/core/commerce/orders/model"
-	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -13,22 +12,13 @@ import (
 // ErrNotFound is returned when a requested order does not exist.
 var ErrNotFound = fmt.Errorf("order not found")
 
-// ErrInvalidProduct is returned when the product_id does not exist.
-var ErrInvalidProduct = fmt.Errorf("selected product is not valid")
-
-// ErrInvalidCoupon is returned when the coupon_id does not exist.
-var ErrInvalidCoupon = fmt.Errorf("selected coupon is not valid")
-
 // Repository defines the data-access contract for the orders domain.
 type Repository interface {
-	Create(ctx context.Context, o *model.Order) error
 	GetByID(ctx context.Context, id string) (*model.Order, error)
 	ListByUserID(ctx context.Context, userID string, limit, offset int) ([]*model.Order, error)
 	CountByUserID(ctx context.Context, userID string) (int64, error)
 	ListAll(ctx context.Context, limit, offset int) ([]*model.Order, error)
 	CountAll(ctx context.Context) (int64, error)
-	UpdateStatus(ctx context.Context, id string, status model.OrderStatus, paidAt *time.Time) error
-	UpdatePaymentMethod(ctx context.Context, id string, paymentMethod string) error
 }
 
 // postgresRepository is the Postgres implementation of Repository.
@@ -43,16 +33,6 @@ func NewPostgresRepository(db *pgxpool.Pool) Repository {
 
 // compile-time interface check
 var _ Repository = (*postgresRepository)(nil)
-
-func (r *postgresRepository) Create(ctx context.Context, o *model.Order) error {
-	err := r.db.QueryRow(ctx, queryCreateOrder,
-		o.UserID, o.ProductID, o.Quantity, o.CouponID, o.Amount, o.DiscountAmount, o.PaymentMethod, o.Status, o.CreatedAt, o.UpdatedAt,
-	).Scan(&o.ID)
-	if err != nil {
-		return fmt.Errorf("orders.repository.Create: %w", err)
-	}
-	return nil
-}
 
 func (r *postgresRepository) GetByID(ctx context.Context, id string) (*model.Order, error) {
 	rows, err := r.db.Query(ctx, queryGetOrderByID, id)
@@ -119,20 +99,4 @@ func (r *postgresRepository) CountAll(ctx context.Context) (int64, error) {
 		return 0, fmt.Errorf("orders.repository.CountAll: %w", err)
 	}
 	return count, nil
-}
-
-func (r *postgresRepository) UpdateStatus(ctx context.Context, id string, status model.OrderStatus, paidAt *time.Time) error {
-	_, err := r.db.Exec(ctx, queryUpdateOrderStatus, status, paidAt, time.Now(), id)
-	if err != nil {
-		return fmt.Errorf("orders.repository.UpdateStatus: %w", err)
-	}
-	return nil
-}
-
-func (r *postgresRepository) UpdatePaymentMethod(ctx context.Context, id string, paymentMethod string) error {
-	_, err := r.db.Exec(ctx, queryUpdateOrderPaymentMethod, paymentMethod, time.Now(), id)
-	if err != nil {
-		return fmt.Errorf("orders.repository.UpdatePaymentMethod: %w", err)
-	}
-	return nil
 }

@@ -63,16 +63,18 @@ func (s *Service) ListByOrderID(ctx context.Context, orderID string) ([]*model.P
 	return payments, nil
 }
 
-// ListAll returns a paginated list of payments for administrators.
-func (s *Service) ListAll(ctx context.Context, params pagination.Params) (*PaginatedResponse, error) {
-	payments, err := s.repo.ListAll(ctx, params.PerPage, params.Offset())
+// ListStars returns only the currently enabled Telegram Stars payments. The
+// repository remains method-aware so future processors can expose dedicated
+// administration endpoints without mixing provider semantics.
+func (s *Service) ListStars(ctx context.Context, params pagination.Params) (*PaginatedResponse, error) {
+	payments, err := s.repo.ListByMethod(ctx, model.MethodTelegramStars, params.PerPage, params.Offset())
 	if err != nil {
-		return nil, fmt.Errorf("payments.service.ListAll: %w", err)
+		return nil, fmt.Errorf("payments.service.ListStars: %w", err)
 	}
 
-	total, err := s.repo.CountAll(ctx)
+	total, err := s.repo.CountByMethod(ctx, model.MethodTelegramStars)
 	if err != nil {
-		return nil, fmt.Errorf("payments.service.ListAll count: %w", err)
+		return nil, fmt.Errorf("payments.service.ListStars count: %w", err)
 	}
 
 	data := make([]Response, 0, len(payments))
