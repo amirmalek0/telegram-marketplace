@@ -23,6 +23,7 @@ import UsersPage from '@/pages/users/UsersPage';
 import WalletsPage from '@/pages/wallets/WalletsPage';
 import VipPage from '@/pages/vip/VipPage';
 import TicketsPage from '@/pages/tickets/TicketsPage';
+import TicketDetailPage from '@/pages/tickets/TicketDetailPage';
 import UserTicketsPage from '@/pages/tickets/UserTicketsPage';
 
 void PageLoader;
@@ -81,6 +82,7 @@ function App() {
             <Route path="vip" element={<VipPage />} />
             <Route path="messages" element={<MessagesPage />} />
             <Route path="tickets" element={<TicketsPage />} />
+            <Route path="tickets/:ticketId" element={<TicketDetailPage />} />
             {/* Catch-all */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>

@@ -24,7 +24,7 @@ export function TicketUserIdentity({ user }: { user?: UserResponse }) {
   );
 }
 
-export function TicketUserPanel({ user, showTicketsLink = true }: { user?: UserResponse; showTicketsLink?: boolean }) {
+export function TicketUserPanel({ user, showTicketsLink = true, compact = false }: { user?: UserResponse; showTicketsLink?: boolean; compact?: boolean }) {
   if (!user) return null;
 
   const facts = [
@@ -55,7 +55,7 @@ export function TicketUserPanel({ user, showTicketsLink = true }: { user?: UserR
           </Link>
         )}
       </div>
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-3">
+      <div className={compact ? 'grid grid-cols-1 gap-2' : 'grid grid-cols-2 gap-2 md:grid-cols-3'}>
         {facts.map((fact) => (
           <div key={fact.label} className="rounded-xl bg-[rgb(var(--color-surface))] px-3 py-2.5">
             <span className="flex items-center gap-1.5 text-[9px] text-[rgb(var(--color-text-muted))]">{fact.icon}{fact.label}</span>

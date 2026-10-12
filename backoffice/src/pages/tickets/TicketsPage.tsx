@@ -1,38 +1,128 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
-import { MessageSquareReply, Plus, Settings2, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Inbox, Plus, Settings2, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ticketCategoriesApi, ticketsApi } from '@/api';
-import { TicketCategoryResponse, TicketPriority, TicketResponse, TicketStatus } from '@/types';
-import { Badge, Button, ConfirmationModal, DataTable, Input, Modal, PageHeader, Select } from '@/components/ui';
-import type { Column } from '@/components/ui';
-import { formatDateTime, shortId } from '@/utils/format';
-import { TicketConversationModal } from './TicketConversationModal';
-import { TicketUserIdentity } from './TicketUserSummary';
+import type { TicketCategoryResponse, TicketPriority, TicketResponse, TicketStatus } from '@/types';
+import { Badge, Button, ConfirmationModal, Input, Modal, PageHeader, Select, Skeleton } from '@/components/ui';
+import { TicketListItem } from './TicketListItem';
+import { priorityOptions, statusOptions } from './ticketMeta';
 
-const statuses: Record<TicketStatus, { label: string; variant: 'success' | 'warning' | 'default' }> = { open: { label: 'باز', variant: 'success' }, in_progress: { label: 'در حال بررسی', variant: 'warning' }, closed: { label: 'بسته', variant: 'default' } };
-const priorities: Record<TicketPriority, { label: string; variant: 'default' | 'info' | 'warning' | 'error' }> = { low: { label: 'کم', variant: 'default' }, medium: { label: 'متوسط', variant: 'info' }, high: { label: 'زیاد', variant: 'warning' }, urgent: { label: 'فوری', variant: 'error' } };
+const perPage = 20;
 
 export default function TicketsPage() {
-  const [rows, setRows] = useState<TicketResponse[]>([]); const [total, setTotal] = useState(0); const [page, setPage] = useState(1); const [loading, setLoading] = useState(true); const [status, setStatus] = useState<TicketStatus | ''>(''); const [priority, setPriority] = useState<TicketPriority | ''>(''); const [replying, setReplying] = useState<TicketResponse | null>(null); const [saving, setSaving] = useState(false); const [deleting, setDeleting] = useState<TicketResponse | null>(null); const [categoriesOpen, setCategoriesOpen] = useState(false); const [categories, setCategories] = useState<TicketCategoryResponse[]>([]); const [categoryName, setCategoryName] = useState('');
-  const load = useCallback(async () => { setLoading(true); try { const r = await ticketsApi.list({ page, per_page: 20, ...(status && { status }), ...(priority && { priority }) }); setRows(r.data); setTotal(r.total); } catch { toast.error('دریافت تیکت‌ها ناموفق بود'); } finally { setLoading(false); } }, [page, status, priority]); useEffect(() => { load(); }, [load]);
-  const loadCategories = async () => { try { const r = await ticketCategoriesApi.list({ page: 1, per_page: 100 }); setCategories(r.data); } catch { toast.error('دسته‌های پشتیبانی دریافت نشد'); } };
-  const update = async (row: TicketResponse, field: 'status' | 'priority', value: string) => { try { await ticketsApi.update(row.id, { [field]: value }); setRows(v => v.map(x => x.id === row.id ? { ...x, [field]: value } as TicketResponse : x)); toast.success('تیکت به‌روز شد'); } catch { toast.error('تغییر تیکت ناموفق بود'); } };
-  const remove = async () => { if (!deleting) return; setSaving(true); try { await ticketsApi.delete(deleting.id); setDeleting(null); toast.success('تیکت حذف شد'); load(); } catch { toast.error('حذف تیکت ناموفق بود'); } finally { setSaving(false); } };
-  const addCategory = async (e: FormEvent) => { e.preventDefault(); if (!categoryName.trim()) return; setSaving(true); try { await ticketCategoriesApi.create(categoryName.trim()); setCategoryName(''); toast.success('دسته پشتیبانی ایجاد شد'); loadCategories(); } catch { toast.error('ساخت دسته ناموفق بود'); } finally { setSaving(false); } };
-  const removeCategory = async (id: string) => { try { await ticketCategoriesApi.delete(id); toast.success('دسته حذف شد'); loadCategories(); } catch { toast.error('این دسته احتمالاً در حال استفاده است'); } };
-  const columns: Column<TicketResponse>[] = [
-    { key: 'subject', title: 'موضوع', render: (v, r) => <div><b>{String(v)}</b><p className="mt-1 text-[10px] text-[rgb(var(--color-text-muted))]">#{shortId(r.id)}</p></div> },
-    { key: 'user', title: 'کاربر', render: (_, r) => <TicketUserIdentity user={r.user} /> },
-    { key: 'category', title: 'دسته', render: v => <Badge>{String(v || 'عمومی')}</Badge> },
-    { key: 'priority', title: 'اولویت', render: v => <Badge variant={priorities[v as TicketPriority]?.variant || 'default'} dot>{priorities[v as TicketPriority]?.label || String(v)}</Badge> },
-    { key: 'status', title: 'وضعیت', render: v => <Badge variant={statuses[v as TicketStatus].variant} dot>{statuses[v as TicketStatus].label}</Badge> },
-    { key: 'last_message_at', title: 'آخرین پیام', render: v => <span className="text-xs">{formatDateTime(v as string)}</span> },
-    { key: 'manage', title: 'رسیدگی', render: (_, r) => <div className="flex min-w-[290px] items-center gap-2"><Select aria-label="وضعیت" value={r.status} className="!py-2" options={Object.entries(statuses).map(([value, x]) => ({ value, label: x.label }))} onChange={e => update(r, 'status', e.target.value)} /><Select aria-label="اولویت" value={r.priority} className="!py-2" options={Object.entries(priorities).map(([value, x]) => ({ value, label: x.label }))} onChange={e => update(r, 'priority', e.target.value)} /></div> },
-    { key: 'actions', title: 'عملیات', render: (_, r) => <div className="flex gap-1"><Button size="sm" variant="ghost" icon={<MessageSquareReply size={14} />} onClick={() => setReplying(r)}>گفت‌وگو</Button><Button size="sm" variant="ghost" className="text-rose-500" icon={<Trash2 size={14} />} onClick={() => setDeleting(r)} aria-label="حذف" /></div> },
-  ];
-  return <div><PageHeader eyebrow="SUPPORT" title="مرکز تیکت‌ها" description="صف رسیدگی پشتیبانی با اولویت‌بندی، وضعیت و پاسخ مستقیم" action={<Button variant="secondary" icon={<Settings2 size={16} />} onClick={() => { setCategoriesOpen(true); loadCategories(); }}>دسته‌ها</Button>} /><div className="filter-bar"><Select aria-label="فیلتر وضعیت" value={status} onChange={e => { setStatus(e.target.value as TicketStatus | ''); setPage(1); }} options={[{ value: '', label: 'همه وضعیت‌ها' }, ...Object.entries(statuses).map(([value, x]) => ({ value, label: x.label }))]} /><Select aria-label="فیلتر اولویت" value={priority} onChange={e => { setPriority(e.target.value as TicketPriority | ''); setPage(1); }} options={[{ value: '', label: 'همه اولویت‌ها' }, ...Object.entries(priorities).map(([value, x]) => ({ value, label: x.label }))]} /><Badge variant="info">{total.toLocaleString('fa-IR')} تیکت</Badge></div><DataTable columns={columns} data={rows} loading={loading} keyExtractor={r => r.id} pagination={{ page, perPage: 20, total, onPageChange: setPage }} emptyMessage="تیکتی با این فیلترها وجود ندارد" />
-    <TicketConversationModal ticket={replying} onClose={() => setReplying(null)} onMessageSent={load} />
-    <Modal isOpen={categoriesOpen} onClose={() => setCategoriesOpen(false)} title="دسته‌های پشتیبانی" description="دسته‌هایی که کاربر هنگام ثبت تیکت می‌بیند" size="lg"><form onSubmit={addCategory} className="mb-4 flex items-end gap-2"><div className="flex-1"><Input label="دسته جدید" value={categoryName} onChange={e => setCategoryName(e.target.value)} placeholder="مثلاً امور مالی" /></div><Button type="submit" loading={saving} icon={<Plus size={15} />}>افزودن</Button></form><div className="divide-y divide-[rgb(var(--color-border))] rounded-xl border border-[rgb(var(--color-border))]">{categories.map(c => <div key={c.id} className="flex items-center justify-between p-3"><span className="font-medium">{c.name}</span><Button variant="ghost" size="sm" className="text-rose-500" icon={<Trash2 size={14} />} onClick={() => removeCategory(c.id)}>حذف</Button></div>)}{categories.length === 0 && <p className="p-6 text-center text-sm text-[rgb(var(--color-text-muted))]">دسته‌ای ایجاد نشده است</p>}</div></Modal>
-    <ConfirmationModal isOpen={Boolean(deleting)} onClose={() => setDeleting(null)} onConfirm={remove} title="حذف تیکت" message={`تیکت «${deleting?.subject || ''}» برای همیشه حذف شود؟`} confirmText="حذف تیکت" loading={saving} />
+  const [rows, setRows] = useState<TicketResponse[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [status, setStatus] = useState<TicketStatus | ''>('');
+  const [priority, setPriority] = useState<TicketPriority | ''>('');
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState<TicketResponse | null>(null);
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const [categories, setCategories] = useState<TicketCategoryResponse[]>([]);
+  const [categoryName, setCategoryName] = useState('');
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await ticketsApi.list({ page, per_page: perPage, ...(status && { status }), ...(priority && { priority }) });
+      setRows(response.data);
+      setTotal(response.total);
+    } catch {
+      toast.error('دریافت تیکت‌ها ناموفق بود');
+    } finally {
+      setLoading(false);
+    }
+  }, [page, priority, status]);
+
+  useEffect(() => { void load(); }, [load]);
+
+  const loadCategories = async () => {
+    try {
+      const response = await ticketCategoriesApi.list({ page: 1, per_page: 100 });
+      setCategories(response.data);
+    } catch {
+      toast.error('دسته‌های پشتیبانی دریافت نشد');
+    }
+  };
+
+  const update = async (ticket: TicketResponse, field: 'status' | 'priority', value: string) => {
+    try {
+      const updated = await ticketsApi.update(ticket.id, { [field]: value });
+      setRows(current => current.map(item => item.id === ticket.id ? { ...item, ...updated, user: item.user } : item));
+      toast.success('تیکت به‌روز شد');
+    } catch {
+      toast.error('تغییر تیکت ناموفق بود');
+    }
+  };
+
+  const remove = async () => {
+    if (!deleting) return;
+    setSaving(true);
+    try {
+      await ticketsApi.delete(deleting.id);
+      setDeleting(null);
+      toast.success('تیکت حذف شد');
+      await load();
+    } catch {
+      toast.error('حذف تیکت ناموفق بود');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const addCategory = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!categoryName.trim()) return;
+    setSaving(true);
+    try {
+      await ticketCategoriesApi.create(categoryName.trim());
+      setCategoryName('');
+      toast.success('دسته پشتیبانی ایجاد شد');
+      await loadCategories();
+    } catch {
+      toast.error('ساخت دسته ناموفق بود');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const removeCategory = async (id: string) => {
+    try {
+      await ticketCategoriesApi.delete(id);
+      toast.success('دسته حذف شد');
+      await loadCategories();
+    } catch {
+      toast.error('این دسته احتمالاً در حال استفاده است');
+    }
+  };
+
+  const totalPages = Math.max(1, Math.ceil(total / perPage));
+
+  return <div>
+    <PageHeader eyebrow="SUPPORT" title="مرکز تیکت‌ها" description="درخواست‌های کاربران، مرتب و آماده رسیدگی" action={<Button variant="secondary" icon={<Settings2 size={16} />} onClick={() => { setCategoriesOpen(true); void loadCategories(); }}>دسته‌ها</Button>} />
+
+    <div className="filter-bar">
+      <Select aria-label="فیلتر وضعیت" value={status} onChange={event => { setStatus(event.target.value as TicketStatus | ''); setPage(1); }} options={[{ value: '', label: 'همه وضعیت‌ها' }, ...statusOptions]} />
+      <Select aria-label="فیلتر اولویت" value={priority} onChange={event => { setPriority(event.target.value as TicketPriority | ''); setPage(1); }} options={[{ value: '', label: 'همه اولویت‌ها' }, ...priorityOptions]} />
+      <Badge variant="info">{total.toLocaleString('fa-IR')} تیکت</Badge>
+    </div>
+
+    <section className="surface-card overflow-hidden">
+      <div className="flex items-center justify-between border-b border-[rgb(var(--color-border))] px-5 py-3.5">
+        <div><h2 className="text-sm font-extrabold">صف پشتیبانی</h2><p className="mt-0.5 text-[10px] text-[rgb(var(--color-text-muted))]">اطلاعات اصلی در یک نگاه؛ جزئیات و گفت‌وگو در صفحه هر تیکت</p></div>
+        <Inbox size={18} className="text-[rgb(var(--color-text-muted))]" />
+      </div>
+      {loading ? <div className="space-y-3 p-4">{Array.from({ length: 5 }, (_, index) => <Skeleton key={index} className="h-36 rounded-2xl" />)}</div> : rows.length === 0 ? <div className="flex min-h-72 flex-col items-center justify-center p-8 text-center"><span className="mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-blue-500/10 text-blue-600"><Inbox size={22} /></span><h3 className="text-sm font-bold">تیکتی پیدا نشد</h3><p className="mt-1 text-xs text-[rgb(var(--color-text-muted))]">فیلترها را تغییر دهید یا منتظر درخواست جدید بمانید.</p></div> : rows.map(ticket => <TicketListItem key={ticket.id} ticket={ticket} onUpdate={update} onDelete={setDeleting} />)}
+    </section>
+
+    {totalPages > 1 && <div className="mt-4 flex items-center justify-between text-xs text-[rgb(var(--color-text-secondary))]"><span>صفحه {page.toLocaleString('fa-IR')} از {totalPages.toLocaleString('fa-IR')}</span><div className="flex gap-1"><button className="icon-button !h-8 !w-8 border border-[rgb(var(--color-border))]" disabled={page <= 1} onClick={() => setPage(current => current - 1)} aria-label="صفحه قبل"><ChevronRight size={15} /></button><button className="icon-button !h-8 !w-8 border border-[rgb(var(--color-border))]" disabled={page >= totalPages} onClick={() => setPage(current => current + 1)} aria-label="صفحه بعد"><ChevronLeft size={15} /></button></div></div>}
+
+    <Modal isOpen={categoriesOpen} onClose={() => setCategoriesOpen(false)} title="دسته‌های پشتیبانی" description="دسته‌هایی که کاربر هنگام ثبت تیکت می‌بیند" size="lg">
+      <form onSubmit={addCategory} className="mb-4 flex items-end gap-2"><div className="flex-1"><Input label="دسته جدید" value={categoryName} onChange={event => setCategoryName(event.target.value)} placeholder="مثلاً امور مالی" /></div><Button type="submit" loading={saving} icon={<Plus size={15} />}>افزودن</Button></form>
+      <div className="divide-y divide-[rgb(var(--color-border))] rounded-xl border border-[rgb(var(--color-border))]">{categories.map(category => <div key={category.id} className="flex items-center justify-between p-3"><span className="font-medium">{category.name}</span><Button variant="ghost" size="sm" className="text-rose-500" icon={<Trash2 size={14} />} onClick={() => void removeCategory(category.id)}>حذف</Button></div>)}{categories.length === 0 && <p className="p-6 text-center text-sm text-[rgb(var(--color-text-muted))]">دسته‌ای ایجاد نشده است</p>}</div>
+    </Modal>
+
+    <ConfirmationModal isOpen={Boolean(deleting)} onClose={() => setDeleting(null)} onConfirm={() => void remove()} title="حذف تیکت" message={`تیکت «${deleting?.subject || ''}» برای همیشه حذف شود؟`} confirmText="حذف تیکت" loading={saving} />
   </div>;
 }

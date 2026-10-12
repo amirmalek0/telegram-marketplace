@@ -7,7 +7,6 @@ import { Badge, Button, DataTable, PageHeader, Select } from '@/components/ui';
 import type { Column } from '@/components/ui';
 import type { TicketPriority, TicketResponse, TicketStatus, UserResponse } from '@/types';
 import { formatDateTime, shortId } from '@/utils/format';
-import { TicketConversationModal } from './TicketConversationModal';
 import { TicketUserPanel } from './TicketUserSummary';
 
 const statuses: Record<TicketStatus, { label: string; variant: 'success' | 'warning' | 'default' }> = {
@@ -33,7 +32,6 @@ export default function UserTicketsPage() {
   const [status, setStatus] = useState<TicketStatus | ''>('');
   const [priority, setPriority] = useState<TicketPriority | ''>('');
   const [loading, setLoading] = useState(true);
-  const [selectedTicket, setSelectedTicket] = useState<TicketResponse | null>(null);
 
   useEffect(() => {
     if (!userId) return;
@@ -74,7 +72,7 @@ export default function UserTicketsPage() {
     { key: 'priority', title: 'اولویت', render: value => <Badge variant={priorities[value as TicketPriority].variant} dot>{priorities[value as TicketPriority].label}</Badge> },
     { key: 'status', title: 'وضعیت', render: value => <Badge variant={statuses[value as TicketStatus].variant} dot>{statuses[value as TicketStatus].label}</Badge> },
     { key: 'last_message_at', title: 'آخرین پیام', render: value => <span className="text-xs">{formatDateTime(value as string)}</span> },
-    { key: 'actions', title: 'گفت‌وگو', render: (_, row) => <Button size="sm" variant="ghost" icon={<MessageSquareText size={14} />} onClick={() => setSelectedTicket(row)}>مشاهده</Button> },
+    { key: 'actions', title: 'گفت‌وگو', render: (_, row) => <Button size="sm" variant="ghost" icon={<MessageSquareText size={14} />} onClick={() => navigate(`/tickets/${row.id}`)}>مشاهده</Button> },
   ];
 
   const name = user ? `${user.first_name} ${user.last_name}`.trim() || 'کاربر بدون نام' : 'کاربر';
@@ -114,8 +112,6 @@ export default function UserTicketsPage() {
         pagination={{ page, perPage: 20, total, onPageChange: setPage }}
         emptyMessage="این کاربر تیکتی با فیلترهای انتخاب‌شده ندارد"
       />
-
-      <TicketConversationModal ticket={selectedTicket} onClose={() => setSelectedTicket(null)} onMessageSent={loadTickets} />
     </div>
   );
 }
