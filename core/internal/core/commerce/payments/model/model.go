@@ -8,6 +8,8 @@ type PaymentMethod string
 const (
 	// MethodTelegramStars is currently the only enabled payment method.
 	MethodTelegramStars PaymentMethod = "telegram_stars"
+	// MethodWallet spends the user's internal Stars-denominated balance.
+	MethodWallet PaymentMethod = "wallet"
 	// StarsCurrency is Telegram's currency code for Stars payments.
 	StarsCurrency = "XTR"
 )
@@ -16,7 +18,7 @@ const (
 // are currently exposed. Add a method here only after its processor and API
 // adapter are fully implemented.
 func EnabledMethods() []PaymentMethod {
-	return []PaymentMethod{MethodTelegramStars}
+	return []PaymentMethod{MethodTelegramStars, MethodWallet}
 }
 
 func (m PaymentMethod) IsEnabled() bool {
@@ -62,7 +64,10 @@ func (s PaymentStatus) IsValid() bool {
 // Payment represents a payment in the system.
 type Payment struct {
 	ID                    string        `db:"id" json:"id"`
-	OrderID               string        `db:"order_id" json:"order_id"`
+	OrderID               *string       `db:"order_id" json:"order_id,omitempty"`
+	UserID                string        `db:"user_id" json:"user_id"`
+	Purpose               string        `db:"purpose" json:"purpose"`
+	TargetID              *string       `db:"target_id" json:"target_id,omitempty"`
 	Method                PaymentMethod `db:"method" json:"method"`
 	Currency              string        `db:"currency" json:"currency"`
 	AmountMinor           int64         `db:"amount_minor" json:"amount_minor"`

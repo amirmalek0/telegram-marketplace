@@ -49,12 +49,16 @@ var migrations = []string{
 		phone_number    TEXT NOT NULL DEFAULT '',
 		has_active_plan BOOLEAN NOT NULL DEFAULT false,
 		active_plan_id  TEXT,
-		wallet_balance  DOUBLE PRECISION NOT NULL DEFAULT 0,
+		wallet_balance  BIGINT NOT NULL DEFAULT 0,
 		plan_expire_at  TIMESTAMPTZ,
 		referred_by     BIGINT,
 		is_banned       BOOLEAN NOT NULL DEFAULT false,
 		created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 	)`,
+	`ALTER TABLE users ALTER COLUMN wallet_balance TYPE BIGINT USING GREATEST(0, ROUND(wallet_balance))::BIGINT`,
+	`ALTER TABLE users ALTER COLUMN wallet_balance SET DEFAULT 0`,
+	`ALTER TABLE users DROP CONSTRAINT IF EXISTS users_wallet_balance_check`,
+	`ALTER TABLE users ADD CONSTRAINT users_wallet_balance_check CHECK (wallet_balance >= 0)`,
 
 	`CREATE TABLE IF NOT EXISTS admins (
 		id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -163,6 +167,11 @@ var migrations = []string{
 		END IF;
 	 END
 	 $$`,
+	`INSERT INTO vip_plans (id, title, stars_price, duration, status, created_at) VALUES
+	 ('10000000-0000-0000-0000-000000000030', 'VIP یک‌ماهه', 50, 30, 'active', now()),
+	 ('10000000-0000-0000-0000-000000000090', 'VIP سه‌ماهه', 130, 90, 'active', now()),
+	 ('10000000-0000-0000-0000-000000000365', 'VIP یک‌ساله', 450, 365, 'active', now())
+	 ON CONFLICT (id) DO NOTHING`,
 
 	`CREATE TABLE IF NOT EXISTS categories (
 		id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -248,6 +257,7 @@ var migrations = []string{
 		api_id        UUID        REFERENCES apis(id),
 		demo_url      TEXT,
 		vip_only      BOOLEAN     NOT NULL DEFAULT false,
+		repurchasable BOOLEAN     NOT NULL DEFAULT true,
 		views_count   INTEGER     NOT NULL DEFAULT 0,
 		status        TEXT        NOT NULL DEFAULT 'active'
 		                          CHECK (status IN ('active','draft','archived')),
@@ -259,6 +269,7 @@ var migrations = []string{
 	`ALTER TABLE products ALTER COLUMN price SET DEFAULT 0`,
 	`ALTER TABLE products ADD COLUMN IF NOT EXISTS image_storage_id TEXT NOT NULL DEFAULT ''`,
 	`ALTER TABLE products ADD COLUMN IF NOT EXISTS stars_price BIGINT NOT NULL DEFAULT 0`,
+	`ALTER TABLE products ADD COLUMN IF NOT EXISTS repurchasable BOOLEAN NOT NULL DEFAULT true`,
 	`ALTER TABLE products DROP CONSTRAINT IF EXISTS products_stars_price_check`,
 	`DO $$
 	 BEGIN
@@ -310,18 +321,23 @@ var migrations = []string{
 	)`,
 	`CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders(user_id)`,
 	`CREATE INDEX IF NOT EXISTS idx_orders_product_id ON orders(product_id)`,
+	`CREATE INDEX IF NOT EXISTS idx_orders_user_product_status ON orders(user_id, product_id, status)`,
 	`CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status)`,
 	`CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at DESC)`,
 
 	`CREATE TABLE IF NOT EXISTS payments (
 		id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-		order_id                UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+		order_id                UUID REFERENCES orders(id) ON DELETE CASCADE,
+		user_id                 UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+		purpose                 TEXT NOT NULL DEFAULT 'product' CHECK (purpose IN ('product','vip_plan','wallet_topup')),
+		target_id               UUID,
 		method                  TEXT NOT NULL,
 		currency                TEXT NOT NULL,
 		amount_minor            BIGINT NOT NULL,
 		checkout_reference      TEXT NOT NULL UNIQUE,
 		external_transaction_id TEXT,
 		provider_transaction_id TEXT,
+		checkout_data           JSONB NOT NULL DEFAULT '{}'::jsonb,
 		status                  TEXT NOT NULL DEFAULT 'pending'
 		                                CHECK (status IN ('pending', 'succeeded', 'failed', 'refunded')),
 		provider_data           JSONB,
@@ -335,12 +351,16 @@ var migrations = []string{
 	// columns remain nullable for audit/history, while new code uses this neutral
 	// shape so another processor can be added without another table redesign.
 	`ALTER TABLE payments ADD COLUMN IF NOT EXISTS method TEXT`,
+	`ALTER TABLE payments ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES users(id) ON DELETE CASCADE`,
+	`ALTER TABLE payments ADD COLUMN IF NOT EXISTS purpose TEXT NOT NULL DEFAULT 'product'`,
+	`ALTER TABLE payments ADD COLUMN IF NOT EXISTS target_id UUID`,
 	`ALTER TABLE payments ADD COLUMN IF NOT EXISTS currency TEXT`,
 	`ALTER TABLE payments ADD COLUMN IF NOT EXISTS amount_minor BIGINT`,
 	`ALTER TABLE payments ADD COLUMN IF NOT EXISTS checkout_reference TEXT`,
 	`ALTER TABLE payments ADD COLUMN IF NOT EXISTS external_transaction_id TEXT`,
 	`ALTER TABLE payments ADD COLUMN IF NOT EXISTS provider_transaction_id TEXT`,
 	`ALTER TABLE payments ADD COLUMN IF NOT EXISTS provider_data JSONB`,
+	`ALTER TABLE payments ADD COLUMN IF NOT EXISTS checkout_data JSONB NOT NULL DEFAULT '{}'::jsonb`,
 	`ALTER TABLE payments ADD COLUMN IF NOT EXISTS is_test BOOLEAN NOT NULL DEFAULT false`,
 	`UPDATE payments
 	 SET is_test = true
@@ -348,6 +368,12 @@ var migrations = []string{
 	    OR COALESCE(provider_data, '{}'::jsonb) @> '{"simulated":true}'::jsonb`,
 	`ALTER TABLE payments ADD COLUMN IF NOT EXISTS paid_at TIMESTAMPTZ`,
 	`ALTER TABLE payments ADD COLUMN IF NOT EXISTS refunded_at TIMESTAMPTZ`,
+	`UPDATE payments p SET user_id = o.user_id, target_id = o.product_id, purpose = 'product'
+	 FROM orders o WHERE p.order_id = o.id AND (p.user_id IS NULL OR p.target_id IS NULL)`,
+	`ALTER TABLE payments ALTER COLUMN order_id DROP NOT NULL`,
+	`ALTER TABLE payments ALTER COLUMN user_id SET NOT NULL`,
+	`ALTER TABLE payments DROP CONSTRAINT IF EXISTS payments_purpose_check`,
+	`ALTER TABLE payments ADD CONSTRAINT payments_purpose_check CHECK (purpose IN ('product','vip_plan','wallet_topup'))`,
 	`DO $$
 	 BEGIN
 		IF EXISTS (
@@ -434,6 +460,8 @@ var migrations = []string{
 	 END
 	 $$`,
 	`CREATE INDEX IF NOT EXISTS idx_payments_order_id ON payments(order_id)`,
+	`CREATE INDEX IF NOT EXISTS idx_payments_user_id ON payments(user_id, created_at DESC)`,
+	`CREATE INDEX IF NOT EXISTS idx_payments_purpose ON payments(purpose, status)`,
 	`CREATE INDEX IF NOT EXISTS idx_payments_method ON payments(method)`,
 	`CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status)`,
 	`CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_checkout_reference ON payments(checkout_reference)`,
@@ -453,6 +481,7 @@ var migrations = []string{
 		delivered_at TIMESTAMPTZ
 	)`,
 	`CREATE INDEX IF NOT EXISTS idx_order_deliveries_user_id ON order_deliveries(user_id, created_at DESC)`,
+	`CREATE INDEX IF NOT EXISTS idx_order_deliveries_user_product ON order_deliveries(user_id, product_id, created_at DESC)`,
 	`CREATE INDEX IF NOT EXISTS idx_order_deliveries_status ON order_deliveries(status)`,
 
 	`CREATE TABLE IF NOT EXISTS order_delivery_items (
@@ -497,14 +526,35 @@ var migrations = []string{
 		id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 		user_id         UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 		type            TEXT NOT NULL CHECK (type IN ('purchase','reward','topup','refund','admin_adjust')),
-		amount          DOUBLE PRECISION NOT NULL CHECK (amount > 0),
-		balance_before  DOUBLE PRECISION NOT NULL,
-		balance_after   DOUBLE PRECISION NOT NULL,
+		amount          BIGINT NOT NULL CHECK (amount > 0),
+		balance_before  BIGINT NOT NULL,
+		balance_after   BIGINT NOT NULL,
+		payment_id      UUID REFERENCES payments(id),
 		description     TEXT NOT NULL DEFAULT '',
 		created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 	)`,
+	`ALTER TABLE wallet_transactions ALTER COLUMN amount TYPE BIGINT USING ROUND(amount)::BIGINT`,
+	`ALTER TABLE wallet_transactions ALTER COLUMN balance_before TYPE BIGINT USING ROUND(balance_before)::BIGINT`,
+	`ALTER TABLE wallet_transactions ALTER COLUMN balance_after TYPE BIGINT USING ROUND(balance_after)::BIGINT`,
+	`ALTER TABLE wallet_transactions ADD COLUMN IF NOT EXISTS payment_id UUID REFERENCES payments(id)`,
+	`CREATE UNIQUE INDEX IF NOT EXISTS idx_wallet_transactions_payment_id ON wallet_transactions(payment_id)`,
 
 	`CREATE INDEX IF NOT EXISTS idx_wallet_transactions_user_id ON wallet_transactions(user_id)`,
 	`CREATE INDEX IF NOT EXISTS idx_wallet_transactions_type ON wallet_transactions(type)`,
 	`CREATE INDEX IF NOT EXISTS idx_wallet_transactions_created_at ON wallet_transactions(created_at DESC)`,
+
+	`CREATE TABLE IF NOT EXISTS user_vip_subscriptions (
+		id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+		user_id       UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+		plan_id       UUID REFERENCES vip_plans(id) ON DELETE SET NULL,
+		plan_title    TEXT NOT NULL,
+		duration_days INTEGER NOT NULL CHECK (duration_days > 0),
+		stars_price   BIGINT NOT NULL CHECK (stars_price >= 0),
+		payment_id    UUID UNIQUE REFERENCES payments(id),
+		payment_method TEXT NOT NULL CHECK (payment_method IN ('telegram_stars','wallet')),
+		starts_at     TIMESTAMPTZ NOT NULL,
+		expires_at    TIMESTAMPTZ NOT NULL,
+		created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+	)`,
+	`CREATE INDEX IF NOT EXISTS idx_user_vip_subscriptions_active ON user_vip_subscriptions(user_id, expires_at DESC)`,
 }

@@ -16,6 +16,7 @@ func RegisterRoutes(rg *gin.RouterGroup, h *users.Handler) {
 	tma := g.Group("", middleware.RequireTelegram())
 	{
 		tma.POST("", h.Save)
+		tma.GET("/me", h.Me)
 		tma.GET("/t/:id", h.GetByTelegramID)
 	}
 

@@ -55,7 +55,7 @@ var _ Repository = (*postgresRepository)(nil)
 func (r *postgresRepository) Create(ctx context.Context, u *model.User) error {
 	err := r.db.QueryRow(ctx, queryCreateUser,
 		u.FirstName, u.LastName, u.Username, u.TelegramID, u.PhoneNumber,
-		u.HasActivePlan, pgconv.TextPtr(u.ActivePlanID), pgconv.TimestamptzPtr(u.PlanExpireAt),
+		u.HasActivePlan, pgconv.TextPtr(u.ActivePlanID), u.WalletBalance, pgconv.TimestamptzPtr(u.PlanExpireAt),
 		pgconv.Int8Ptr(u.ReferredBy), u.IsBanned, u.CreatedAt,
 	).Scan(&u.ID)
 	if err != nil {

@@ -77,6 +77,10 @@ func NewService(
 // Create stores a new product.
 func (s *Service) Create(ctx context.Context, req CreateRequest) (*model.Product, error) {
 	deliveryType := model.DeliveryType(req.DeliveryType)
+	repurchasable := true
+	if req.Repurchasable != nil {
+		repurchasable = *req.Repurchasable
+	}
 
 	// Validate delivery type configuration
 	if err := validateDeliveryType(deliveryType, req.FileID, req.MessageID, req.InventoryID, req.BundleID, req.APIID); err != nil {
@@ -89,21 +93,22 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (*model.Product
 	}
 
 	product := &model.Product{
-		Title:        req.Title,
-		Description:  req.Description,
-		StarsPrice:   req.StarsPrice,
-		CategoryID:   req.CategoryID,
-		DeliveryType: deliveryType,
-		FileID:       req.FileID,
-		MessageID:    req.MessageID,
-		InventoryID:  req.InventoryID,
-		BundleID:     req.BundleID,
-		APIID:        req.APIID,
-		DemoURL:      req.DemoURL,
-		VIPOnly:      req.VIPOnly,
-		ViewsCount:   0,
-		Status:       "active",
-		CreatedAt:    time.Now(),
+		Title:         req.Title,
+		Description:   req.Description,
+		StarsPrice:    req.StarsPrice,
+		CategoryID:    req.CategoryID,
+		DeliveryType:  deliveryType,
+		FileID:        req.FileID,
+		MessageID:     req.MessageID,
+		InventoryID:   req.InventoryID,
+		BundleID:      req.BundleID,
+		APIID:         req.APIID,
+		DemoURL:       req.DemoURL,
+		VIPOnly:       req.VIPOnly,
+		Repurchasable: repurchasable,
+		ViewsCount:    0,
+		Status:        "active",
+		CreatedAt:     time.Now(),
 	}
 
 	if err := s.repo.Create(ctx, product); err != nil {
@@ -218,6 +223,9 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) (*mo
 	}
 	if req.VIPOnly != nil {
 		product.VIPOnly = *req.VIPOnly
+	}
+	if req.Repurchasable != nil {
+		product.Repurchasable = *req.Repurchasable
 	}
 	if req.Status != nil {
 		product.Status = *req.Status

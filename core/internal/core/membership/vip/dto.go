@@ -11,7 +11,7 @@ import (
 // CreatePlanRequest represents the payload for creating a new VIP plan.
 type CreatePlanRequest struct {
 	Title      string `json:"title" binding:"required,min=1,max=100"`
-	StarsPrice int64  `json:"stars_price" binding:"gte=0"`
+	StarsPrice int64  `json:"stars_price" binding:"required,gt=0"`
 	Duration   int    `json:"duration" binding:"required,gt=0"`
 	Status     string `json:"status" binding:"omitempty,oneof=active inactive"`
 }
@@ -19,7 +19,7 @@ type CreatePlanRequest struct {
 // UpdatePlanRequest represents the payload for partially updating a VIP plan.
 type UpdatePlanRequest struct {
 	Title      *string `json:"title" binding:"omitempty,min=1,max=100"`
-	StarsPrice *int64  `json:"stars_price" binding:"omitempty,gte=0"`
+	StarsPrice *int64  `json:"stars_price" binding:"omitempty,gt=0"`
 	Duration   *int    `json:"duration" binding:"omitempty,gt=0"`
 	Status     *string `json:"status" binding:"omitempty,oneof=active inactive"`
 }

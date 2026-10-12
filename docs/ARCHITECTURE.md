@@ -81,8 +81,16 @@ Stars checkout flow:
    reconciliation/refunds and used as an idempotency key.
 6. `GET /api/v1/payment/deliveries` exposes only the authenticated buyer's paid
    delivery, using short-lived download URLs and never exposing source IDs.
+   Passing `product_id` limits the result to that product for direct access on
+   its detail page. Every paid order retains its own delivery snapshot, so a
+   buyer can purchase the same product repeatedly without an ownership limit.
 
-An administrator controls the global mode from the backoffice Payments page.
+MinIO is private to the Docker network. Presigned object URLs are exposed as
+same-origin `/storage/<bucket>/<object>` paths; the Mini App and backoffice
+proxies remove `/storage` and preserve MinIO's signed internal Host. This keeps
+links valid through HTTPS tunnels without exposing `minio:9000` or localhost.
+
+An administrator controls the global mode from the backoffice General Settings page.
 Production mode creates a real Telegram Stars invoice with the production bot.
 Test mode skips Telegram and presents deterministic success, failure, and
 cancellation controls in the Mini App. Every payment persists its `is_test`

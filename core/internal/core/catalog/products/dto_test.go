@@ -16,11 +16,12 @@ func TestPublicProductResponseOmitsDeliveryReferences(t *testing.T) {
 	bundleID := "internal-bundle-id"
 	apiID := "internal-api-id"
 	product := &model.Product{
-		FileID:      &fileID,
-		MessageID:   &messageID,
-		InventoryID: &inventoryID,
-		BundleID:    &bundleID,
-		APIID:       &apiID,
+		FileID:        &fileID,
+		MessageID:     &messageID,
+		InventoryID:   &inventoryID,
+		BundleID:      &bundleID,
+		APIID:         &apiID,
+		Repurchasable: true,
 	}
 
 	response, err := (&Service{}).toResponse(context.Background(), product, false)
@@ -40,6 +41,9 @@ func TestPublicProductResponseOmitsDeliveryReferences(t *testing.T) {
 	}
 	if strings.Contains(string(payload), `"price"`) {
 		t.Fatalf("public response exposed retired fiat price: %s", payload)
+	}
+	if !strings.Contains(string(payload), `"repurchasable":true`) {
+		t.Fatalf("public response omitted purchase policy: %s", payload)
 	}
 }
 

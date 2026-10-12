@@ -11,6 +11,10 @@ func RegisterRoutes(rg *gin.RouterGroup, h *payments.Handler) {
 	{
 		tma.POST("/stars/invoice", h.CreateStarsInvoice)
 		tma.POST("/stars/test/simulate", h.SimulateStarsPayment)
+		tma.POST("/product/checkout", h.CreateProductCheckout)
+		tma.POST("/vip/checkout", h.CreateVIPCheckout)
+		tma.POST("/wallet/topup", h.CreateWalletTopup)
+		tma.GET("/wallet", h.GetWallet)
 		tma.GET("/deliveries", h.ListDeliveries)
 	}
 

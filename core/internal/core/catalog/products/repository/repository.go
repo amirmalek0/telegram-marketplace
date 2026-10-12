@@ -46,7 +46,7 @@ func (r *postgresRepository) Create(ctx context.Context, p *model.Product) error
 	err := r.db.QueryRow(ctx, queryCreateProduct,
 		p.Title, p.Description, p.StarsPrice, p.CategoryID, p.ImageStorageID, p.DeliveryType,
 		p.FileID, p.MessageID, p.InventoryID, p.BundleID, p.APIID,
-		p.DemoURL, p.VIPOnly, p.ViewsCount, p.Status, p.CreatedAt,
+		p.DemoURL, p.VIPOnly, p.Repurchasable, p.ViewsCount, p.Status, p.CreatedAt,
 	).Scan(&p.ID)
 	if err != nil {
 		var pgErr *pgconn.PgError
@@ -99,7 +99,7 @@ func (r *postgresRepository) Update(ctx context.Context, p *model.Product) error
 	_, err := r.db.Exec(ctx, queryUpdateProduct,
 		p.Title, p.Description, p.StarsPrice, p.CategoryID, p.ImageStorageID, p.DeliveryType,
 		p.FileID, p.MessageID, p.InventoryID, p.BundleID, p.APIID,
-		p.DemoURL, p.VIPOnly, p.Status, p.ID,
+		p.DemoURL, p.VIPOnly, p.Repurchasable, p.Status, p.ID,
 	)
 	if err != nil {
 		return fmt.Errorf("products.repository.Update: %w", err)

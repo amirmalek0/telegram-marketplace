@@ -46,6 +46,9 @@ type Order struct {
 	DiscountAmount float64     `db:"discount_amount" json:"discount_amount"`
 	PaymentMethod  *string     `db:"payment_method" json:"payment_method,omitempty"`
 	Stars          int64       `db:"stars" json:"stars"`
+	ProductTitle   string      `db:"product_title" json:"product_title"`
+	DeliveryStatus string      `db:"delivery_status" json:"delivery_status"`
+	DeliveryItems  int         `db:"delivery_item_count" json:"delivery_item_count"`
 	Status         OrderStatus `db:"status" json:"status"`
 	PaidAt         *time.Time  `db:"paid_at" json:"paid_at,omitempty"`
 	CreatedAt      time.Time   `db:"created_at" json:"created_at"`

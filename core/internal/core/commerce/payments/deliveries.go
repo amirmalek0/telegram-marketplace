@@ -8,15 +8,17 @@ import (
 )
 
 // ListDeliveries returns only paid deliveries belonging to the authenticated
-// Telegram user. Internal file/API/inventory identifiers never leave the API.
-func (s *Service) ListDeliveries(ctx context.Context, telegramID int64) ([]DeliveryResponse, error) {
+// Telegram user. An optional product ID limits the result for product-page
+// access. Internal file/API/inventory identifiers never leave the API.
+func (s *Service) ListDeliveries(ctx context.Context, telegramID int64, productID string) ([]DeliveryResponse, error) {
 	rows, err := s.db.Query(ctx, `
 		SELECT d.id, d.order_id, d.product_id, d.product_title, d.status, d.error, d.created_at, d.delivered_at
 		FROM order_deliveries d
 		JOIN users u ON u.id = d.user_id
 		JOIN orders o ON o.id = d.order_id
 		WHERE u.telegram_id = $1 AND o.status = 'paid'
-		ORDER BY d.created_at DESC`, telegramID)
+		  AND ($2 = '' OR d.product_id = NULLIF($2, '')::uuid)
+		ORDER BY d.created_at DESC`, telegramID, productID)
 	if err != nil {
 		return nil, fmt.Errorf("payments list deliveries: %w", err)
 	}

@@ -107,7 +107,7 @@ func (h *Handler) processUpdate(ctx context.Context, update telegramclient.Updat
 			ctx, query.From.ID, query.InvoicePayload, query.Currency, query.TotalAmount,
 		)
 		if err != nil {
-			return h.telegram.AnswerPreCheckoutQuery(ctx, query.ID, false, "این سفارش معتبر نیست یا موجودی آن پایان یافته است.")
+			return h.telegram.AnswerPreCheckoutQuery(ctx, query.ID, false, "این پرداخت معتبر نیست یا منقضی شده است.")
 		}
 		return h.telegram.AnswerPreCheckoutQuery(ctx, query.ID, true, "")
 	}
@@ -135,7 +135,7 @@ func (h *Handler) processUpdate(ctx context.Context, update telegramclient.Updat
 	if err != nil {
 		return err
 	}
-	if err := h.telegram.SendMessage(ctx, message.Chat.ID, "پرداخت شما با موفقیت انجام شد ✅\nمحصول در بخش «دانلودها» آماده است."); err != nil {
+	if err := h.telegram.SendMessage(ctx, message.Chat.ID, "پرداخت شما با موفقیت انجام شد ✅\nحساب شما در مینی‌اپ به‌روزرسانی شده است."); err != nil {
 		log.Printf("telegram payment confirmation message: %v", err)
 	}
 	return nil

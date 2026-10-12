@@ -11,6 +11,7 @@ type User struct {
 	PhoneNumber   string     `db:"phone_number"`
 	HasActivePlan bool       `db:"has_active_plan"`
 	ActivePlanID  *string    `db:"active_plan_id"`
+	WalletBalance int64      `db:"wallet_balance"`
 	PlanExpireAt  *time.Time `db:"plan_expire_at"`
 	ReferredBy    *int64     `db:"referred_by"`
 	IsBanned      bool       `db:"is_banned"`

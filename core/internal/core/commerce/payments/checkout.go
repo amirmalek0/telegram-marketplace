@@ -14,21 +14,25 @@ import (
 
 var (
 	ErrCheckoutUnavailable = errors.New("checkout is unavailable for this product")
+	ErrAlreadyPurchased    = errors.New("product can only be purchased once")
+	ErrInsufficientBalance = errors.New("insufficient wallet balance")
 	ErrOutOfStock          = errors.New("product is out of stock")
 	ErrInvalidCheckout     = errors.New("checkout is no longer valid")
 )
 
 type checkoutProduct struct {
-	ID           string
-	Title        string
-	Description  string
-	StarsPrice   int64
-	DeliveryType string
-	FileID       *string
-	MessageID    *string
-	InventoryID  *string
-	BundleID     *string
-	APIID        *string
+	ID            string
+	Title         string
+	Description   string
+	StarsPrice    int64
+	DeliveryType  string
+	FileID        *string
+	MessageID     *string
+	InventoryID   *string
+	BundleID      *string
+	APIID         *string
+	VIPOnly       bool
+	Repurchasable bool
 }
 
 // CreateStarsInvoice creates the pending order/payment and its delivery
@@ -54,7 +58,7 @@ func (s *Service) CreateStarsInvoice(ctx context.Context, telegramID int64, prod
 
 	var userID string
 	var banned bool
-	if err := tx.QueryRow(ctx, `SELECT id, is_banned FROM users WHERE telegram_id = $1`, telegramID).Scan(&userID, &banned); err != nil {
+	if err := tx.QueryRow(ctx, `SELECT id, is_banned FROM users WHERE telegram_id = $1 FOR UPDATE`, telegramID).Scan(&userID, &banned); err != nil {
 		return nil, ErrInvalidCheckout
 	}
 	if banned {
@@ -64,14 +68,28 @@ func (s *Service) CreateStarsInvoice(ctx context.Context, telegramID int64, prod
 	var product checkoutProduct
 	err = tx.QueryRow(ctx, `
 		SELECT id, title, description, stars_price, delivery_type,
-		       file_id, message_id, inventory_id, bundle_id, api_id
+		       file_id, message_id, inventory_id, bundle_id, api_id, vip_only, repurchasable
 		FROM products WHERE id = $1 AND status = 'active' FOR SHARE`, productID).Scan(
 		&product.ID, &product.Title, &product.Description, &product.StarsPrice,
 		&product.DeliveryType, &product.FileID, &product.MessageID, &product.InventoryID,
-		&product.BundleID, &product.APIID,
+		&product.BundleID, &product.APIID, &product.VIPOnly, &product.Repurchasable,
 	)
 	if err != nil || product.StarsPrice <= 0 {
 		return nil, ErrCheckoutUnavailable
+	}
+
+	if !product.Repurchasable {
+		var alreadyPurchased bool
+		if err := tx.QueryRow(ctx, `
+			SELECT EXISTS (
+				SELECT 1 FROM orders
+				WHERE user_id = $1 AND product_id = $2 AND status IN ('pending', 'paid')
+			)`, userID, product.ID).Scan(&alreadyPurchased); err != nil {
+			return nil, fmt.Errorf("payments checkout verify purchase limit: %w", err)
+		}
+		if alreadyPurchased {
+			return nil, ErrAlreadyPurchased
+		}
 	}
 
 	var orderID string
@@ -87,9 +105,9 @@ func (s *Service) CreateStarsInvoice(ctx context.Context, telegramID int64, prod
 	checkoutReference := uuid.NewString()
 	var paymentID string
 	err = tx.QueryRow(ctx, `
-		INSERT INTO payments (order_id, method, currency, amount_minor, checkout_reference, is_test, status, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, 'pending', now(), now()) RETURNING id`,
-		orderID, string(paymentsmodel.MethodTelegramStars), paymentsmodel.StarsCurrency,
+		INSERT INTO payments (order_id, user_id, purpose, target_id, method, currency, amount_minor, checkout_reference, is_test, status, created_at, updated_at)
+		VALUES ($1, $2, 'product', $3, $4, $5, $6, $7, $8, 'pending', now(), now()) RETURNING id`,
+		orderID, userID, product.ID, string(paymentsmodel.MethodTelegramStars), paymentsmodel.StarsCurrency,
 		product.StarsPrice, checkoutReference, testMode,
 	).Scan(&paymentID)
 	if err != nil {
@@ -109,7 +127,7 @@ func (s *Service) CreateStarsInvoice(ctx context.Context, telegramID int64, prod
 	if testMode {
 		return &CreateStarsInvoiceResponse{
 			OrderID: orderID, PaymentID: paymentID, InvoiceURL: "",
-			Stars:             product.StarsPrice,
+			Stars: product.StarsPrice, Purpose: "product",
 			SimulationEnabled: true,
 		}, nil
 	}
@@ -135,7 +153,7 @@ func (s *Service) CreateStarsInvoice(ctx context.Context, telegramID int64, prod
 
 	return &CreateStarsInvoiceResponse{
 		OrderID: orderID, PaymentID: paymentID, InvoiceURL: invoiceURL,
-		Stars:             product.StarsPrice,
+		Stars: product.StarsPrice, Purpose: "product",
 		SimulationEnabled: false,
 	}, nil
 }
@@ -144,16 +162,16 @@ func (s *Service) CreateStarsInvoice(ctx context.Context, telegramID int64, prod
 // trusting a forged Telegram update. Only payments created while the admin
 // payment mode was set to test can use this path.
 func (s *Service) SimulateStarsPayment(ctx context.Context, telegramID int64, paymentID, outcome string) (*SimulateStarsPaymentResponse, error) {
-	var orderID, payload, currency, status string
+	var orderID *string
+	var payload, currency, status, purpose string
 	var amount int64
 	err := s.db.QueryRow(ctx, `
-		SELECT p.order_id, p.checkout_reference, p.currency, p.amount_minor, p.status
+		SELECT p.order_id, p.checkout_reference, p.currency, p.amount_minor, p.status, p.purpose
 		FROM payments p
-		JOIN orders o ON o.id = p.order_id
-		JOIN users u ON u.id = o.user_id
+		JOIN users u ON u.id = p.user_id
 		WHERE p.id = $1 AND p.method = $2 AND u.telegram_id = $3 AND p.is_test = true`,
 		paymentID, string(paymentsmodel.MethodTelegramStars), telegramID,
-	).Scan(&orderID, &payload, &currency, &amount, &status)
+	).Scan(&orderID, &payload, &currency, &amount, &status, &purpose)
 	if err != nil || status != "pending" {
 		return nil, ErrInvalidCheckout
 	}
@@ -161,35 +179,50 @@ func (s *Service) SimulateStarsPayment(ctx context.Context, telegramID int64, pa
 	switch outcome {
 	case "succeeded":
 		raw := mustJSON(map[string]any{"simulated": true, "outcome": outcome, "payment_id": paymentID})
-		settledOrderID, settleErr := s.SettleStarsPayment(ctx, SuccessfulPaymentInput{
+		referenceID, settleErr := s.SettleStarsPayment(ctx, SuccessfulPaymentInput{
 			TelegramID: telegramID, Currency: currency, TotalAmount: amount,
 			InvoicePayload: payload, TelegramChargeID: "test:" + uuid.NewString(), Raw: raw,
 		})
 		if settleErr != nil {
-			if settledOrderID != "" {
+			if referenceID != "" {
 				return &SimulateStarsPaymentResponse{
-					OrderID: settledOrderID, Status: "succeeded",
+					OrderID: stringValue(orderID), ReferenceID: referenceID, Purpose: purpose, Status: "succeeded",
 					DeliveryStatus: "failed", DeliveryError: settleErr.Error(),
 				}, nil
 			}
 			return nil, settleErr
 		}
-		deliveryStatus, deliveryError := s.deliveryOutcome(ctx, settledOrderID)
+		deliveryStatus, deliveryError := "", ""
+		if orderID != nil {
+			deliveryStatus, deliveryError = s.deliveryOutcome(ctx, *orderID)
+		}
+		balance, _ := s.walletBalanceByTelegramID(ctx, telegramID)
 		return &SimulateStarsPaymentResponse{
-			OrderID: settledOrderID, Status: "succeeded",
-			DeliveryStatus: deliveryStatus, DeliveryError: deliveryError,
+			OrderID: stringValue(orderID), ReferenceID: referenceID, Purpose: purpose, Status: "succeeded",
+			DeliveryStatus: deliveryStatus, DeliveryError: deliveryError, WalletBalance: balance,
 		}, nil
 	case "failed", "cancelled":
-		if err := s.failCheckout(ctx, orderID, paymentID, "simulated "+outcome); err != nil {
+		if orderID != nil {
+			if err := s.failCheckout(ctx, *orderID, paymentID, "simulated "+outcome); err != nil {
+				return nil, err
+			}
+			if outcome == "cancelled" {
+				_, _ = s.db.Exec(ctx, `UPDATE orders SET status = 'cancelled', updated_at = now() WHERE id = $1 AND status = 'failed'`, *orderID)
+			}
+		} else if err := s.failStandalonePayment(ctx, paymentID, "simulated "+outcome); err != nil {
 			return nil, err
 		}
-		if outcome == "cancelled" {
-			_, _ = s.db.Exec(ctx, `UPDATE orders SET status = 'cancelled', updated_at = now() WHERE id = $1 AND status = 'failed'`, orderID)
-		}
-		return &SimulateStarsPaymentResponse{OrderID: orderID, Status: outcome}, nil
+		return &SimulateStarsPaymentResponse{OrderID: stringValue(orderID), ReferenceID: paymentID, Purpose: purpose, Status: outcome}, nil
 	default:
 		return nil, ErrInvalidCheckout
 	}
+}
+
+func stringValue(value *string) string {
+	if value == nil {
+		return ""
+	}
+	return *value
 }
 
 func (s *Service) deliveryOutcome(ctx context.Context, orderID string) (string, string) {
@@ -366,15 +399,17 @@ func mustJSON(value any) []byte {
 // ValidatePreCheckout rechecks the authoritative amount, currency, owner, and
 // reservation immediately before Telegram accepts the payment.
 func (s *Service) ValidatePreCheckout(ctx context.Context, telegramID int64, payload, currency string, amount int64) error {
-	var storedCurrency, status, orderStatus string
+	var storedCurrency, status, purpose string
+	var orderStatus *string
 	var storedAmount int64
 	var ownerTelegramID int64
 	err := s.db.QueryRow(ctx, `
-		SELECT p.currency, p.amount_minor, p.status, o.status, u.telegram_id
-		FROM payments p JOIN orders o ON o.id = p.order_id JOIN users u ON u.id = o.user_id
+		SELECT p.currency, p.amount_minor, p.status, o.status, u.telegram_id, p.purpose
+		FROM payments p JOIN users u ON u.id = p.user_id LEFT JOIN orders o ON o.id = p.order_id
 		WHERE p.checkout_reference = $1 AND p.method = $2 AND p.is_test = false`, payload, string(paymentsmodel.MethodTelegramStars),
-	).Scan(&storedCurrency, &storedAmount, &status, &orderStatus, &ownerTelegramID)
-	if err != nil || status != "pending" || orderStatus != "pending" || ownerTelegramID != telegramID || storedCurrency != currency || storedAmount != amount {
+	).Scan(&storedCurrency, &storedAmount, &status, &orderStatus, &ownerTelegramID, &purpose)
+	productInvalid := purpose == "product" && (orderStatus == nil || *orderStatus != "pending")
+	if err != nil || status != "pending" || productInvalid || ownerTelegramID != telegramID || storedCurrency != currency || storedAmount != amount {
 		return ErrInvalidCheckout
 	}
 	return nil
@@ -400,20 +435,22 @@ func (s *Service) SettleStarsPayment(ctx context.Context, input SuccessfulPaymen
 	}
 	defer tx.Rollback(ctx)
 
-	var paymentID, orderID, deliveryID, currency, paymentStatus, orderStatus string
+	var paymentID, userID, purpose, currency, paymentStatus string
+	var orderID, targetID, existingChargeID *string
+	var orderStatus *string
+	deliveryID := ""
 	var isTest bool
-	var existingChargeID *string
 	var amount int64
 	var ownerTelegramID int64
 	err = tx.QueryRow(ctx, `
-		SELECT p.id, p.order_id, d.id, p.currency, p.amount_minor, p.is_test, p.status, o.status, u.telegram_id, p.external_transaction_id
+		SELECT p.id, p.order_id, p.user_id, p.purpose, p.target_id, p.currency, p.amount_minor,
+		       p.is_test, p.status, o.status, u.telegram_id, p.external_transaction_id
 		FROM payments p
-		JOIN orders o ON o.id = p.order_id
-		JOIN users u ON u.id = o.user_id
-		JOIN order_deliveries d ON d.order_id = o.id
+		JOIN users u ON u.id = p.user_id
+		LEFT JOIN orders o ON o.id = p.order_id
 		WHERE p.checkout_reference = $1 AND p.method = $2
-		FOR UPDATE OF p, o, d`, input.InvoicePayload, string(paymentsmodel.MethodTelegramStars),
-	).Scan(&paymentID, &orderID, &deliveryID, &currency, &amount, &isTest, &paymentStatus, &orderStatus, &ownerTelegramID, &existingChargeID)
+		FOR UPDATE OF p, u`, input.InvoicePayload, string(paymentsmodel.MethodTelegramStars),
+	).Scan(&paymentID, &orderID, &userID, &purpose, &targetID, &currency, &amount, &isTest, &paymentStatus, &orderStatus, &ownerTelegramID, &existingChargeID)
 	if err != nil || ownerTelegramID != input.TelegramID || currency != input.Currency || amount != input.TotalAmount {
 		return "", ErrInvalidCheckout
 	}
@@ -421,39 +458,67 @@ func (s *Service) SettleStarsPayment(ctx context.Context, input SuccessfulPaymen
 		return "", ErrInvalidCheckout
 	}
 
-	if paymentStatus == "pending" && orderStatus == "pending" {
+	if paymentStatus == "pending" {
 		if _, err = tx.Exec(ctx, `
 			UPDATE payments SET status = 'succeeded', external_transaction_id = $2,
 			provider_transaction_id = NULLIF($3, ''), provider_data = $4, paid_at = now(), updated_at = now()
 			WHERE id = $1`, paymentID, input.TelegramChargeID, input.ProviderChargeID, input.Raw); err != nil {
 			return "", err
 		}
-		if _, err = tx.Exec(ctx, `UPDATE orders SET status = 'paid', paid_at = now(), updated_at = now() WHERE id = $1`, orderID); err != nil {
-			return "", err
+		switch purpose {
+		case "product":
+			if orderID == nil || orderStatus == nil || *orderStatus != "pending" {
+				return "", ErrInvalidCheckout
+			}
+			if err := tx.QueryRow(ctx, `SELECT id FROM order_deliveries WHERE order_id = $1 FOR UPDATE`, *orderID).Scan(&deliveryID); err != nil {
+				return "", ErrInvalidCheckout
+			}
+			if _, err = tx.Exec(ctx, `UPDATE orders SET status = 'paid', paid_at = now(), updated_at = now() WHERE id = $1`, *orderID); err != nil {
+				return "", err
+			}
+			if _, err = tx.Exec(ctx, `UPDATE inventory_items SET status = 'sold', sold_at = now(), reserved_at = NULL WHERE order_id = $1 AND status = 'reserved'`, *orderID); err != nil {
+				return "", err
+			}
+			if _, err = tx.Exec(ctx, `
+				UPDATE order_deliveries SET status = CASE WHEN EXISTS (
+					SELECT 1 FROM order_delivery_items WHERE delivery_id = $1 AND kind = 'api'
+				) THEN 'processing' ELSE 'delivered' END,
+				delivered_at = CASE WHEN EXISTS (
+					SELECT 1 FROM order_delivery_items WHERE delivery_id = $1 AND kind = 'api'
+				) THEN NULL ELSE now() END, updated_at = now() WHERE id = $1`, deliveryID); err != nil {
+				return "", err
+			}
+		case "vip_plan":
+			if targetID == nil {
+				return "", ErrInvalidCheckout
+			}
+			if err := s.activateVIPTx(ctx, tx, userID, *targetID, paymentID, string(paymentsmodel.MethodTelegramStars)); err != nil {
+				return "", err
+			}
+		case "wallet_topup":
+			if err := s.creditWalletTx(ctx, tx, userID, amount, paymentID, "شارژ کیف پول با تلگرام استار"); err != nil {
+				return "", err
+			}
+		default:
+			return "", ErrInvalidCheckout
 		}
-		if _, err = tx.Exec(ctx, `UPDATE inventory_items SET status = 'sold', sold_at = now(), reserved_at = NULL WHERE order_id = $1 AND status = 'reserved'`, orderID); err != nil {
-			return "", err
-		}
-		if _, err = tx.Exec(ctx, `
-			UPDATE order_deliveries SET status = CASE WHEN EXISTS (
-				SELECT 1 FROM order_delivery_items WHERE delivery_id = $1 AND kind = 'api'
-			) THEN 'processing' ELSE 'delivered' END,
-			delivered_at = CASE WHEN EXISTS (
-				SELECT 1 FROM order_delivery_items WHERE delivery_id = $1 AND kind = 'api'
-			) THEN NULL ELSE now() END, updated_at = now() WHERE id = $1`, deliveryID); err != nil {
-			return "", err
-		}
-	} else if paymentStatus != "succeeded" || orderStatus != "paid" || existingChargeID == nil || *existingChargeID != input.TelegramChargeID {
+	} else if paymentStatus != "succeeded" || existingChargeID == nil || *existingChargeID != input.TelegramChargeID {
 		return "", ErrInvalidCheckout
 	}
 
 	if err := tx.Commit(ctx); err != nil {
 		return "", err
 	}
-	if err := s.fulfillAPIDelivery(ctx, deliveryID); err != nil {
-		return orderID, err
+	referenceID := paymentID
+	if orderID != nil {
+		referenceID = *orderID
 	}
-	return orderID, nil
+	if deliveryID != "" {
+		if err := s.fulfillAPIDelivery(ctx, deliveryID); err != nil {
+			return referenceID, err
+		}
+	}
+	return referenceID, nil
 }
 
 func (s *Service) fulfillAPIDelivery(ctx context.Context, deliveryID string) error {

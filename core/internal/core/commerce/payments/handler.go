@@ -27,19 +27,99 @@ func (h *Handler) CreateStarsInvoice(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	result, err := h.service.CreateStarsInvoice(c.Request.Context(), telegramID, req.ProductID)
+	result, err := h.service.CreateProductCheckout(c.Request.Context(), telegramID, req.ProductID, "telegram_stars")
 	if err != nil {
-		switch {
-		case errors.Is(err, ErrOutOfStock):
-			c.JSON(http.StatusConflict, gin.H{"error": "موجودی این محصول تمام شده است"})
-		case errors.Is(err, ErrCheckoutUnavailable), errors.Is(err, ErrInvalidCheckout):
-			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "این محصول در حال حاضر قابل خرید نیست"})
-		default:
-			c.JSON(http.StatusBadGateway, gin.H{"error": "ایجاد فاکتور تلگرام ناموفق بود"})
-		}
+		h.writeCheckoutError(c, err)
 		return
 	}
 	c.JSON(http.StatusCreated, result)
+}
+
+// CreateProductCheckout purchases a product with Stars, wallet balance, or VIP access.
+func (h *Handler) CreateProductCheckout(c *gin.Context) {
+	telegramID, ok := middleware.GetTelegramUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "telegram authentication required"})
+		return
+	}
+	var req CreateProductCheckoutRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	result, err := h.service.CreateProductCheckout(c.Request.Context(), telegramID, req.ProductID, req.Method)
+	if err != nil {
+		h.writeCheckoutError(c, err)
+		return
+	}
+	c.JSON(http.StatusCreated, result)
+}
+
+func (h *Handler) CreateVIPCheckout(c *gin.Context) {
+	telegramID, ok := middleware.GetTelegramUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "telegram authentication required"})
+		return
+	}
+	var req CreateVIPCheckoutRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	result, err := h.service.CreateVIPCheckout(c.Request.Context(), telegramID, req.PlanID, req.Method)
+	if err != nil {
+		h.writeCheckoutError(c, err)
+		return
+	}
+	c.JSON(http.StatusCreated, result)
+}
+
+func (h *Handler) CreateWalletTopup(c *gin.Context) {
+	telegramID, ok := middleware.GetTelegramUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "telegram authentication required"})
+		return
+	}
+	var req CreateWalletTopupRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	result, err := h.service.CreateWalletTopup(c.Request.Context(), telegramID, req.Stars)
+	if err != nil {
+		h.writeCheckoutError(c, err)
+		return
+	}
+	c.JSON(http.StatusCreated, result)
+}
+
+func (h *Handler) GetWallet(c *gin.Context) {
+	telegramID, ok := middleware.GetTelegramUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "telegram authentication required"})
+		return
+	}
+	result, err := h.service.Wallet(c.Request.Context(), telegramID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "دریافت کیف پول ناموفق بود"})
+		return
+	}
+	c.JSON(http.StatusOK, result)
+}
+
+func (h *Handler) writeCheckoutError(c *gin.Context, err error) {
+	switch {
+	case errors.Is(err, ErrOutOfStock):
+		c.JSON(http.StatusConflict, gin.H{"error": "موجودی این محصول تمام شده است"})
+	case errors.Is(err, ErrAlreadyPurchased):
+		c.JSON(http.StatusConflict, gin.H{"error": "این محصول فقط یک‌بار قابل خرید است و امکان خرید مجدد آن وجود ندارد"})
+	case errors.Is(err, ErrInsufficientBalance):
+		c.JSON(http.StatusConflict, gin.H{"error": "موجودی کیف پول کافی نیست"})
+	case errors.Is(err, ErrCheckoutUnavailable), errors.Is(err, ErrInvalidCheckout):
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": "این پرداخت در حال حاضر در دسترس نیست"})
+	default:
+		c.JSON(http.StatusBadGateway, gin.H{"error": "ایجاد پرداخت ناموفق بود"})
+	}
 }
 
 // ListDeliveries returns the authenticated user's paid digital deliveries.
@@ -49,7 +129,12 @@ func (h *Handler) ListDeliveries(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "telegram authentication required"})
 		return
 	}
-	result, err := h.service.ListDeliveries(c.Request.Context(), telegramID)
+	var query ListDeliveriesQuery
+	if err := c.ShouldBindQuery(&query); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "product_id is invalid"})
+		return
+	}
+	result, err := h.service.ListDeliveries(c.Request.Context(), telegramID, query.ProductID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "دریافت تحویل‌ها ناموفق بود"})
 		return

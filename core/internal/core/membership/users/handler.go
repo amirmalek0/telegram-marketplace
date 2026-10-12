@@ -5,12 +5,28 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"telegram-marketplace/internal/app/middleware"
 	"telegram-marketplace/pkg/pagination"
 )
 
 // Handler wires HTTP concerns to the Service layer.
 type Handler struct {
 	service *Service
+}
+
+// Me returns the authenticated Telegram user's current profile and account state.
+func (h *Handler) Me(c *gin.Context) {
+	telegramID, ok := middleware.GetTelegramUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "telegram authentication required"})
+		return
+	}
+	user, err := h.service.GetByTelegramID(c.Request.Context(), telegramID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, toResponse(user))
 }
 
 // NewHandler constructs a Handler with the given Service.

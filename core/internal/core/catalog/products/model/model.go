@@ -51,6 +51,7 @@ type Product struct {
 	APIID          *string      `db:"api_id"`
 	DemoURL        *string      `db:"demo_url"`
 	VIPOnly        bool         `db:"vip_only"`
+	Repurchasable  bool         `db:"repurchasable"`
 	ViewsCount     int          `db:"views_count"`
 	Status         string       `db:"status"`
 	CreatedAt      time.Time    `db:"created_at"`
