@@ -9,7 +9,7 @@ import { Icon, type IconName } from '../components/ui/Icon'
 import { deliveryLabels } from '../features/catalog/constants'
 import type { CatalogState, Product } from '../features/catalog/types'
 import type { SimulatedPayment, StarsInvoice } from '../features/commerce/types'
-import { formatDate, formatPrice } from '../utils/format'
+import { formatDate } from '../utils/format'
 
 interface ProductPageProps extends CatalogState {
   initDataRaw: string | null
@@ -128,7 +128,6 @@ export function ProductPage({ products, categoryById, initDataRaw }: ProductPage
         <div className="product-price-copy">
           <small>پرداخت با تلگرام استار</small>
           <strong>{product.stars_price.toLocaleString('fa-IR')} ⭐</strong>
-          <em>{formatPrice(product.price)}</em>
           <span>تحویل امن پس از پرداخت</span>
         </div>
         <button type="button" disabled={purchasing || product.stars_price <= 0} onClick={() => void buyWithStars()}>

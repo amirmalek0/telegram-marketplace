@@ -23,7 +23,6 @@ export interface Product {
   id: string
   title: string
   description: string
-  price: number
   stars_price: number
   category_id: string
   image_url: string

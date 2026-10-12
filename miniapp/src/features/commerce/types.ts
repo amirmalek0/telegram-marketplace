@@ -3,7 +3,6 @@ export interface StarsInvoice {
   payment_id: string
   invoice_url: string
   stars: number
-  currency: 'XTR'
   simulation_enabled: boolean
 }
 
@@ -18,8 +17,7 @@ export interface Order {
   id: string
   product_id: string
   quantity: number
-  amount: number
-  payment_method?: string
+  stars: number
   status: 'pending' | 'paid' | 'failed' | 'refunded' | 'cancelled'
   paid_at?: string
   created_at: string

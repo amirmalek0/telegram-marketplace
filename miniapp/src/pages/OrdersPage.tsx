@@ -4,7 +4,7 @@ import { StateCard } from '../components/feedback/CatalogStates'
 import { Icon } from '../components/ui/Icon'
 import type { Product, PaginatedResponse } from '../features/catalog/types'
 import type { Order } from '../features/commerce/types'
-import { formatDate, formatPrice } from '../utils/format'
+import { formatDate } from '../utils/format'
 
 const statusLabel: Record<Order['status'], string> = {
   pending: 'در انتظار پرداخت', paid: 'پرداخت‌شده', failed: 'ناموفق',
@@ -44,9 +44,7 @@ export function OrdersPage({ initDataRaw, products }: OrdersPageProps) {
             </div>
             <div className="order-card-footer">
               <span className={`order-status status-${order.status}`}>{statusLabel[order.status]}</span>
-              <strong>{order.payment_method === 'telegram_stars' && product
-                ? `${product.stars_price.toLocaleString('fa-IR')} ⭐`
-                : formatPrice(order.amount)}</strong>
+              <strong>{order.stars > 0 ? `${order.stars.toLocaleString('fa-IR')} ⭐` : 'Telegram Stars'}</strong>
             </div>
           </article>
         )
