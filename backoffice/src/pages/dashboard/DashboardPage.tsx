@@ -1,12 +1,12 @@
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, CircleDollarSign, Package, Search, ShoppingBag, Ticket, Users, WalletCards } from 'lucide-react';
+import { ArrowLeft, CircleDollarSign, Package, Search, ShoppingBag, Star, Ticket, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { ordersApi, productsApi, ticketsApi, usersApi } from '@/api';
 import { OrderResponse } from '@/types';
 import { Badge } from '@/components/ui';
-import { formatDateTime, formatMoney, shortId } from '@/utils/format';
+import { formatDateTime, shortId } from '@/utils/format';
 
 interface Metric {
   label: string;
@@ -33,7 +33,6 @@ const destinations = [
   { path: '/payments', label: 'پرداخت‌ها', keywords: 'پرداخت payment stars ستاره' },
   { path: '/coupons', label: 'کدهای تخفیف', keywords: 'تخفیف coupon discount' },
   { path: '/users', label: 'کاربران', keywords: 'کاربر مشتری user customer' },
-  { path: '/wallets', label: 'کیف پول', keywords: 'wallet balance موجودی' },
   { path: '/vip', label: 'پلن‌های VIP', keywords: 'vip اشتراک plan' },
   { path: '/tickets', label: 'تیکت‌ها', keywords: 'ticket پشتیبانی support' },
   { path: '/admins', label: 'مدیران', keywords: 'admin مدیر' },
@@ -107,7 +106,7 @@ export default function DashboardPage() {
         </div>
         <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto">
           <Quick path="/products" icon={<Package size={16} />} title="محصول جدید" />
-          <Quick path="/wallets" icon={<WalletCards size={16} />} title="کیف پول" />
+          <Quick path="/payments" icon={<Star size={16} />} title="پرداخت‌های Stars" />
           <Quick path="/coupons" icon={<CircleDollarSign size={16} />} title="کد تخفیف" />
           <Quick path="/tickets" icon={<Ticket size={16} />} title="تیکت‌ها" />
         </div>
@@ -132,7 +131,7 @@ export default function DashboardPage() {
         {recent.map(order => <button key={order.id} onClick={() => navigate('/orders')} className="flex w-full items-center gap-4 p-4 text-right transition hover:bg-[rgb(var(--color-surface-2))]">
           <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-500/10 text-blue-600"><ShoppingBag size={17} /></div>
           <div className="min-w-0 flex-1"><p className="text-sm font-bold">سفارش #{shortId(order.id)}</p><p className="mt-1 text-[10px] text-[rgb(var(--color-text-muted))]">{formatDateTime(order.created_at)}</p></div>
-          <b className="text-xs">{formatMoney(order.amount - order.discount_amount)}</b>
+          <b className="text-xs">{order.stars > 0 ? `${order.stars.toLocaleString('fa-IR')} ستاره` : '—'}</b>
           <OrderBadge status={order.status} />
         </button>)}
         {!loading && recent.length === 0 && <p className="p-10 text-center text-sm text-[rgb(var(--color-text-muted))]">هنوز سفارشی ثبت نشده است</p>}

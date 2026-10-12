@@ -10,7 +10,6 @@ export { apisApi } from './apis';
 export { adminsApi } from './admins';
 export {
   usersApi,
-  walletsApi,
   couponsApi,
   ordersApi,
   paymentsApi,

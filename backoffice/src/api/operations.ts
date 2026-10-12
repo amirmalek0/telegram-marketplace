@@ -1,12 +1,10 @@
 import apiClient from './client';
 import {
-  AdjustWalletRequest,
   CouponsPaginatedResponse,
   CreateCouponRequest,
   CreateVipPlanRequest,
-  OrderStatus,
   OrdersPaginatedResponse,
-  PaymentsPaginatedResponse,
+  TelegramStarsPaymentsPaginatedResponse,
   PaymentConfigResponse,
   TicketCategoriesPaginatedResponse,
   TicketMessageResponse,
@@ -21,9 +19,6 @@ import {
   UserResponse,
   UsersPaginatedResponse,
   VipPlansPaginatedResponse,
-  WalletBalanceResponse,
-  WalletTransactionResponse,
-  WalletTransactionsPaginatedResponse,
 } from '@/types';
 
 type PageParams = { page?: number; per_page?: number };
@@ -40,13 +35,6 @@ export const usersApi = {
   delete: (id: string) => apiClient.delete(`/user/${id}`),
 };
 
-export const walletsApi = {
-  balance: (userId: string) => apiClient.get<WalletBalanceResponse>(`/wallet/users/${userId}/balance`).then(r => r.data),
-  transactions: (userId: string, params?: PageParams) =>
-    apiClient.get<WalletTransactionsPaginatedResponse>(`/wallet/users/${userId}/transactions`, { params }).then(r => r.data),
-  adjust: (data: AdjustWalletRequest) => apiClient.post<WalletTransactionResponse>('/wallet/adjust', data).then(r => r.data),
-};
-
 export const couponsApi = {
   list: (params?: PageParams, signal?: AbortSignal) => apiClient.get<CouponsPaginatedResponse>('/coupon', { params, signal }).then(r => r.data),
   create: (data: CreateCouponRequest) => apiClient.post('/coupon', data).then(r => r.data),
@@ -56,13 +44,12 @@ export const couponsApi = {
 
 export const ordersApi = {
   list: (params?: PageParams, signal?: AbortSignal) => apiClient.get<OrdersPaginatedResponse>('/order/all', { params, signal }).then(r => r.data),
-  updateStatus: (id: string, status: OrderStatus) => apiClient.patch(`/order/${id}/status`, { status }),
 };
 
 export const paymentsApi = {
-  list: (params?: PageParams, signal?: AbortSignal) => apiClient.get<PaymentsPaginatedResponse>('/payment/all', { params, signal }).then(r => r.data),
-  getConfig: (signal?: AbortSignal) => apiClient.get<PaymentConfigResponse>('/payment/config', { signal }).then(r => r.data),
-  updateConfig: (testMode: boolean) => apiClient.patch<PaymentConfigResponse>('/payment/config', { test_mode: testMode }).then(r => r.data),
+  list: (params?: PageParams, signal?: AbortSignal) => apiClient.get<TelegramStarsPaymentsPaginatedResponse>('/payment/stars', { params, signal }).then(r => r.data),
+  getConfig: (signal?: AbortSignal) => apiClient.get<PaymentConfigResponse>('/payment/stars/config', { signal }).then(r => r.data),
+  updateConfig: (testMode: boolean) => apiClient.patch<PaymentConfigResponse>('/payment/stars/config', { test_mode: testMode }).then(r => r.data),
 };
 
 export const vipApi = {

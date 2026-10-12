@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Check, FlaskConical, RefreshCw, Settings2, ShieldCheck, Star } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { paymentsApi } from '@/api';
-import { PaymentConfigResponse, PaymentResponse } from '@/types';
+import { PaymentConfigResponse, TelegramStarsPaymentResponse } from '@/types';
 import { Badge, Button, ConfirmationModal, DataTable, Modal, PageHeader } from '@/components/ui';
 import type { Column } from '@/components/ui';
 import { formatDateTime, shortId } from '@/utils/format';
@@ -11,13 +11,8 @@ const paymentStatus = (value: string): { label: string; variant: 'success' | 'wa
   succeeded: { label: 'موفق', variant: 'success' }, pending: { label: 'در انتظار', variant: 'warning' }, failed: { label: 'ناموفق', variant: 'error' }, refunded: { label: 'بازپرداخت‌شده', variant: 'default' },
 }[value] as { label: string; variant: 'success' | 'warning' | 'error' | 'default' } || { label: value, variant: 'default' });
 
-const paymentMethod = (method: string) => method === 'telegram_stars' ? 'Telegram Stars' : method;
-const paymentAmount = (payment: PaymentResponse) => payment.currency === 'XTR'
-  ? `${payment.amount_minor.toLocaleString('fa-IR')} ستاره`
-  : `${payment.amount_minor.toLocaleString('fa-IR')} ${payment.currency}`;
-
 export default function PaymentsPage() {
-  const [rows, setRows] = useState<PaymentResponse[]>([]); const [page, setPage] = useState(1); const [total, setTotal] = useState(0); const [loading, setLoading] = useState(true);
+  const [rows, setRows] = useState<TelegramStarsPaymentResponse[]>([]); const [page, setPage] = useState(1); const [total, setTotal] = useState(0); const [loading, setLoading] = useState(true);
   const [config, setConfig] = useState<PaymentConfigResponse | null>(null);
   const [configLoading, setConfigLoading] = useState(true);
   const [configSaving, setConfigSaving] = useState(false);
@@ -52,17 +47,16 @@ export default function PaymentsPage() {
     } catch { toast.error('تغییر حالت پرداخت ناموفق بود'); }
     finally { setConfigSaving(false); }
   };
-  const columns: Column<PaymentResponse>[] = [
+  const columns: Column<TelegramStarsPaymentResponse>[] = [
     { key: 'id', title: 'شناسه پرداخت', render: v => <span className="mono-id" title={v as string}>{shortId(v as string)}</span> },
     { key: 'order_id', title: 'سفارش', render: v => <span className="mono-id" title={v as string}>{shortId(v as string)}</span> },
-    { key: 'method', title: 'روش پرداخت', render: v => <span className="font-semibold">{paymentMethod(String(v))}</span> },
     { key: 'external_transaction_id', title: 'شناسه تراکنش', render: v => <span className="mono-id" title={String(v || '')}>{v ? shortId(String(v)) : '—'}</span> },
-    { key: 'amount_minor', title: 'مبلغ', render: (_v, row) => <b>{paymentAmount(row)}</b> },
+    { key: 'stars', title: 'مبلغ', render: v => <b>{Number(v).toLocaleString('fa-IR')} ستاره</b> },
     { key: 'is_test', title: 'حالت', render: v => <Badge variant={v ? 'warning' : 'success'}>{v ? 'آزمایشی' : 'واقعی'}</Badge> },
     { key: 'status', title: 'وضعیت', render: v => { const s = paymentStatus(String(v)); return <Badge variant={s.variant} dot>{s.label}</Badge>; } },
     { key: 'created_at', title: 'زمان', render: v => <span className="text-xs text-[rgb(var(--color-text-secondary))]">{formatDateTime(v as string)}</span> },
   ];
-  const successTotal = rows.filter(x => !x.is_test && x.status === 'succeeded' && x.currency === 'XTR').reduce((sum, payment) => sum + payment.amount_minor, 0);
+  const successTotal = rows.filter(x => !x.is_test && x.status === 'succeeded').reduce((sum, payment) => sum + payment.stars, 0);
   const testMode = config?.test_mode ?? false;
   return <div>
     <PageHeader eyebrow="TELEGRAM STARS" title="پرداخت‌ها" description="تراکنش‌های Telegram Stars و تطبیق آن‌ها با سفارش‌ها" action={<div className="flex flex-wrap items-center gap-2"><Button variant="secondary" size="sm" icon={<Settings2 size={15} />} disabled={configLoading || !config} onClick={openModeModal}>حالت پرداخت <Badge variant={testMode ? 'warning' : 'success'}>{testMode ? 'آزمایشی' : 'واقعی'}</Badge></Button><Button variant="secondary" icon={<RefreshCw size={16} />} onClick={() => { void load(); void loadConfig(); }}>به‌روزرسانی</Button></div>} />

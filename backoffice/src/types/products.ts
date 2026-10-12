@@ -6,7 +6,6 @@ export type ProductStatus = 'active' | 'draft' | 'archived';
 export interface CreateProductRequest {
   title: string;
   description: string;
-  price: number;
   stars_price: number;
   category_id: string;
   delivery_type: DeliveryType;
@@ -22,7 +21,6 @@ export interface CreateProductRequest {
 export interface UpdateProductRequest {
   title?: string;
   description?: string;
-  price?: number;
   stars_price?: number;
   category_id?: string;
   delivery_type?: DeliveryType;
@@ -40,7 +38,6 @@ export interface ProductResponse {
   id: string;
   title: string;
   description: string;
-  price: number;
   stars_price: number;
   category_id: string;
   image_url: string;

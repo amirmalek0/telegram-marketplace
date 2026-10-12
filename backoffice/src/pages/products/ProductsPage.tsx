@@ -57,9 +57,6 @@ const statusVariants: Record<ProductStatus, 'success' | 'info' | 'default'> = {
   archived: 'default',
 };
 
-const formatPrice = (price: number) =>
-  new Intl.NumberFormat('fa-IR').format(price) + ' تومان';
-
 const PER_PAGE = 20;
 
 // ─── Zod Schema ──────────────────────────────────────────────────────────────
@@ -67,9 +64,6 @@ const PER_PAGE = 20;
 const productSchema = z.object({
   title: z.string().min(1, 'نام محصول الزامی است'),
   description: z.string(),
-  price: z
-    .number({ message: 'قیمت باید عدد باشد' })
-    .positive('قیمت باید بزرگتر از صفر باشد'),
   stars_price: z
     .number({ message: 'قیمت استار باید عدد باشد' })
     .int('قیمت استار باید عدد صحیح باشد')
@@ -302,17 +296,8 @@ function ProductFormFields({
         {...register('description')}
       />
 
-      {/* Price */}
       <Input
-        label="قیمت (تومان)"
-        type="number"
-        placeholder="قیمت را وارد کنید"
-        error={errors.price?.message}
-        {...register('price', { valueAsNumber: true })}
-      />
-
-      <Input
-        label="قیمت تلگرام استار (XTR)"
+        label="قیمت (تلگرام استار)"
         type="number"
         min="1"
         step="1"
@@ -430,7 +415,6 @@ export default function ProductsPage() {
   const defaultValues: ProductForm = {
     title: '',
     description: '',
-    price: 0,
     stars_price: 0,
     category_id: '',
     delivery_type: 'file',
@@ -509,7 +493,6 @@ export default function ProductsPage() {
       const payload = {
         title: data.title,
         description: data.description,
-        price: data.price,
         stars_price: data.stars_price,
         category_id: data.category_id,
         delivery_type: data.delivery_type,
@@ -546,7 +529,6 @@ export default function ProductsPage() {
     editForm.reset({
       title: product.title,
       description: product.description,
-      price: product.price,
       stars_price: product.stars_price,
       category_id: product.category_id,
       delivery_type: product.delivery_type,
@@ -570,7 +552,6 @@ export default function ProductsPage() {
       const payload = {
         title: data.title,
         description: data.description,
-        price: data.price,
         stars_price: data.stars_price,
         category_id: data.category_id,
         delivery_type: data.delivery_type,
@@ -669,15 +650,8 @@ export default function ProductsPage() {
       ),
     },
     {
-      key: 'price',
-      title: 'قیمت',
-      render: (_, row) => (
-        <span className="text-[rgb(var(--color-text))]">{formatPrice(row.price)}</span>
-      ),
-    },
-    {
       key: 'stars_price',
-      title: 'تلگرام استار',
+      title: 'قیمت',
       render: (_, row) => (
         <span className="font-semibold text-[rgb(var(--color-text))]">
           {new Intl.NumberFormat('fa-IR').format(row.stars_price)} ⭐

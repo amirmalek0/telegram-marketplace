@@ -20,7 +20,6 @@ import OrdersPage from '@/pages/orders/OrdersPage';
 import PaymentsPage from '@/pages/payments/PaymentsPage';
 import CouponsPage from '@/pages/coupons/CouponsPage';
 import UsersPage from '@/pages/users/UsersPage';
-import WalletsPage from '@/pages/wallets/WalletsPage';
 import VipPage from '@/pages/vip/VipPage';
 import TicketsPage from '@/pages/tickets/TicketsPage';
 import TicketDetailPage from '@/pages/tickets/TicketDetailPage';
@@ -78,7 +77,6 @@ function App() {
             <Route path="coupons" element={<CouponsPage />} />
             <Route path="users" element={<UsersPage />} />
             <Route path="users/:userId/tickets" element={<UserTicketsPage />} />
-            <Route path="wallets" element={<WalletsPage />} />
             <Route path="vip" element={<VipPage />} />
             <Route path="messages" element={<MessagesPage />} />
             <Route path="tickets" element={<TicketsPage />} />

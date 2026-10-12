@@ -1,7 +1,7 @@
-import { AtSign, BadgeCheck, CircleUserRound, Crown, MessageSquareText, Phone, WalletCards } from 'lucide-react';
+import { AtSign, BadgeCheck, CircleUserRound, Crown, MessageSquareText, Phone } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { UserResponse } from '@/types';
-import { formatDate, formatMoney } from '@/utils/format';
+import { formatDate } from '@/utils/format';
 
 function displayName(user: UserResponse) {
   return `${user.first_name} ${user.last_name}`.trim() || 'کاربر بدون نام';
@@ -31,7 +31,6 @@ export function TicketUserPanel({ user, showTicketsLink = true, compact = false 
     { icon: <AtSign size={14} />, label: 'نام کاربری', value: user.username ? `@${user.username}` : '—', ltr: true },
     { icon: <CircleUserRound size={14} />, label: 'شناسه تلگرام', value: user.telegram_id.toLocaleString('en-US'), ltr: true },
     { icon: <Phone size={14} />, label: 'شماره تلفن', value: user.phone_number || '—', ltr: true },
-    { icon: <WalletCards size={14} />, label: 'موجودی', value: formatMoney(user.wallet_balance) },
     { icon: <Crown size={14} />, label: 'عضویت', value: user.has_active_plan ? 'VIP فعال' : 'عادی' },
     { icon: <BadgeCheck size={14} />, label: 'عضویت از', value: formatDate(user.created_at) },
   ];

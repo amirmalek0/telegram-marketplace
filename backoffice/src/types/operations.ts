@@ -9,7 +9,6 @@ export interface UserResponse {
   phone_number: string;
   has_active_plan: boolean;
   active_plan_id?: string;
-  wallet_balance: number;
   plan_expire_at?: string;
   referred_by?: number;
   is_banned: boolean;
@@ -56,10 +55,7 @@ export interface OrderResponse {
   user_id: string;
   product_id: string;
   quantity: number;
-  coupon_id?: string;
-  amount: number;
-  discount_amount: number;
-  payment_method?: string;
+  stars: number;
   status: OrderStatus;
   paid_at?: string;
   created_at: string;
@@ -67,12 +63,10 @@ export interface OrderResponse {
 }
 export type OrdersPaginatedResponse = PaginatedResponse<OrderResponse>;
 
-export interface PaymentResponse {
+export interface TelegramStarsPaymentResponse {
   id: string;
   order_id: string;
-  method: string;
-  currency: string;
-  amount_minor: number;
+  stars: number;
   checkout_reference: string;
   external_transaction_id?: string;
   provider_transaction_id?: string;
@@ -83,42 +77,24 @@ export interface PaymentResponse {
   paid_at?: string;
   refunded_at?: string;
 }
-export type PaymentsPaginatedResponse = PaginatedResponse<PaymentResponse>;
+export type TelegramStarsPaymentsPaginatedResponse = PaginatedResponse<TelegramStarsPaymentResponse>;
 
 export interface PaymentConfigResponse {
   test_mode: boolean;
   updated_at: string;
 }
 
-export interface WalletBalanceResponse { user_id: string; balance: number }
-export interface WalletTransactionResponse {
-  id: string;
-  type: string;
-  amount: number;
-  balance_before: number;
-  balance_after: number;
-  description: string;
-  created_at: string;
-}
-export type WalletTransactionsPaginatedResponse = PaginatedResponse<WalletTransactionResponse>;
-export interface AdjustWalletRequest {
-  user_id: string;
-  amount: number;
-  operation: 'credit' | 'debit';
-  description: string;
-}
-
 export interface VipPlanResponse {
   id: string;
   title: string;
-  price: number;
+  stars_price: number;
   duration: number;
   status: 'active' | 'inactive';
   created_at: string;
 }
 export interface CreateVipPlanRequest {
   title: string;
-  price: number;
+  stars_price: number;
   duration: number;
   status: 'active' | 'inactive';
 }
