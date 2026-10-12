@@ -8,17 +8,38 @@ import (
 	"telegram-marketplace/internal/core/commerce/payments/model"
 	paymentsrepo "telegram-marketplace/internal/core/commerce/payments/repository"
 	"telegram-marketplace/pkg/pagination"
+	"telegram-marketplace/pkg/storage"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// Service owns provider-neutral payment persistence. Processor-specific
-// checkout and update handling can be added on top of this layer.
+// InvoiceCreator is the provider boundary used by the Stars checkout. Keeping
+// it small makes a future payment processor independent from Telegram.
+type InvoiceCreator interface {
+	CreateInvoiceLink(ctx context.Context, title, description, payload, currency string, amount int64) (string, error)
+}
+
+// APIExecutor performs configured API-based product delivery.
+type APIExecutor interface {
+	ExecuteAPICall(ctx context.Context, apiID string) (string, error)
+}
+
+// Service owns provider-neutral payment persistence. Telegram Stars invoice
+// creation and update processing will be added on top of this layer.
 type Service struct {
-	repo paymentsrepo.Repository
+	repo        paymentsrepo.Repository
+	db          *pgxpool.Pool
+	invoices    InvoiceCreator
+	apiExecutor APIExecutor
+	fileStorage storage.Storage
 }
 
 // NewService constructs the payment service.
-func NewService(repo paymentsrepo.Repository) *Service {
-	return &Service{repo: repo}
+func NewService(repo paymentsrepo.Repository, db *pgxpool.Pool, invoices InvoiceCreator, apiExecutor APIExecutor, fileStorage storage.Storage) *Service {
+	return &Service{
+		repo: repo, db: db, invoices: invoices, apiExecutor: apiExecutor,
+		fileStorage: fileStorage,
+	}
 }
 
 // GetByID returns a payment by its UUID.

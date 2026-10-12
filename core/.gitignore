@@ -4,8 +4,8 @@
 *.dll
 *.so
 *.dylib
-api
-bot
+/api
+/bot
 
 # Test binary
 *.test

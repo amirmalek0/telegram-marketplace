@@ -5,6 +5,13 @@ import "time"
 // PaymentMethod identifies the checkout integration used for a payment.
 type PaymentMethod string
 
+const (
+	// MethodTelegramStars is currently the only enabled payment method.
+	MethodTelegramStars PaymentMethod = "telegram_stars"
+	// StarsCurrency is Telegram's currency code for Stars payments.
+	StarsCurrency = "XTR"
+)
+
 // PaymentStatus represents the status of a payment.
 type PaymentStatus string
 
@@ -46,6 +53,7 @@ type Payment struct {
 	CheckoutReference     string        `db:"checkout_reference" json:"checkout_reference"`
 	ExternalTransactionID *string       `db:"external_transaction_id" json:"external_transaction_id,omitempty"`
 	ProviderTransactionID *string       `db:"provider_transaction_id" json:"provider_transaction_id,omitempty"`
+	IsTest                bool          `db:"is_test" json:"is_test"`
 	Status                PaymentStatus `db:"status" json:"status"`
 	ProviderData          []byte        `db:"provider_data" json:"-"`
 	CreatedAt             time.Time     `db:"created_at" json:"created_at"`

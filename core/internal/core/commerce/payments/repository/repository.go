@@ -46,7 +46,7 @@ var _ Repository = (*postgresRepository)(nil)
 
 func (r *postgresRepository) Create(ctx context.Context, p *model.Payment) error {
 	err := r.db.QueryRow(ctx, queryCreatePayment,
-		p.OrderID, p.Method, p.Currency, p.AmountMinor, p.CheckoutReference, p.Status, p.CreatedAt, p.UpdatedAt,
+		p.OrderID, p.Method, p.Currency, p.AmountMinor, p.CheckoutReference, p.IsTest, p.Status, p.CreatedAt, p.UpdatedAt,
 	).Scan(&p.ID)
 	if err != nil {
 		return fmt.Errorf("payments.repository.Create: %w", err)

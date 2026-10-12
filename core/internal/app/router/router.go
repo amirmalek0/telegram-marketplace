@@ -60,6 +60,7 @@ type Handlers struct {
 	Coupons          *coupons.Handler
 	Orders           *orders.Handler
 	Payments         *payments.Handler
+	PaymentsService  *payments.Service
 	Tickets          *tickets.Handler
 	TicketCategories *ticketcategories.Handler
 	VIP              *vip.Handler

@@ -1,0 +1,3 @@
+package bot
+
+func RegisterRoutes(){}

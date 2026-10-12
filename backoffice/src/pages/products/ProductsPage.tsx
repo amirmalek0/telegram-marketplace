@@ -70,6 +70,10 @@ const productSchema = z.object({
   price: z
     .number({ message: 'قیمت باید عدد باشد' })
     .positive('قیمت باید بزرگتر از صفر باشد'),
+  stars_price: z
+    .number({ message: 'قیمت استار باید عدد باشد' })
+    .int('قیمت استار باید عدد صحیح باشد')
+    .positive('قیمت استار باید بزرگتر از صفر باشد'),
   category_id: z.string().min(1, 'دسته‌بندی الزامی است'),
   delivery_type: z.enum(['file', 'message', 'inventory', 'bundle', 'api'] as const),
   file_id: z.string().optional(),
@@ -307,6 +311,16 @@ function ProductFormFields({
         {...register('price', { valueAsNumber: true })}
       />
 
+      <Input
+        label="قیمت تلگرام استار (XTR)"
+        type="number"
+        min="1"
+        step="1"
+        placeholder="تعداد استار"
+        error={errors.stars_price?.message}
+        {...register('stars_price', { valueAsNumber: true })}
+      />
+
       {/* Category */}
       <Controller
         name="category_id"
@@ -417,6 +431,7 @@ export default function ProductsPage() {
     title: '',
     description: '',
     price: 0,
+    stars_price: 0,
     category_id: '',
     delivery_type: 'file',
     file_id: '',
@@ -495,6 +510,7 @@ export default function ProductsPage() {
         title: data.title,
         description: data.description,
         price: data.price,
+        stars_price: data.stars_price,
         category_id: data.category_id,
         delivery_type: data.delivery_type,
         demo_url: data.demo_url || undefined,
@@ -531,6 +547,7 @@ export default function ProductsPage() {
       title: product.title,
       description: product.description,
       price: product.price,
+      stars_price: product.stars_price,
       category_id: product.category_id,
       delivery_type: product.delivery_type,
       file_id: product.file_id ?? '',
@@ -554,6 +571,7 @@ export default function ProductsPage() {
         title: data.title,
         description: data.description,
         price: data.price,
+        stars_price: data.stars_price,
         category_id: data.category_id,
         delivery_type: data.delivery_type,
         demo_url: data.demo_url || undefined,
@@ -655,6 +673,15 @@ export default function ProductsPage() {
       title: 'قیمت',
       render: (_, row) => (
         <span className="text-[rgb(var(--color-text))]">{formatPrice(row.price)}</span>
+      ),
+    },
+    {
+      key: 'stars_price',
+      title: 'تلگرام استار',
+      render: (_, row) => (
+        <span className="font-semibold text-[rgb(var(--color-text))]">
+          {new Intl.NumberFormat('fa-IR').format(row.stars_price)} ⭐
+        </span>
       ),
     },
     {

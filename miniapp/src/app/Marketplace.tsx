@@ -8,6 +8,8 @@ import { useTelegramAuth } from '../hooks/useTelegramAuth'
 import { CategoryPage } from '../pages/CategoryPage'
 import { NewTicketPage } from '../pages/NewTicketPage'
 import { ProductPage } from '../pages/ProductPage'
+import { OrdersPage } from '../pages/OrdersPage'
+import { DownloadsPage } from '../pages/DownloadsPage'
 import { ShopPage } from '../pages/ShopPage'
 import { TicketPage } from '../pages/TicketPage'
 import { TicketsPage } from '../pages/TicketsPage'
@@ -28,8 +30,8 @@ export function Marketplace() {
           <Route path="/" element={<ShopPage {...catalog} />} />
           <Route path="/categories/:categoryId" element={<CategoryPage {...catalog} />} />
           <Route path="/products/:productId" element={<ProductPage {...catalog} initDataRaw={auth.initDataRaw} />} />
-          <Route path="/orders" element={<UnderConstructionPage icon="orders" title="سفارش‌ها" />} />
-          <Route path="/downloads" element={<UnderConstructionPage icon="download" title="دانلودها" />} />
+          <Route path="/orders" element={<OrdersPage initDataRaw={auth.initDataRaw} products={catalog.products} />} />
+          <Route path="/downloads" element={<DownloadsPage initDataRaw={auth.initDataRaw} />} />
           <Route path="/tickets" element={<TicketsPage initDataRaw={auth.initDataRaw} ready={!catalog.loading} />} />
           <Route path="/tickets/new" element={<NewTicketPage initDataRaw={auth.initDataRaw} ready={!catalog.loading} />} />
           <Route path="/tickets/:ticketId" element={<TicketPage initDataRaw={auth.initDataRaw} ready={!catalog.loading} />} />

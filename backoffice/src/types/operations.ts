@@ -76,6 +76,7 @@ export interface PaymentResponse {
   checkout_reference: string;
   external_transaction_id?: string;
   provider_transaction_id?: string;
+  is_test: boolean;
   status: string;
   created_at: string;
   updated_at: string;
@@ -83,6 +84,11 @@ export interface PaymentResponse {
   refunded_at?: string;
 }
 export type PaymentsPaginatedResponse = PaginatedResponse<PaymentResponse>;
+
+export interface PaymentConfigResponse {
+  test_mode: boolean;
+  updated_at: string;
+}
 
 export interface WalletBalanceResponse { user_id: string; balance: number }
 export interface WalletTransactionResponse {

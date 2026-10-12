@@ -7,6 +7,7 @@ export interface CreateProductRequest {
   title: string;
   description: string;
   price: number;
+  stars_price: number;
   category_id: string;
   delivery_type: DeliveryType;
   file_id?: string;
@@ -22,6 +23,7 @@ export interface UpdateProductRequest {
   title?: string;
   description?: string;
   price?: number;
+  stars_price?: number;
   category_id?: string;
   delivery_type?: DeliveryType;
   file_id?: string;
@@ -39,6 +41,7 @@ export interface ProductResponse {
   title: string;
   description: string;
   price: number;
+  stars_price: number;
   category_id: string;
   image_url: string;
   delivery_type: DeliveryType;

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
+import { openInvoice } from '@telegram-apps/sdk'
 import { ApiClient } from '../api/client'
 import { ProductArtwork } from '../components/catalog/ProductArtwork'
 import { RelatedProducts } from '../components/catalog/RelatedProducts'
@@ -7,6 +8,7 @@ import { ShopSkeleton, StateCard } from '../components/feedback/CatalogStates'
 import { Icon, type IconName } from '../components/ui/Icon'
 import { deliveryLabels } from '../features/catalog/constants'
 import type { CatalogState, Product } from '../features/catalog/types'
+import type { SimulatedPayment, StarsInvoice } from '../features/commerce/types'
 import { formatDate, formatPrice } from '../utils/format'
 
 interface ProductPageProps extends CatalogState {
@@ -30,9 +32,14 @@ function ProductFact({ icon, label, value }: ProductFactProps) {
 
 export function ProductPage({ products, categoryById, initDataRaw }: ProductPageProps) {
   const { productId = '' } = useParams()
+  const navigate = useNavigate()
   const [product, setProduct] = useState<Product | undefined>(() => products.find((item) => item.id === productId))
   const [loading, setLoading] = useState(!product)
   const [error, setError] = useState<string | null>(null)
+  const [purchasing, setPurchasing] = useState(false)
+  const [purchaseError, setPurchaseError] = useState<string | null>(null)
+  const [testInvoice, setTestInvoice] = useState<StarsInvoice | null>(null)
+  const [simulating, setSimulating] = useState<'succeeded' | 'failed' | 'cancelled' | null>(null)
 
   useEffect(() => {
     const existing = products.find((item) => item.id === productId)
@@ -61,6 +68,46 @@ export function ProductPage({ products, categoryById, initDataRaw }: ProductPage
     ? 'download'
     : product.delivery_type === 'message' ? 'tickets' : 'box'
 
+  const buyWithStars = async () => {
+    if (!initDataRaw || purchasing) return
+    setPurchasing(true)
+    setPurchaseError(null)
+    try {
+      const invoice = await new ApiClient({ initDataRaw }).post<StarsInvoice>('/payment/stars/invoice', { product_id: product.id })
+      if (invoice.simulation_enabled) {
+        setTestInvoice(invoice)
+        return
+      }
+      if (!openInvoice.isAvailable()) {
+        setPurchaseError('پرداخت تلگرام در این نسخه در دسترس نیست. تلگرام را به‌روزرسانی کنید.')
+        return
+      }
+      setTestInvoice(null)
+      const status = await openInvoice(invoice.invoice_url, 'url')
+      if (status === 'paid') navigate('/downloads', { state: { orderId: invoice.order_id } })
+      else if (status === 'failed') setPurchaseError('پرداخت ناموفق بود. دوباره تلاش کنید.')
+    } catch (reason) {
+      setPurchaseError(reason instanceof Error ? reason.message : 'ایجاد پرداخت ناموفق بود')
+    } finally { setPurchasing(false) }
+  }
+
+  const simulatePayment = async (outcome: 'succeeded' | 'failed' | 'cancelled') => {
+    if (!initDataRaw || !testInvoice || simulating) return
+    setSimulating(outcome)
+    setPurchaseError(null)
+    try {
+      const result = await new ApiClient({ initDataRaw }).post<SimulatedPayment>('/payment/stars/test/simulate', {
+        payment_id: testInvoice.payment_id,
+        outcome,
+      })
+      setTestInvoice(null)
+      if (result.status === 'succeeded') navigate('/downloads', { state: { orderId: result.order_id } })
+      else setPurchaseError(result.status === 'cancelled' ? 'پرداخت آزمایشی لغو شد.' : 'پرداخت آزمایشی ناموفق ثبت شد.')
+    } catch (reason) {
+      setPurchaseError(reason instanceof Error ? reason.message : 'شبیه‌سازی پرداخت ناموفق بود')
+    } finally { setSimulating(null) }
+  }
+
   return (
     <div className="page detail-page product-detail">
       <section className="product-detail-hero">
@@ -79,14 +126,26 @@ export function ProductPage({ products, categoryById, initDataRaw }: ProductPage
 
       <section className="product-purchase-panel">
         <div className="product-price-copy">
-          <small>قیمت نهایی</small>
-          <strong>{formatPrice(product.price)}</strong>
+          <small>پرداخت با تلگرام استار</small>
+          <strong>{product.stars_price.toLocaleString('fa-IR')} ⭐</strong>
+          <em>{formatPrice(product.price)}</em>
           <span>تحویل امن پس از پرداخت</span>
         </div>
-        <button type="button" onClick={() => window.alert('فرآیند خرید به‌زودی فعال می‌شود.')}>
-          <span>خرید محصول</span><Icon name="arrow" size={17} />
+        <button type="button" disabled={purchasing || product.stars_price <= 0} onClick={() => void buyWithStars()}>
+          <span>{purchasing ? 'در حال اتصال…' : 'خرید محصول'}</span><Icon name="arrow" size={17} />
         </button>
       </section>
+      {purchaseError && <p className="purchase-error">{purchaseError}</p>}
+      {testInvoice && (
+        <section className="payment-simulator">
+          <div><strong>حالت آزمایشی فروشگاه</strong><span>هیچ استاری مصرف نمی‌شود؛ نتیجه موردنظر را انتخاب کنید.</span></div>
+          <div className="payment-simulator-actions">
+            <button disabled={Boolean(simulating)} onClick={() => void simulatePayment('succeeded')}>موفق</button>
+            <button disabled={Boolean(simulating)} onClick={() => void simulatePayment('failed')}>ناموفق</button>
+            <button disabled={Boolean(simulating)} onClick={() => void simulatePayment('cancelled')}>لغو</button>
+          </div>
+        </section>
+      )}
 
       <section className="product-facts-card">
         <div className="product-section-title">

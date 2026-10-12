@@ -214,7 +214,7 @@ const nodes = [
   {
     id: 'product', label: 'Product', type: 'entity', x: 860, y: 280,
     fields: [
-      'id', 'title', 'description', 'price',
+      'id', 'title', 'description', 'price', 'stars_price (XTR)',
       'category_id → Category', 'delivery_type',
       'file_id → File', 'message_id → Message',
       'inventory_id → Inventory', 'bundle_id → Bundle',
@@ -236,7 +236,7 @@ const nodes = [
   },
   {
     id: 'inventory_item', label: 'Inventory Item', type: 'entity', x: 860, y: 1120,
-    fields: ['id', 'inventory_id → Inventory', 'value', 'status (available/sold)']
+    fields: ['id', 'inventory_id → Inventory', 'value', 'status (available/reserved/sold)', 'reserved_at', 'order_id', 'user_id']
   },
   {
     id: 'bundle', label: 'Bundle', type: 'entity', x: 860, y: 1270,
@@ -269,6 +269,10 @@ const nodes = [
     fields: ['id', 'order_id → Order', 'method', 'currency', 'amount_minor', 'checkout_reference', 'external_transaction_id', 'status']
   },
   {
+    id: 'delivery', label: 'Order Delivery', type: 'entity', x: 1530, y: 290,
+    fields: ['id', 'order_id → Order', 'user_id → User', 'product_id → Product', 'product_title', 'status', 'delivered_at']
+  },
+  {
     id: 'coupon', label: 'Coupon', type: 'entity', x: 1300, y: 490,
     fields: ['id', 'code', 'discount_type (static/percentage)', 'discount_value', 'usage_limit', 'expires_at']
   },
@@ -282,7 +286,7 @@ const nodes = [
   },
 
   // ── PAYMENT PROCESSOR BOUNDARY ────────────────────────────────────────────
-  { id: 'payment_processor', label: 'Processor contract', type: 'payment', x: 1300, y: 1080, fields: ['CreateCheckout', 'Refund', 'future payment adapters'] },
+  { id: 'payment_processor', label: 'Processor contract', type: 'payment', x: 1300, y: 1080, fields: ['CreateCheckout', 'Refund', 'Telegram Stars first', 'future third-party adapters'] },
 ];
 
 const relations = [
@@ -320,6 +324,7 @@ const relations = [
   ['user', 'order'],
   ['product', 'order'],
   ['order', 'payment'],
+  ['order', 'delivery'],
   ['payment', 'payment_processor'],
 ];
 

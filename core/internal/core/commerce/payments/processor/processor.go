@@ -1,6 +1,6 @@
 // Package processor defines the boundary between the payment domain and an
-// external checkout system. Each concrete integration implements this contract
-// outside the core model.
+// external checkout system. Telegram Stars is the first integration; future
+// third-party gateways can implement the same contract outside the core model.
 package processor
 
 import (

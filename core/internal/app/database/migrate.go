@@ -10,8 +10,27 @@ import (
 // Migrate runs all CREATE TABLE IF NOT EXISTS statements.
 // It is idempotent and safe to call on every startup.
 func Migrate(ctx context.Context, db *pgxpool.Pool) {
+	conn, err := db.Acquire(ctx)
+	if err != nil {
+		log.Fatalf("migration lock connection failed: %v", err)
+	}
+	defer conn.Release()
+
+	// API and bot start together and both apply the shared schema. A
+	// session-scoped advisory lock serializes them so DROP/ADD upgrade steps
+	// cannot race and force one service to restart.
+	const migrationLockID int64 = 742091843
+	if _, err := conn.Exec(ctx, `SELECT pg_advisory_lock($1)`, migrationLockID); err != nil {
+		log.Fatalf("migration lock failed: %v", err)
+	}
+	defer func() {
+		if _, err := conn.Exec(context.Background(), `SELECT pg_advisory_unlock($1)`, migrationLockID); err != nil {
+			log.Printf("migration unlock failed: %v", err)
+		}
+	}()
+
 	for i, stmt := range migrations {
-		if _, err := db.Exec(ctx, stmt); err != nil {
+		if _, err := conn.Exec(ctx, stmt); err != nil {
 			log.Fatalf("migration %d failed: %v", i+1, err)
 		}
 	}
@@ -204,6 +223,7 @@ var migrations = []string{
 		title         TEXT        NOT NULL,
 		description   TEXT        NOT NULL DEFAULT '',
 		price         DOUBLE PRECISION NOT NULL,
+		stars_price   BIGINT      NOT NULL DEFAULT 0 CHECK (stars_price >= 0),
 		category_id   UUID        NOT NULL REFERENCES categories(id),
 		image_storage_id TEXT      NOT NULL DEFAULT '',
 		delivery_type TEXT        NOT NULL
@@ -222,6 +242,17 @@ var migrations = []string{
 	)`,
 	// Upgrade path for databases created before product images were introduced.
 	`ALTER TABLE products ADD COLUMN IF NOT EXISTS image_storage_id TEXT NOT NULL DEFAULT ''`,
+	`ALTER TABLE products ADD COLUMN IF NOT EXISTS stars_price BIGINT NOT NULL DEFAULT 0`,
+	`ALTER TABLE products DROP CONSTRAINT IF EXISTS products_stars_price_check`,
+	`DO $$
+	 BEGIN
+		BEGIN
+			ALTER TABLE products ADD CONSTRAINT products_stars_price_check CHECK (stars_price >= 0);
+		EXCEPTION WHEN duplicate_object THEN
+			NULL;
+		END;
+	 END
+	 $$`,
 	`CREATE INDEX IF NOT EXISTS idx_products_category_id ON products(category_id)`,
 	`CREATE INDEX IF NOT EXISTS idx_products_status       ON products(status)`,
 
@@ -294,6 +325,11 @@ var migrations = []string{
 	`ALTER TABLE payments ADD COLUMN IF NOT EXISTS external_transaction_id TEXT`,
 	`ALTER TABLE payments ADD COLUMN IF NOT EXISTS provider_transaction_id TEXT`,
 	`ALTER TABLE payments ADD COLUMN IF NOT EXISTS provider_data JSONB`,
+	`ALTER TABLE payments ADD COLUMN IF NOT EXISTS is_test BOOLEAN NOT NULL DEFAULT false`,
+	`UPDATE payments
+	 SET is_test = true
+	 WHERE external_transaction_id LIKE 'test:%'
+	    OR COALESCE(provider_data, '{}'::jsonb) @> '{"simulated":true}'::jsonb`,
 	`ALTER TABLE payments ADD COLUMN IF NOT EXISTS paid_at TIMESTAMPTZ`,
 	`ALTER TABLE payments ADD COLUMN IF NOT EXISTS refunded_at TIMESTAMPTZ`,
 	`DO $$
@@ -303,7 +339,7 @@ var migrations = []string{
 			WHERE table_schema = 'public' AND table_name = 'payments' AND column_name = 'provider'
 		) THEN
 			EXECUTE 'UPDATE payments SET method = provider WHERE (method IS NULL OR method = '''') AND provider IS NOT NULL AND provider <> ''''';
-			EXECUTE 'UPDATE payments SET currency = ''IRR'' WHERE provider IS NOT NULL AND provider <> '''' AND (currency IS NULL OR currency = '''')';
+			EXECUTE 'UPDATE payments SET currency = CASE WHEN provider = ''telegram_stars'' THEN ''XTR'' ELSE ''IRR'' END WHERE provider IS NOT NULL AND provider <> ''''';
 			EXECUTE 'ALTER TABLE payments ALTER COLUMN provider DROP NOT NULL';
 		END IF;
 		IF EXISTS (
@@ -325,11 +361,45 @@ var migrations = []string{
 		) THEN
 			EXECUTE 'UPDATE payments SET provider_data = callback_data WHERE provider_data IS NULL AND callback_data IS NOT NULL';
 		END IF;
+		IF EXISTS (
+			SELECT 1 FROM information_schema.columns
+			WHERE table_schema = 'public' AND table_name = 'payments' AND column_name = 'stars_amount'
+		) THEN
+			EXECUTE 'UPDATE payments SET method = ''telegram_stars'' WHERE method IS NULL OR method = ''''';
+			EXECUTE 'UPDATE payments SET currency = ''XTR'' WHERE currency IS NULL OR currency = ''''';
+			EXECUTE 'UPDATE payments SET amount_minor = stars_amount WHERE amount_minor IS NULL AND stars_amount IS NOT NULL';
+			EXECUTE 'ALTER TABLE payments ALTER COLUMN stars_amount DROP NOT NULL';
+		END IF;
+		IF EXISTS (
+			SELECT 1 FROM information_schema.columns
+			WHERE table_schema = 'public' AND table_name = 'payments' AND column_name = 'invoice_payload'
+		) THEN
+			EXECUTE 'UPDATE payments SET checkout_reference = invoice_payload WHERE (checkout_reference IS NULL OR checkout_reference = '''') AND invoice_payload IS NOT NULL AND invoice_payload <> ''''';
+			EXECUTE 'ALTER TABLE payments ALTER COLUMN invoice_payload DROP NOT NULL';
+		END IF;
+		IF EXISTS (
+			SELECT 1 FROM information_schema.columns
+			WHERE table_schema = 'public' AND table_name = 'payments' AND column_name = 'telegram_payment_charge_id'
+		) THEN
+			EXECUTE 'UPDATE payments SET external_transaction_id = telegram_payment_charge_id WHERE external_transaction_id IS NULL AND telegram_payment_charge_id IS NOT NULL';
+		END IF;
+		IF EXISTS (
+			SELECT 1 FROM information_schema.columns
+			WHERE table_schema = 'public' AND table_name = 'payments' AND column_name = 'provider_payment_charge_id'
+		) THEN
+			EXECUTE 'UPDATE payments SET provider_transaction_id = provider_payment_charge_id WHERE provider_transaction_id IS NULL AND provider_payment_charge_id IS NOT NULL';
+		END IF;
+		IF EXISTS (
+			SELECT 1 FROM information_schema.columns
+			WHERE table_schema = 'public' AND table_name = 'payments' AND column_name = 'successful_payment'
+		) THEN
+			EXECUTE 'UPDATE payments SET provider_data = successful_payment WHERE provider_data IS NULL AND successful_payment IS NOT NULL';
+		END IF;
 	 END
 	 $$`,
 	`UPDATE payments SET method = 'legacy' WHERE method IS NULL OR method = ''`,
 	`ALTER TABLE payments ALTER COLUMN method SET NOT NULL`,
-	`UPDATE payments SET currency = 'UNKNOWN' WHERE currency IS NULL OR currency = ''`,
+	`UPDATE payments SET currency = CASE WHEN method = 'telegram_stars' THEN 'XTR' ELSE 'IRR' END WHERE currency IS NULL OR currency = ''`,
 	`ALTER TABLE payments ALTER COLUMN currency SET NOT NULL`,
 	`ALTER TABLE payments ALTER COLUMN currency DROP DEFAULT`,
 	`UPDATE payments SET amount_minor = 1 WHERE amount_minor IS NULL`,
@@ -353,9 +423,54 @@ var migrations = []string{
 	`CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_checkout_reference ON payments(checkout_reference)`,
 	`CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_external_transaction ON payments(method, external_transaction_id) WHERE external_transaction_id IS NOT NULL`,
 
-	`CREATE TABLE IF NOT EXISTS settings (
-		id UUID PRIMARY KEY DEFAULT gen_random_uuid()
+	`CREATE TABLE IF NOT EXISTS order_deliveries (
+		id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+		order_id     UUID NOT NULL UNIQUE REFERENCES orders(id) ON DELETE CASCADE,
+		user_id      UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+		product_id   UUID NOT NULL REFERENCES products(id),
+		product_title TEXT NOT NULL,
+		status       TEXT NOT NULL DEFAULT 'awaiting_payment'
+		                    CHECK (status IN ('awaiting_payment','processing','delivered','failed')),
+		error        TEXT,
+		created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+		updated_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+		delivered_at TIMESTAMPTZ
 	)`,
+	`CREATE INDEX IF NOT EXISTS idx_order_deliveries_user_id ON order_deliveries(user_id, created_at DESC)`,
+	`CREATE INDEX IF NOT EXISTS idx_order_deliveries_status ON order_deliveries(status)`,
+
+	`CREATE TABLE IF NOT EXISTS order_delivery_items (
+		id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+		delivery_id  UUID NOT NULL REFERENCES order_deliveries(id) ON DELETE CASCADE,
+		kind         TEXT NOT NULL CHECK (kind IN ('file','message','inventory','api')),
+		label        TEXT NOT NULL DEFAULT '',
+		file_id      UUID REFERENCES files(id),
+		api_id       UUID REFERENCES apis(id),
+		content      TEXT,
+		status       TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','processing','ready','failed')),
+		sort_order   INTEGER NOT NULL DEFAULT 0,
+		error        TEXT,
+		created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+		updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+	)`,
+	`CREATE INDEX IF NOT EXISTS idx_order_delivery_items_delivery_id ON order_delivery_items(delivery_id, sort_order)`,
+
+	// Inventory values are reserved while an invoice is open and become sold
+	// only after Telegram sends a successful_payment update.
+	`ALTER TABLE inventory_items DROP CONSTRAINT IF EXISTS inventory_items_status_check`,
+	`ALTER TABLE inventory_items ADD CONSTRAINT inventory_items_status_check CHECK (status IN ('available','reserved','sold'))`,
+	`ALTER TABLE inventory_items ADD COLUMN IF NOT EXISTS reserved_at TIMESTAMPTZ`,
+
+	`CREATE TABLE IF NOT EXISTS settings (
+		id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+		payment_test_mode BOOLEAN NOT NULL DEFAULT false,
+		updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+	)`,
+	`ALTER TABLE settings ADD COLUMN IF NOT EXISTS payment_test_mode BOOLEAN NOT NULL DEFAULT false`,
+	`ALTER TABLE settings ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now()`,
+	`INSERT INTO settings (id, payment_test_mode, updated_at)
+	 VALUES ('00000000-0000-0000-0000-000000000001', false, now())
+	 ON CONFLICT (id) DO NOTHING`,
 
 	`CREATE TABLE IF NOT EXISTS seed_markers (
 		seed_name  TEXT        PRIMARY KEY,

@@ -40,6 +40,7 @@ import (
 	userrepo "telegram-marketplace/internal/core/membership/users/repository"
 	"telegram-marketplace/internal/core/membership/vip"
 	viprepo "telegram-marketplace/internal/core/membership/vip/repository"
+	telegramclient "telegram-marketplace/internal/platform/telegram"
 	"telegram-marketplace/pkg/storage"
 )
 
@@ -155,7 +156,10 @@ func Wire(ctx context.Context, db *pgxpool.Pool, cfg config.Config) router.Handl
 
 	// --- commerce/payments ---
 	paymentsRepo := paymentsrepo.NewPostgresRepository(db)
-	paymentsService := payments.NewService(paymentsRepo)
+	telegramAPI := telegramclient.NewClient(cfg.BotToken)
+	paymentsService := payments.NewService(
+		paymentsRepo, db, telegramAPI, apiService, productFilesStore,
+	)
 	paymentsHandler := payments.NewHandler(paymentsService)
 
 	// --- membership/vip ---
@@ -189,6 +193,7 @@ func Wire(ctx context.Context, db *pgxpool.Pool, cfg config.Config) router.Handl
 		Coupons:          couponsHandler,
 		Orders:           ordersHandler,
 		Payments:         paymentsHandler,
+		PaymentsService:  paymentsService,
 		Tickets:          ticketHandler,
 		TicketCategories: ticketCategoryHandler,
 		VIP:              vipHandler,

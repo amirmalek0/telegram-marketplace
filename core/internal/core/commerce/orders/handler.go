@@ -55,8 +55,13 @@ func (h *Handler) Create(c *gin.Context) {
 // GetByID returns a single order by its UUID.
 func (h *Handler) GetByID(c *gin.Context) {
 	id := c.Param("id")
+	telegramID, ok := middleware.GetTelegramUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "telegram user not found"})
+		return
+	}
 
-	order, err := h.service.GetByID(c.Request.Context(), id)
+	order, err := h.service.GetByIDForTelegramID(c.Request.Context(), id, telegramID)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})

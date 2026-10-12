@@ -7,6 +7,7 @@ import {
   OrderStatus,
   OrdersPaginatedResponse,
   PaymentsPaginatedResponse,
+  PaymentConfigResponse,
   TicketCategoriesPaginatedResponse,
   TicketMessageResponse,
   TicketPriority,
@@ -60,6 +61,8 @@ export const ordersApi = {
 
 export const paymentsApi = {
   list: (params?: PageParams, signal?: AbortSignal) => apiClient.get<PaymentsPaginatedResponse>('/payment/all', { params, signal }).then(r => r.data),
+  getConfig: (signal?: AbortSignal) => apiClient.get<PaymentConfigResponse>('/payment/config', { signal }).then(r => r.data),
+  updateConfig: (testMode: boolean) => apiClient.patch<PaymentConfigResponse>('/payment/config', { test_mode: testMode }).then(r => r.data),
 };
 
 export const vipApi = {

@@ -1,6 +1,5 @@
 import { NavLink } from 'react-router-dom'
 import type { Category, Product } from '../../features/catalog/types'
-import { formatPrice } from '../../utils/format'
 import { Icon } from '../ui/Icon'
 import { ProductArtwork } from './ProductArtwork'
 
@@ -24,7 +23,7 @@ export function ProductCard({ product, category }: ProductCardProps) {
           <span className="views"><span>{product.views_count.toLocaleString('fa-IR')}</span><Icon name="eye" size={14} /></span>
         </div>
         <div className="product-card-footer">
-          <strong>{formatPrice(product.price)}</strong>
+          <strong>{product.stars_price.toLocaleString('fa-IR')} ⭐</strong>
           <span className="product-card-action">مشاهده <Icon name="arrow" size={15} /></span>
         </div>
       </div>

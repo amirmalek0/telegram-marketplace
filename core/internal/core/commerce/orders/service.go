@@ -134,6 +134,20 @@ func (s *Service) GetByID(ctx context.Context, id string) (*model.Order, error) 
 	return order, nil
 }
 
+// GetByIDForTelegramID prevents one shopper from reading another shopper's
+// order by guessing its UUID.
+func (s *Service) GetByIDForTelegramID(ctx context.Context, id string, telegramID int64) (*model.Order, error) {
+	userID, err := s.getUserIDByTelegramID(ctx, telegramID)
+	if err != nil {
+		return nil, err
+	}
+	order, err := s.GetByID(ctx, id)
+	if err != nil || order.UserID != userID {
+		return nil, repository.ErrNotFound
+	}
+	return order, nil
+}
+
 // ListByTelegramID returns a paginated list of orders for a telegram user.
 func (s *Service) ListByTelegramID(ctx context.Context, telegramID int64, params pagination.Params) (*PaginatedResponse, error) {
 	// Look up user by telegram ID

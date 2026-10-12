@@ -15,6 +15,7 @@ type CreateRequest struct {
 	Title        string  `json:"title" binding:"required"`
 	Description  string  `json:"description"`
 	Price        float64 `json:"price" binding:"required,gt=0"`
+	StarsPrice   int64   `json:"stars_price" binding:"required,gt=0"`
 	CategoryID   string  `json:"category_id" binding:"required"`
 	DeliveryType string  `json:"delivery_type" binding:"required,oneof=file message inventory bundle api"`
 	FileID       *string `json:"file_id"`
@@ -31,6 +32,7 @@ type UpdateRequest struct {
 	Title        *string  `json:"title"`
 	Description  *string  `json:"description"`
 	Price        *float64 `json:"price" binding:"omitempty,gt=0"`
+	StarsPrice   *int64   `json:"stars_price" binding:"omitempty,gt=0"`
 	CategoryID   *string  `json:"category_id"`
 	DeliveryType *string  `json:"delivery_type" binding:"omitempty,oneof=file message inventory bundle api"`
 	FileID       *string  `json:"file_id"`
@@ -54,6 +56,7 @@ type Response struct {
 	Title        string             `json:"title"`
 	Description  string             `json:"description"`
 	Price        float64            `json:"price"`
+	StarsPrice   int64              `json:"stars_price"`
 	CategoryID   string             `json:"category_id"`
 	ImageURL     string             `json:"image_url"`
 	DeliveryType model.DeliveryType `json:"delivery_type"`
@@ -87,6 +90,7 @@ func (s *Service) toResponse(ctx context.Context, p *model.Product, includeDeliv
 		Title:        p.Title,
 		Description:  p.Description,
 		Price:        p.Price,
+		StarsPrice:   p.StarsPrice,
 		CategoryID:   p.CategoryID,
 		ImageURL:     imageURL,
 		DeliveryType: p.DeliveryType,

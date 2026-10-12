@@ -81,6 +81,7 @@ services:
       DATABASE_URL: postgres://tgmp:tgmp@postgres:5432/telegram_marketplace?sslmode=disable
       REDIS_URL: redis://redis:6379/0
       BOT_TOKEN: ${BOT_TOKEN}
+      TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:-}
       JWT_SECRET: ${JWT_SECRET:-qgGm3V/DGE+dobjQh+hiPO1j/r6CsmLa0TkYAdX+/Z4=}
       ADMIN_SEED_USERNAME: ${ADMIN_SEED_USERNAME:-admin}
       ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-admin}
@@ -120,6 +121,7 @@ services:
       DATABASE_URL: postgres://tgmp:tgmp@postgres:5432/telegram_marketplace?sslmode=disable
       REDIS_URL: redis://redis:6379/0
       BOT_TOKEN: ${BOT_TOKEN}
+      TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:-}
       JWT_SECRET: ${JWT_SECRET:-qgGm3V/DGE+dobjQh+hiPO1j/r6CsmLa0TkYAdX+/Z4=}
       ADMIN_SEED_USERNAME: ${ADMIN_SEED_USERNAME:-admin}
       ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-admin}
@@ -138,7 +140,7 @@ services:
       PRODUCT_IMAGES_PUBLIC_URL: ${PRODUCT_IMAGES_PUBLIC_URL:-http://localhost:9000/product-images}
       ADDR: ":8081"
     ports:
-      - "8081:8081"
+      - "${BOT_PORT:-8083}:8081"
     restart: unless-stopped
 
   # ── Frontend Services ───────────────────────────────

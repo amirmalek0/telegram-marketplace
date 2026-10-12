@@ -92,6 +92,7 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (*model.Product
 		Title:        req.Title,
 		Description:  req.Description,
 		Price:        req.Price,
+		StarsPrice:   req.StarsPrice,
 		CategoryID:   req.CategoryID,
 		DeliveryType: deliveryType,
 		FileID:       req.FileID,
@@ -191,6 +192,9 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) (*mo
 	}
 	if req.Price != nil {
 		product.Price = *req.Price
+	}
+	if req.StarsPrice != nil {
+		product.StarsPrice = *req.StarsPrice
 	}
 	if req.CategoryID != nil {
 		product.CategoryID = *req.CategoryID

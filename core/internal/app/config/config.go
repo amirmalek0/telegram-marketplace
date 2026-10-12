@@ -15,6 +15,7 @@ type Config struct {
 	BotToken           string
 	Addr               string
 	WebhookURL         string // Optional: webhook URL for bot (empty = polling mode)
+	WebhookSecret      string // Optional secret verified on incoming Telegram webhooks.
 	JWTSecret          string // Secret key for signing admin JWT tokens
 	CORSAllowedOrigins []string
 
@@ -48,11 +49,12 @@ func Load() Config {
 	loadEnvFile()
 
 	return Config{
-		DatabaseURL: mustEnv("DATABASE_URL"),
-		BotToken:    mustEnv("BOT_TOKEN"),
-		Addr:        getEnv("ADDR", ":8080"),
-		WebhookURL:  getEnv("WEBHOOK_URL", ""),
-		JWTSecret:   mustEnv("JWT_SECRET"),
+		DatabaseURL:   mustEnv("DATABASE_URL"),
+		BotToken:      mustEnv("BOT_TOKEN"),
+		Addr:          getEnv("ADDR", ":8080"),
+		WebhookURL:    getEnv("WEBHOOK_URL", ""),
+		WebhookSecret: getEnv("TELEGRAM_WEBHOOK_SECRET", ""),
+		JWTSecret:     mustEnv("JWT_SECRET"),
 		CORSAllowedOrigins: splitCSV(getEnv(
 			"CORS_ALLOWED_ORIGINS",
 			"http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001",

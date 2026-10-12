@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { deliveryGradients } from '../../features/catalog/constants'
 import type { Product } from '../../features/catalog/types'
 import { publicAssetURL } from '../../utils/assets'
-import { formatPrice } from '../../utils/format'
 import { Icon } from '../ui/Icon'
 
 export function ProductSearch({ products }: { products: Product[] }) {
@@ -78,7 +77,7 @@ export function ProductSearch({ products }: { products: Product[] }) {
                   <span className={`search-result-image ${deliveryGradients[item.delivery_type]}`}>
                     {item.image_url ? <img src={publicAssetURL(item.image_url)} alt="" /> : <Icon name="box" size={20} />}
                   </span>
-                  <span className="search-result-copy"><strong>{item.title}</strong><small>{formatPrice(item.price)}</small></span>
+                  <span className="search-result-copy"><strong>{item.title}</strong><small>{item.stars_price.toLocaleString('fa-IR')} ⭐</small></span>
                   <Icon name="arrow" size={15} />
                 </button>
               )) : (
