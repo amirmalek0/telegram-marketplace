@@ -29,6 +29,7 @@ export interface Product {
   delivery_type: DeliveryType
   demo_url?: string
   vip_only: boolean
+  repurchasable: boolean
   views_count: number
   status: string
   created_at: string

@@ -1,16 +1,58 @@
 export interface StarsInvoice {
-  order_id: string
+  order_id?: string
   payment_id: string
-  invoice_url: string
+  invoice_url?: string
   stars: number
   simulation_enabled: boolean
+  completed: boolean
+  purpose: 'product' | 'vip_plan' | 'wallet_topup'
+  wallet_balance?: number
 }
 
 export interface SimulatedPayment {
-  order_id: string
+  order_id?: string
+  reference_id?: string
+  purpose: 'product' | 'vip_plan' | 'wallet_topup'
   status: 'succeeded' | 'failed' | 'cancelled'
   delivery_status?: 'processing' | 'delivered' | 'failed'
   delivery_error?: string
+  wallet_balance?: number
+}
+
+export interface WalletTransaction {
+  id: string
+  type: 'purchase' | 'reward' | 'topup' | 'refund' | 'admin_adjust'
+  amount: number
+  balance_before: number
+  balance_after: number
+  description: string
+  created_at: string
+}
+
+export interface Wallet {
+  balance: number
+  transactions: WalletTransaction[]
+}
+
+export interface VipPlan {
+  id: string
+  title: string
+  stars_price: number
+  duration: number
+  status: 'active' | 'inactive'
+  created_at: string
+}
+
+export interface UserAccount {
+  id: string
+  telegram_id: number
+  first_name: string
+  last_name: string
+  username: string
+  wallet_balance: number
+  has_active_plan: boolean
+  active_plan_id?: string
+  plan_expire_at?: string
 }
 
 export interface Order {
@@ -18,6 +60,9 @@ export interface Order {
   product_id: string
   quantity: number
   stars: number
+  product_title: string
+  delivery_status?: 'awaiting_payment' | 'processing' | 'delivered' | 'failed'
+  delivery_item_count: number
   status: 'pending' | 'paid' | 'failed' | 'refunded' | 'cancelled'
   paid_at?: string
   created_at: string

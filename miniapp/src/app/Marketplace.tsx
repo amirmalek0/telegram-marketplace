@@ -13,7 +13,7 @@ import { DownloadsPage } from '../pages/DownloadsPage'
 import { ShopPage } from '../pages/ShopPage'
 import { TicketPage } from '../pages/TicketPage'
 import { TicketsPage } from '../pages/TicketsPage'
-import { UnderConstructionPage } from '../pages/UnderConstructionPage'
+import { ProfilePage } from '../pages/ProfilePage'
 
 export function Marketplace() {
   const auth = useTelegramAuth()
@@ -35,7 +35,7 @@ export function Marketplace() {
           <Route path="/tickets" element={<TicketsPage initDataRaw={auth.initDataRaw} ready={!catalog.loading} />} />
           <Route path="/tickets/new" element={<NewTicketPage initDataRaw={auth.initDataRaw} ready={!catalog.loading} />} />
           <Route path="/tickets/:ticketId" element={<TicketPage initDataRaw={auth.initDataRaw} ready={!catalog.loading} />} />
-          <Route path="/profile" element={<UnderConstructionPage icon="profile" title="پروفایل" />} />
+          <Route path="/profile" element={<ProfilePage initDataRaw={auth.initDataRaw} telegramUser={auth.user} />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
