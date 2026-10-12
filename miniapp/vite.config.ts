@@ -12,6 +12,12 @@ export default defineConfig({
         target: 'http://localhost:8082',
         changeOrigin: true,
       },
+      '/storage': {
+        target: 'http://localhost:9000',
+        changeOrigin: true,
+        headers: { Host: 'minio:9000' },
+        rewrite: (requestPath) => requestPath.replace(/^\/storage/, ''),
+      },
     },
   },
   build: {

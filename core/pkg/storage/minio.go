@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/url"
 	"strings"
 	"time"
 
@@ -41,8 +42,9 @@ func NewClient(endpoint, accessKey, secretKey, region string) *Client {
 }
 
 // Bucket returns a Storage scoped to the given bucket name.
-// publicURL is the base URL used to build public object URLs,
-// e.g. "http://localhost:9000/categories-icons".
+// publicURL is the browser-facing bucket base. It can be a same-origin path
+// such as "/storage/categories-icons" or an absolute proxy URL. The proxy must
+// forward the original S3 path and preserve the host used by the signer.
 func (c *Client) Bucket(name, publicURL string) Storage {
 	return &S3Client{
 		client:    c.client,
@@ -129,5 +131,34 @@ func (c *S3Client) PresignedURL(ctx context.Context, key string, ttl time.Durati
 	if err != nil {
 		return "", fmt.Errorf("storage.PresignedURL: %w", err)
 	}
-	return req.URL, nil
+	return c.toPublicURL(req.URL)
+}
+
+// toPublicURL exposes a signed internal MinIO URL through the configured
+// browser-facing proxy without changing its signature query. The proxy removes
+// its public prefix and sends the original bucket path and signed Host to MinIO.
+func (c *S3Client) toPublicURL(signedURL string) (string, error) {
+	if c.publicURL == "" {
+		return signedURL, nil
+	}
+
+	signed, err := url.Parse(signedURL)
+	if err != nil {
+		return "", fmt.Errorf("storage public URL: parse signed URL: %w", err)
+	}
+	publicBase, err := url.Parse(c.publicURL)
+	if err != nil {
+		return "", fmt.Errorf("storage public URL: parse public base: %w", err)
+	}
+
+	bucketPath := "/" + c.bucket
+	if signed.Path != bucketPath && !strings.HasPrefix(signed.Path, bucketPath+"/") {
+		return "", fmt.Errorf("storage public URL: signed path does not belong to bucket %q", c.bucket)
+	}
+
+	objectPath := strings.TrimPrefix(signed.Path, bucketPath)
+	publicBase.Path = strings.TrimRight(publicBase.Path, "/") + objectPath
+	publicBase.RawQuery = signed.RawQuery
+	publicBase.Fragment = ""
+	return publicBase.String(), nil
 }

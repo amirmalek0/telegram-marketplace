@@ -32,13 +32,13 @@ type Config struct {
 
 	// Per-entity buckets (name + public base URL)
 	CategoryIconsBucket    string // e.g. "categories-icons"
-	CategoryIconsPublicURL string // e.g. "http://localhost:9000/categories-icons"
+	CategoryIconsPublicURL string // e.g. "/storage/categories-icons"
 
 	ProductFilesBucket    string // e.g. "product-files"
-	ProductFilesPublicURL string // e.g. "http://localhost:9000/product-files"
+	ProductFilesPublicURL string // e.g. "/storage/product-files"
 
 	ProductImagesBucket    string // e.g. "product-images"
-	ProductImagesPublicURL string // e.g. "http://localhost:9000/product-images"
+	ProductImagesPublicURL string // e.g. "/storage/product-images"
 
 }
 

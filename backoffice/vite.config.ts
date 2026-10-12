@@ -25,6 +25,7 @@ export default defineConfig(({ mode }) => {
         '/storage': {
           target: env.VITE_STORAGE_PROXY_TARGET || 'http://localhost:9000',
           changeOrigin: true,
+          headers: { Host: env.VITE_STORAGE_SIGNING_HOST || 'minio:9000' },
           rewrite: (requestPath) => requestPath.replace(/^\/storage/, ''),
         },
       },

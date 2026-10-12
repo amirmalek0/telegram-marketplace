@@ -92,11 +92,11 @@ services:
       STORAGE_REGION: ${STORAGE_REGION:-us-east-1}
       STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL:-http://localhost:9000/marketplace}
       CATEGORY_ICONS_BUCKET: ${CATEGORY_ICONS_BUCKET:-categories-icons}
-      CATEGORY_ICONS_PUBLIC_URL: ${CATEGORY_ICONS_PUBLIC_URL:-http://localhost:9000/categories-icons}
+      CATEGORY_ICONS_PUBLIC_URL: ${CATEGORY_ICONS_PUBLIC_URL:-/storage/categories-icons}
       PRODUCT_FILES_BUCKET: ${PRODUCT_FILES_BUCKET:-product-files}
-      PRODUCT_FILES_PUBLIC_URL: ${PRODUCT_FILES_PUBLIC_URL:-http://localhost:9000/product-files}
+      PRODUCT_FILES_PUBLIC_URL: ${PRODUCT_FILES_PUBLIC_URL:-/storage/product-files}
       PRODUCT_IMAGES_BUCKET: ${PRODUCT_IMAGES_BUCKET:-product-images}
-      PRODUCT_IMAGES_PUBLIC_URL: ${PRODUCT_IMAGES_PUBLIC_URL:-http://localhost:9000/product-images}
+      PRODUCT_IMAGES_PUBLIC_URL: ${PRODUCT_IMAGES_PUBLIC_URL:-/storage/product-images}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001}
       ADDR: ":8080"
     ports:
@@ -133,11 +133,11 @@ services:
       STORAGE_REGION: ${STORAGE_REGION:-us-east-1}
       STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL:-http://localhost:9000/marketplace}
       CATEGORY_ICONS_BUCKET: ${CATEGORY_ICONS_BUCKET:-categories-icons}
-      CATEGORY_ICONS_PUBLIC_URL: ${CATEGORY_ICONS_PUBLIC_URL:-http://localhost:9000/categories-icons}
+      CATEGORY_ICONS_PUBLIC_URL: ${CATEGORY_ICONS_PUBLIC_URL:-/storage/categories-icons}
       PRODUCT_FILES_BUCKET: ${PRODUCT_FILES_BUCKET:-product-files}
-      PRODUCT_FILES_PUBLIC_URL: ${PRODUCT_FILES_PUBLIC_URL:-http://localhost:9000/product-files}
+      PRODUCT_FILES_PUBLIC_URL: ${PRODUCT_FILES_PUBLIC_URL:-/storage/product-files}
       PRODUCT_IMAGES_BUCKET: ${PRODUCT_IMAGES_BUCKET:-product-images}
-      PRODUCT_IMAGES_PUBLIC_URL: ${PRODUCT_IMAGES_PUBLIC_URL:-http://localhost:9000/product-images}
+      PRODUCT_IMAGES_PUBLIC_URL: ${PRODUCT_IMAGES_PUBLIC_URL:-/storage/product-images}
       ADDR: ":8081"
     ports:
       - "${BOT_PORT:-8083}:8081"
