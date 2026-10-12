@@ -1,34 +1,162 @@
-import { useEffect, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, CircleDollarSign, Package, ShoppingBag, Ticket, TrendingUp, Users, WalletCards } from 'lucide-react';
+import { ArrowLeft, CircleDollarSign, Package, Search, ShoppingBag, Ticket, Users, WalletCards } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { ordersApi, paymentsApi, productsApi, ticketsApi, usersApi } from '@/api';
+import toast from 'react-hot-toast';
+import { ordersApi, productsApi, ticketsApi, usersApi } from '@/api';
 import { OrderResponse } from '@/types';
 import { Badge } from '@/components/ui';
 import { formatDateTime, formatMoney, shortId } from '@/utils/format';
 
-interface Metric { label: string; value: number; helper: string; icon: React.ElementType; iconClass: string; path: string }
+interface Metric {
+  label: string;
+  value: number;
+  helper: string;
+  icon: React.ElementType;
+  iconClass: string;
+  path: string;
+}
+
 const container = { hidden: {}, visible: { transition: { staggerChildren: .05 } } };
 const item = { hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0 } };
 
+const destinations = [
+  { path: '/', label: 'داشبورد', keywords: 'خانه dashboard overview' },
+  { path: '/products', label: 'محصولات', keywords: 'محصول کالا product catalog' },
+  { path: '/categories', label: 'دسته‌بندی‌ها', keywords: 'دسته category' },
+  { path: '/bundles', label: 'باندل‌ها', keywords: 'بسته bundle' },
+  { path: '/inventory', label: 'مخزن', keywords: 'موجودی inventory stock' },
+  { path: '/files', label: 'فایل‌ها', keywords: 'file download' },
+  { path: '/messages', label: 'پیام‌های تحویل', keywords: 'پیام delivery message' },
+  { path: '/apis', label: 'اتصال‌های API', keywords: 'api اتصال' },
+  { path: '/orders', label: 'سفارش‌ها', keywords: 'سفارش order خرید' },
+  { path: '/payments', label: 'پرداخت‌ها', keywords: 'پرداخت payment stars ستاره' },
+  { path: '/coupons', label: 'کدهای تخفیف', keywords: 'تخفیف coupon discount' },
+  { path: '/users', label: 'کاربران', keywords: 'کاربر مشتری user customer' },
+  { path: '/wallets', label: 'کیف پول', keywords: 'wallet balance موجودی' },
+  { path: '/vip', label: 'پلن‌های VIP', keywords: 'vip اشتراک plan' },
+  { path: '/tickets', label: 'تیکت‌ها', keywords: 'ticket پشتیبانی support' },
+  { path: '/admins', label: 'مدیران', keywords: 'admin مدیر' },
+];
+
 export default function DashboardPage() {
-  const navigate = useNavigate(); const [counts, setCounts] = useState({ products: 0, users: 0, orders: 0, tickets: 0, payments: 0 }); const [recent, setRecent] = useState<OrderResponse[]>([]); const [loading, setLoading] = useState(true);
-  useEffect(() => { let mounted = true; Promise.allSettled([productsApi.list({ page: 1, per_page: 1 }), usersApi.list({ page: 1, per_page: 1 }), ordersApi.list({ page: 1, per_page: 6 }), ticketsApi.list({ page: 1, per_page: 1 }), paymentsApi.list({ page: 1, per_page: 1 })]).then(results => { if (!mounted) return; const value = <T,>(i: number) => results[i].status === 'fulfilled' ? (results[i] as PromiseFulfilledResult<T>).value : null; const p = value<Awaited<ReturnType<typeof productsApi.list>>>(0); const u = value<Awaited<ReturnType<typeof usersApi.list>>>(1); const o = value<Awaited<ReturnType<typeof ordersApi.list>>>(2); const t = value<Awaited<ReturnType<typeof ticketsApi.list>>>(3); const pay = value<Awaited<ReturnType<typeof paymentsApi.list>>>(4); setCounts({ products: p?.total || 0, users: u?.total || 0, orders: o?.total || 0, tickets: t?.total || 0, payments: pay?.total || 0 }); setRecent(o?.data || []); setLoading(false); }); return () => { mounted = false; }; }, []);
+  const navigate = useNavigate();
+  const [counts, setCounts] = useState({ products: 0, users: 0, orders: 0, tickets: 0 });
+  const [recent, setRecent] = useState<OrderResponse[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState('');
+  const matches = useMemo(() => {
+    const normalized = query.trim().toLowerCase();
+    if (!normalized) return [];
+    return destinations.filter(destination => `${destination.label} ${destination.keywords}`.toLowerCase().includes(normalized)).slice(0, 6);
+  }, [query]);
+
+  useEffect(() => {
+    let mounted = true;
+    Promise.allSettled([
+      productsApi.list({ page: 1, per_page: 1 }),
+      usersApi.list({ page: 1, per_page: 1 }),
+      ordersApi.list({ page: 1, per_page: 6 }),
+      ticketsApi.list({ page: 1, per_page: 1 }),
+    ]).then(results => {
+      if (!mounted) return;
+      const value = <T,>(index: number) => results[index].status === 'fulfilled' ? (results[index] as PromiseFulfilledResult<T>).value : null;
+      const products = value<Awaited<ReturnType<typeof productsApi.list>>>(0);
+      const users = value<Awaited<ReturnType<typeof usersApi.list>>>(1);
+      const orders = value<Awaited<ReturnType<typeof ordersApi.list>>>(2);
+      const tickets = value<Awaited<ReturnType<typeof ticketsApi.list>>>(3);
+      setCounts({ products: products?.total || 0, users: users?.total || 0, orders: orders?.total || 0, tickets: tickets?.total || 0 });
+      setRecent(orders?.data || []);
+      setLoading(false);
+    });
+    return () => { mounted = false; };
+  }, []);
+
   const metrics: Metric[] = [
     { label: 'کل سفارش‌ها', value: counts.orders, helper: 'چرخه کامل فروش', icon: ShoppingBag, iconClass: 'bg-blue-500/10 text-blue-600', path: '/orders' },
     { label: 'کاربران', value: counts.users, helper: 'مشتریان ثبت‌شده', icon: Users, iconClass: 'bg-violet-500/10 text-violet-600', path: '/users' },
     { label: 'محصولات', value: counts.products, helper: 'اقلام کاتالوگ', icon: Package, iconClass: 'bg-cyan-500/10 text-cyan-600', path: '/products' },
     { label: 'تیکت‌ها', value: counts.tickets, helper: 'در صف پشتیبانی', icon: Ticket, iconClass: 'bg-amber-500/10 text-amber-600', path: '/tickets' },
   ];
+
+  const goTo = (path: string) => {
+    navigate(path);
+    setQuery('');
+  };
+
+  const search = (event: FormEvent) => {
+    event.preventDefault();
+    if (matches[0]) goTo(matches[0].path);
+    else if (query.trim()) toast.error('بخشی با این عنوان پیدا نشد');
+  };
+
   return <div className="space-y-6 pb-8">
-    <section className="relative overflow-hidden rounded-[24px] bg-[#111d3a] px-6 py-7 text-white shadow-xl shadow-blue-950/10 sm:px-8 sm:py-9">
-      <div className="absolute inset-0 opacity-30" style={{ backgroundImage: 'radial-gradient(circle at 15% 20%, #2563eb 0, transparent 30%), radial-gradient(circle at 80% 80%, #06b6d4 0, transparent 25%)' }} />
-      <div className="relative flex flex-col justify-between gap-7 lg:flex-row lg:items-end"><div><div className="mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] text-blue-100"><span className="h-2 w-2 rounded-full bg-emerald-400" />همه سرویس‌ها در دسترس‌اند</div><h1 className="max-w-xl text-3xl font-black leading-tight tracking-tight sm:text-4xl">عملیات فروشگاه،<br /><span className="text-cyan-300">در یک نمای واضح.</span></h1><p className="mt-3 max-w-xl text-sm leading-6 text-slate-300">از سفارش و پرداخت تا موجودی، مشتری و پشتیبانی؛ داده‌های اصلی کسب‌وکار بدون رفت‌وآمد بین ابزارها.</p></div><div className="grid grid-cols-2 gap-3"><HeroMini label="تراکنش‌ها" value={counts.payments} icon={<CircleDollarSign size={17} />} /><HeroMini label="نرخ پاسخ" value="زنده" icon={<TrendingUp size={17} />} /></div></div>
+    <section className="surface-card overflow-visible p-3">
+      <form onSubmit={search} className="relative flex w-full items-center gap-2 rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface-2))] px-3 py-2.5 transition focus-within:border-blue-500/50 focus-within:ring-2 focus-within:ring-blue-500/10">
+        <Search size={16} className="shrink-0 text-[rgb(var(--color-text-muted))]" />
+        <input value={query} onChange={event => setQuery(event.target.value)} className="min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:text-[rgb(var(--color-text-muted))]" placeholder="جستجوی بخش‌های پنل..." />
+        {query.trim() && <div className="absolute inset-x-0 top-[calc(100%+8px)] z-50 overflow-hidden rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-1.5 shadow-xl">
+          {matches.map(destination => <button key={destination.path} type="button" onClick={() => goTo(destination.path)} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-right text-xs font-semibold hover:bg-[rgb(var(--color-surface-2))]"><Search size={13} className="text-[rgb(var(--color-text-muted))]" />{destination.label}</button>)}
+          {matches.length === 0 && <p className="px-3 py-3 text-center text-xs text-[rgb(var(--color-text-muted))]">نتیجه‌ای پیدا نشد</p>}
+        </div>}
+      </form>
+      <div className="mt-3 flex items-center gap-4 border-t border-[rgb(var(--color-border))] pt-3">
+        <div className="hidden shrink-0 border-l border-[rgb(var(--color-border))] px-3 sm:block">
+          <p className="text-sm font-extrabold">میانبرها</p>
+          <p className="mt-0.5 text-[10px] text-[rgb(var(--color-text-muted))]">دسترسی سریع</p>
+        </div>
+        <div className="flex min-w-0 flex-1 gap-2 overflow-x-auto">
+          <Quick path="/products" icon={<Package size={16} />} title="محصول جدید" />
+          <Quick path="/wallets" icon={<WalletCards size={16} />} title="کیف پول" />
+          <Quick path="/coupons" icon={<CircleDollarSign size={16} />} title="کد تخفیف" />
+          <Quick path="/tickets" icon={<Ticket size={16} />} title="تیکت‌ها" />
+        </div>
+      </div>
     </section>
-    <motion.section variants={container} initial="hidden" animate="visible" className="grid grid-cols-2 gap-3 xl:grid-cols-4">{metrics.map(m => <motion.button variants={item} key={m.path} onClick={() => navigate(m.path)} className="surface-card metric-card text-right transition hover:-translate-y-0.5 hover:border-blue-500/30"><div className="mb-5 flex items-center justify-between"><span className={`grid h-10 w-10 place-items-center rounded-xl ${m.iconClass}`}><m.icon size={19} /></span><ArrowLeft size={15} className="text-[rgb(var(--color-text-muted))]" /></div><p className="text-2xl font-black">{loading ? '—' : m.value.toLocaleString('fa-IR')}</p><p className="mt-1 text-xs font-semibold text-[rgb(var(--color-text-secondary))]">{m.label}</p><p className="mt-2 text-[10px] text-[rgb(var(--color-text-muted))]">{m.helper}</p></motion.button>)}</motion.section>
-    <div className="grid gap-5 xl:grid-cols-[1.45fr_.75fr]"><section className="surface-card overflow-hidden"><div className="flex items-center justify-between border-b border-[rgb(var(--color-border))] p-5"><div><h2 className="font-extrabold">سفارش‌های اخیر</h2><p className="mt-1 text-xs text-[rgb(var(--color-text-secondary))]">آخرین فعالیت‌های فروشگاه</p></div><button onClick={() => navigate('/orders')} className="flex items-center gap-1 text-xs font-bold text-blue-600">همه سفارش‌ها <ArrowLeft size={14} /></button></div><div className="divide-y divide-[rgb(var(--color-border))]">{recent.map(order => <button key={order.id} onClick={() => navigate('/orders')} className="flex w-full items-center gap-4 p-4 text-right transition hover:bg-[rgb(var(--color-surface-2))]"><div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-500/10 text-blue-600"><ShoppingBag size={17} /></div><div className="min-w-0 flex-1"><p className="text-sm font-bold">سفارش #{shortId(order.id)}</p><p className="mt-1 text-[10px] text-[rgb(var(--color-text-muted))]">{formatDateTime(order.created_at)}</p></div><b className="text-xs">{formatMoney(order.amount - order.discount_amount)}</b><OrderBadge status={order.status} /></button>)}{!loading && recent.length === 0 && <p className="p-10 text-center text-sm text-[rgb(var(--color-text-muted))]">هنوز سفارشی ثبت نشده است</p>}</div></section><aside className="surface-card p-5"><h2 className="font-extrabold">میانبرهای عملیاتی</h2><p className="mb-4 mt-1 text-xs text-[rgb(var(--color-text-secondary))]">کارهای پرتکرار تیم</p><Quick path="/products" icon={<Package size={17} />} title="افزودن محصول" subtitle="کاتالوگ و روش تحویل" /><Quick path="/wallets" icon={<WalletCards size={17} />} title="اصلاح کیف پول" subtitle="افزایش یا کاهش موجودی" /><Quick path="/coupons" icon={<CircleDollarSign size={17} />} title="ساخت کد تخفیف" subtitle="کمپین فروش تازه" /><Quick path="/tickets" icon={<Ticket size={17} />} title="رسیدگی به تیکت‌ها" subtitle="صف پشتیبانی کاربران" /></aside></div>
+
+    <motion.section variants={container} initial="hidden" animate="visible" className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      {metrics.map(metric => <motion.button variants={item} key={metric.path} onClick={() => navigate(metric.path)} className="surface-card metric-card text-right transition hover:-translate-y-0.5 hover:border-blue-500/30">
+        <div className="mb-5 flex items-center justify-between"><span className={`grid h-10 w-10 place-items-center rounded-xl ${metric.iconClass}`}><metric.icon size={19} /></span><ArrowLeft size={15} className="text-[rgb(var(--color-text-muted))]" /></div>
+        <p className="text-2xl font-black">{loading ? '—' : metric.value.toLocaleString('fa-IR')}</p>
+        <p className="mt-1 text-xs font-semibold text-[rgb(var(--color-text-secondary))]">{metric.label}</p>
+        <p className="mt-2 text-[10px] text-[rgb(var(--color-text-muted))]">{metric.helper}</p>
+      </motion.button>)}
+    </motion.section>
+
+    <section className="surface-card overflow-hidden">
+      <div className="flex items-center justify-between border-b border-[rgb(var(--color-border))] p-5">
+        <div><h2 className="font-extrabold">سفارش‌های اخیر</h2><p className="mt-1 text-xs text-[rgb(var(--color-text-secondary))]">آخرین فعالیت‌های فروشگاه</p></div>
+        <button onClick={() => navigate('/orders')} className="flex items-center gap-1 text-xs font-bold text-blue-600">همه سفارش‌ها <ArrowLeft size={14} /></button>
+      </div>
+      <div className="divide-y divide-[rgb(var(--color-border))]">
+        {recent.map(order => <button key={order.id} onClick={() => navigate('/orders')} className="flex w-full items-center gap-4 p-4 text-right transition hover:bg-[rgb(var(--color-surface-2))]">
+          <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-500/10 text-blue-600"><ShoppingBag size={17} /></div>
+          <div className="min-w-0 flex-1"><p className="text-sm font-bold">سفارش #{shortId(order.id)}</p><p className="mt-1 text-[10px] text-[rgb(var(--color-text-muted))]">{formatDateTime(order.created_at)}</p></div>
+          <b className="text-xs">{formatMoney(order.amount - order.discount_amount)}</b>
+          <OrderBadge status={order.status} />
+        </button>)}
+        {!loading && recent.length === 0 && <p className="p-10 text-center text-sm text-[rgb(var(--color-text-muted))]">هنوز سفارشی ثبت نشده است</p>}
+      </div>
+    </section>
   </div>;
 }
-function HeroMini({ label, value, icon }: { label: string; value: string | number; icon: React.ReactNode }) { return <div className="min-w-32 rounded-2xl border border-white/10 bg-white/[.07] p-4 backdrop-blur"><div className="mb-3 text-cyan-300">{icon}</div><p className="text-xl font-black">{typeof value === 'number' ? value.toLocaleString('fa-IR') : value}</p><p className="mt-1 text-[10px] text-slate-300">{label}</p></div>; }
-function Quick({ path, icon, title, subtitle }: { path: string; icon: React.ReactNode; title: string; subtitle: string }) { const navigate = useNavigate(); return <button onClick={() => navigate(path)} className="mb-2 flex w-full items-center gap-3 rounded-xl border border-transparent p-3 text-right transition hover:border-[rgb(var(--color-border))] hover:bg-[rgb(var(--color-surface-2))]"><span className="grid h-9 w-9 place-items-center rounded-xl bg-blue-500/10 text-blue-600">{icon}</span><span className="flex-1"><b className="block text-xs">{title}</b><small className="text-[10px] text-[rgb(var(--color-text-muted))]">{subtitle}</small></span><ArrowLeft size={14} className="text-[rgb(var(--color-text-muted))]" /></button>; }
-function OrderBadge({ status }: { status: string }) { const map: Record<string, { label: string; variant: 'success' | 'warning' | 'error' | 'default' }> = { paid: { label: 'موفق', variant: 'success' }, pending: { label: 'انتظار', variant: 'warning' }, failed: { label: 'ناموفق', variant: 'error' }, cancelled: { label: 'لغو', variant: 'default' } }; const x = map[status] || { label: status, variant: 'default' as const }; return <Badge variant={x.variant}>{x.label}</Badge>; }
+
+function Quick({ path, icon, title }: { path: string; icon: React.ReactNode; title: string }) {
+  const navigate = useNavigate();
+  return <button onClick={() => navigate(path)} className="flex min-w-[145px] flex-1 items-center gap-2.5 rounded-xl border border-transparent bg-[rgb(var(--color-surface-2))] px-3 py-2.5 text-right transition hover:border-blue-500/25 hover:text-blue-600">
+    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-blue-500/10 text-blue-600">{icon}</span>
+    <b className="flex-1 whitespace-nowrap text-xs">{title}</b>
+    <ArrowLeft size={13} className="text-[rgb(var(--color-text-muted))]" />
+  </button>;
+}
+
+function OrderBadge({ status }: { status: string }) {
+  const map: Record<string, { label: string; variant: 'success' | 'warning' | 'error' | 'default' }> = {
+    paid: { label: 'موفق', variant: 'success' },
+    pending: { label: 'انتظار', variant: 'warning' },
+    failed: { label: 'ناموفق', variant: 'error' },
+    cancelled: { label: 'لغو', variant: 'default' },
+  };
+  const value = map[status] || { label: status, variant: 'default' as const };
+  return <Badge variant={value.variant}>{value.label}</Badge>;
+}
