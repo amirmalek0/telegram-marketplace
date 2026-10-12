@@ -8,7 +8,7 @@ import { adminsApi } from '@/api';
 import { Button, Modal } from '@/components/ui';
 
 const titles: Record<string, string> = {
-  '/': 'داشبورد', '/products': 'محصولات', '/categories': 'دسته‌بندی‌ها', '/bundles': 'باندل‌ها', '/inventory': 'مخزن', '/files': 'فایل‌ها', '/messages': 'پیام‌های تحویل', '/apis': 'اتصال‌های API', '/orders': 'سفارش‌ها', '/payments': 'پرداخت‌ها', '/coupons': 'کدهای تخفیف', '/users': 'کاربران', '/vip': 'پلن‌های VIP', '/tickets': 'تیکت‌ها', '/admins': 'مدیران',
+  '/': 'داشبورد', '/products': 'محصولات', '/categories': 'دسته‌بندی‌ها', '/bundles': 'باندل‌ها', '/inventory': 'مخزن', '/files': 'فایل‌ها', '/messages': 'پیام‌های تحویل', '/apis': 'اتصال‌های API', '/orders': 'سفارش‌ها', '/payments': 'پرداخت‌ها', '/coupons': 'کدهای تخفیف', '/users': 'کاربران', '/vip': 'پلن‌های VIP', '/tickets': 'تیکت‌ها', '/admins': 'مدیران', '/settings': 'تنظیمات عمومی',
 };
 
 function getAdminId(token: string | null) {
@@ -93,7 +93,7 @@ export function Header() {
     <header className="app-header">
       <div className="flex items-center gap-3">
         <button onClick={toggleMobileSidebar} className="icon-button lg:hidden" aria-label="باز کردن منو"><Menu size={19} /></button>
-        <h2 className="text-base font-bold">{titles[pathname] || (pathname.startsWith('/tickets/') ? 'گفت‌وگوی تیکت' : 'مدیریت')}</h2>
+        <h2 className="text-base font-bold">{titles[pathname] || (pathname === '/products/new' ? 'محصول جدید' : pathname.startsWith('/products/') ? 'ویرایش محصول' : pathname.startsWith('/tickets/') ? 'گفت‌وگوی تیکت' : 'مدیریت')}</h2>
       </div>
       <div className="flex items-center gap-2">
         <button onClick={toggleTheme} className="icon-button" aria-label="تغییر پوسته">{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}</button>

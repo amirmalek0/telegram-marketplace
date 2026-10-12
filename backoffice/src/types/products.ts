@@ -16,6 +16,7 @@ export interface CreateProductRequest {
   api_id?: string;
   demo_url?: string;
   vip_only: boolean;
+  repurchasable: boolean;
 }
 
 export interface UpdateProductRequest {
@@ -31,6 +32,7 @@ export interface UpdateProductRequest {
   api_id?: string;
   demo_url?: string;
   vip_only?: boolean;
+  repurchasable?: boolean;
   status?: ProductStatus;
 }
 
@@ -49,6 +51,7 @@ export interface ProductResponse {
   api_id?: string;
   demo_url?: string;
   vip_only: boolean;
+  repurchasable: boolean;
   views_count: number;
   status: ProductStatus;
   created_at: string;

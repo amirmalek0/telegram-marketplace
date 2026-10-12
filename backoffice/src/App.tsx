@@ -9,6 +9,7 @@ import { PageLoader } from '@/components/ui/LoadingSpinner';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import CategoriesPage from '@/pages/categories/CategoriesPage';
 import ProductsPage from '@/pages/products/ProductsPage';
+import ProductEditorPage from '@/pages/products/ProductEditorPage';
 import FilesPage from '@/pages/files/FilesPage';
 import MessagesPage from '@/pages/messages/MessagesPage';
 import InventoryPage from '@/pages/inventory/InventoryPage';
@@ -24,6 +25,7 @@ import VipPage from '@/pages/vip/VipPage';
 import TicketsPage from '@/pages/tickets/TicketsPage';
 import TicketDetailPage from '@/pages/tickets/TicketDetailPage';
 import UserTicketsPage from '@/pages/tickets/UserTicketsPage';
+import SettingsPage from '@/pages/settings/SettingsPage';
 
 void PageLoader;
 
@@ -66,6 +68,8 @@ function App() {
           >
             <Route index element={<DashboardPage />} />
             <Route path="products" element={<ProductsPage />} />
+            <Route path="products/new" element={<ProductEditorPage />} />
+            <Route path="products/:productId/edit" element={<ProductEditorPage />} />
             <Route path="categories" element={<CategoriesPage />} />
             <Route path="bundles" element={<BundlesPage />} />
             <Route path="inventory" element={<InventoryPage />} />
@@ -81,6 +85,7 @@ function App() {
             <Route path="messages" element={<MessagesPage />} />
             <Route path="tickets" element={<TicketsPage />} />
             <Route path="tickets/:ticketId" element={<TicketDetailPage />} />
+            <Route path="settings" element={<SettingsPage />} />
             {/* Catch-all */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>

@@ -6,6 +6,7 @@ export interface UserResponse {
   last_name: string;
   username: string;
   telegram_id: number;
+  wallet_balance: number;
   phone_number: string;
   has_active_plan: boolean;
   active_plan_id?: string;
@@ -56,6 +57,9 @@ export interface OrderResponse {
   product_id: string;
   quantity: number;
   stars: number;
+  product_title: string;
+  delivery_status?: 'awaiting_payment' | 'processing' | 'delivered' | 'failed';
+  delivery_item_count: number;
   status: OrderStatus;
   paid_at?: string;
   created_at: string;
@@ -65,7 +69,10 @@ export type OrdersPaginatedResponse = PaginatedResponse<OrderResponse>;
 
 export interface TelegramStarsPaymentResponse {
   id: string;
-  order_id: string;
+  order_id?: string;
+  user_id: string;
+  purpose: 'product' | 'vip_plan' | 'wallet_topup';
+  target_id?: string;
   stars: number;
   checkout_reference: string;
   external_transaction_id?: string;
