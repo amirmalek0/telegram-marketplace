@@ -1,10 +1,13 @@
 import { BrowserRouter } from 'react-router-dom'
 import { Marketplace } from './app/Marketplace'
+import { ContentProvider } from './features/content/ContentProvider'
 
 function App() {
   return (
     <BrowserRouter>
-      <Marketplace />
+      <ContentProvider>
+        <Marketplace />
+      </ContentProvider>
     </BrowserRouter>
   )
 }

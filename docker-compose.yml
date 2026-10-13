@@ -164,6 +164,7 @@ services:
         # Use the backoffice origin and let nginx proxy /api to the API container.
         # This avoids browser CORS entirely in the production Docker setup.
         VITE_API_BASE_URL: ${BACKOFFICE_API_URL:-/api/v1}
+        VITE_MINIAPP_URL: ${MINIAPP_PUBLIC_URL:-http://localhost:3000}
     depends_on:
       - api
     ports:

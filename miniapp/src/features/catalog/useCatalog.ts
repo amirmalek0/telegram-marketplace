@@ -3,32 +3,34 @@ import { ApiClient } from '../../api/client'
 import type { TelegramUser } from '../../hooks/useTelegramAuth'
 import type { Category, PaginatedResponse, Product, UserResponse } from './types'
 
-export function useCatalog(user: TelegramUser | null, initDataRaw: string | null) {
+export function useCatalog(user: TelegramUser | null, initDataRaw: string | null, adminToken?: string | null) {
   const [categories, setCategories] = useState<Category[]>([])
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!user || !initDataRaw) {
+    if ((!user || !initDataRaw) && !adminToken) {
       setLoading(false)
       return
     }
 
     let active = true
-    const client = new ApiClient({ initDataRaw })
+    const client = new ApiClient(adminToken ? { bearerToken: adminToken } : { initDataRaw: initDataRaw || undefined })
 
     async function loadCatalog() {
       setLoading(true)
       setError(null)
 
       try {
-        await client.post<UserResponse>('/user', {
-          first_name: user?.firstName,
-          last_name: user?.lastName || '',
-          username: user?.username || '',
-          telegram_id: user?.id,
-        })
+        if (user && initDataRaw) {
+          await client.post<UserResponse>('/user', {
+            first_name: user.firstName,
+            last_name: user.lastName || '',
+            username: user.username || '',
+            telegram_id: user.id,
+          })
+        }
 
         const [categoryResponse, productResponse] = await Promise.all([
           client.get<PaginatedResponse<Category>>('/category?per_page=100'),
@@ -51,7 +53,7 @@ export function useCatalog(user: TelegramUser | null, initDataRaw: string | null
 
     loadCatalog()
     return () => { active = false }
-  }, [initDataRaw, user])
+  }, [adminToken, initDataRaw, user])
 
   const categoryById = useMemo(
     () => new Map(categories.map((category) => [category.id, category])),

@@ -26,6 +26,7 @@ import TicketsPage from '@/pages/tickets/TicketsPage';
 import TicketDetailPage from '@/pages/tickets/TicketDetailPage';
 import UserTicketsPage from '@/pages/tickets/UserTicketsPage';
 import SettingsPage from '@/pages/settings/SettingsPage';
+import MiniappContentPage from '@/pages/miniapp-content/MiniappContentPage';
 
 void PageLoader;
 
@@ -86,6 +87,7 @@ function App() {
             <Route path="tickets" element={<TicketsPage />} />
             <Route path="tickets/:ticketId" element={<TicketDetailPage />} />
             <Route path="settings" element={<SettingsPage />} />
+            <Route path="miniapp-content" element={<MiniappContentPage />} />
             {/* Catch-all */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>

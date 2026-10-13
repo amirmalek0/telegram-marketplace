@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import {
   BarChart3, Bot, Boxes, ChevronLeft, CircleDollarSign, Code2, Crown, FileText,
   FolderTree, Layers3, LogOut, MessageSquareText, Package, ReceiptText,
-  Settings, ShieldCheck, ShoppingBag, Ticket, Users, X,
+  Smartphone, Settings, ShieldCheck, ShoppingBag, Ticket, Users, X,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { useUIStore } from '@/stores/uiStore';
@@ -31,6 +31,7 @@ const groups = [
   ]},
   { label: 'پشتیبانی و سیستم', items: [
     { label: 'تیکت‌ها', to: '/tickets', icon: Ticket },
+    { label: 'ویرایش مینی‌اپ', to: '/miniapp-content', icon: Smartphone },
     { label: 'مدیران', to: '/admins', icon: ShieldCheck },
     { label: 'تنظیمات عمومی', to: '/settings', icon: Settings },
   ]},

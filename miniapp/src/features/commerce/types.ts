@@ -39,8 +39,34 @@ export interface VipPlan {
   title: string
   stars_price: number
   duration: number
+  tier: number
   status: 'active' | 'inactive'
   created_at: string
+}
+
+export interface WalletTopupPack {
+  id: string
+  title: string
+  stars: number
+  status: 'active' | 'inactive'
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
+export interface VipQuote {
+  plan_id: string
+  plan_title: string
+  original_stars: number
+  credit_stars: number
+  payable_stars: number
+  remaining_days: number
+  is_upgrade: boolean
+  current_plan_id?: string
+  current_plan_title?: string
+  current_tier: number
+  target_tier: number
+  current_expire_at?: string
 }
 
 export interface UserAccount {

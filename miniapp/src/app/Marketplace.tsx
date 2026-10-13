@@ -15,11 +15,14 @@ import { TicketPage } from '../pages/TicketPage'
 import { TicketsPage } from '../pages/TicketsPage'
 import { ProfilePage } from '../pages/ProfilePage'
 
+import { useContent } from '../features/content/ContentProvider'
+
 export function Marketplace() {
   const auth = useTelegramAuth()
-  const catalog = useCatalog(auth.user, auth.initDataRaw)
+  const content = useContent()
+  const catalog = useCatalog(auth.user, auth.initDataRaw, content.adminToken)
 
-  if (!auth.isAvailable) return <TelegramRequired />
+  if (!auth.isAvailable && !content.editorMode) return <TelegramRequired />
 
   return (
     <div className="app-shell">
