@@ -98,6 +98,25 @@ mode at creation time, so production payments can never enter the simulator.
 The simulator still requires the authenticated user to own the pending payment
 and invokes the same settlement, fulfillment, and inventory-release paths.
 
+Mini App content:
+
+- User-interface copy has stable keys and frontend fallbacks. The public
+  `GET /api/v1/miniapp-content` endpoint returns only administrator overrides,
+  so the Mini App remains usable if no override exists or content loading fails.
+- `PUT /api/v1/miniapp-content/:key` and
+  `DELETE /api/v1/miniapp-content/:key` are admin-only and respectively save
+  an override or restore the versioned default.
+- The backoffice route `/miniapp-content` embeds the live Mini App in editor
+  mode. Admin JWT credentials are transferred to the frame with a trusted-origin
+  `postMessage` handshake and are never placed in its URL.
+- Dynamic phrases use named placeholders such as `{count}` and `{date}` so an
+  administrator can edit the sentence while preserving runtime values.
+- Editor mode provides route-specific preview scenarios for populated, empty,
+  loading, error, payment, access, and lifecycle states. These scenarios use
+  isolated fixtures and never impersonate a Telegram user or execute payments.
+- `MINIAPP_PUBLIC_URL` controls the browser URL embedded by the backoffice and
+  must point to the public Mini App origin in deployed environments.
+
 **Broadcasts**
 id
 title

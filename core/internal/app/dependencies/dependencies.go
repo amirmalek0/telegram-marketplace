@@ -38,6 +38,8 @@ import (
 	userrepo "telegram-marketplace/internal/core/membership/users/repository"
 	"telegram-marketplace/internal/core/membership/vip"
 	viprepo "telegram-marketplace/internal/core/membership/vip/repository"
+	"telegram-marketplace/internal/core/settings"
+	settingsrepo "telegram-marketplace/internal/core/settings/repository"
 	telegramclient "telegram-marketplace/internal/platform/telegram"
 	"telegram-marketplace/pkg/storage"
 )
@@ -88,6 +90,9 @@ func Wire(ctx context.Context, db *pgxpool.Pool, cfg config.Config) router.Handl
 	productImagesStore := storageClient.Bucket(cfg.ProductImagesBucket, cfg.ProductImagesPublicURL)
 
 	// --- membership/users ---
+	settingsRepo := settingsrepo.NewPostgresRepository(db)
+	settingsService := settings.NewService(settingsRepo)
+	settingsHandler := settings.NewHandler(settingsService)
 	userRepo := userrepo.NewPostgresRepository(db)
 	userService := users.NewService(userRepo)
 	userHandler := users.NewHandler(userService)
@@ -189,5 +194,6 @@ func Wire(ctx context.Context, db *pgxpool.Pool, cfg config.Config) router.Handl
 		Tickets:          ticketHandler,
 		TicketCategories: ticketCategoryHandler,
 		VIP:              vipHandler,
+		Settings:         settingsHandler,
 	}
 }

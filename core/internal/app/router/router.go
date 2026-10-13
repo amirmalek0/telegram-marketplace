@@ -38,6 +38,8 @@ import (
 	userrouter "telegram-marketplace/internal/core/membership/users/router"
 	"telegram-marketplace/internal/core/membership/vip"
 	viprouter "telegram-marketplace/internal/core/membership/vip/router"
+	"telegram-marketplace/internal/core/settings"
+	settingsrouter "telegram-marketplace/internal/core/settings/router"
 )
 
 // Handlers groups all domain handlers that the router needs.
@@ -61,6 +63,7 @@ type Handlers struct {
 	Tickets          *tickets.Handler
 	TicketCategories *ticketcategories.Handler
 	VIP              *vip.Handler
+	Settings         *settings.Handler
 }
 
 // New creates and configures the gin.Engine:
@@ -84,6 +87,7 @@ func New(botToken string, corsAllowedOrigins []string, h Handlers) *gin.Engine {
 	{
 		// Public auth endpoints — no auth required (they issue tokens)
 		authrouter.RegisterRoutes(api, h.Auth)
+		settingsrouter.RegisterPublicRoutes(api, h.Settings)
 
 		// Domain routes — Auth requires valid Telegram (tma) or JWT (Bearer)
 		// authentication. Per-route guards enforce role-specific access control.
@@ -105,6 +109,7 @@ func New(botToken string, corsAllowedOrigins []string, h Handlers) *gin.Engine {
 			ticketrouter.RegisterRoutes(domain, h.Tickets)
 			ticketcategoryrouter.RegisterRoutes(domain, h.TicketCategories)
 			viprouter.RegisterRoutes(domain, h.VIP)
+			settingsrouter.RegisterAdminRoutes(domain, h.Settings)
 		}
 	}
 

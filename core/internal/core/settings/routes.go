@@ -1,3 +1,0 @@
-package settings
-
-func RegisterRoutes(){}

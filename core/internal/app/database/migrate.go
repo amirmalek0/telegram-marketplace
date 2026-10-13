@@ -517,6 +517,16 @@ var migrations = []string{
 	 VALUES ('00000000-0000-0000-0000-000000000001', false, now())
 	 ON CONFLICT (id) DO NOTHING`,
 
+	`CREATE TABLE IF NOT EXISTS miniapp_content (
+		content_key TEXT PRIMARY KEY,
+		value       TEXT NOT NULL,
+		updated_by  UUID REFERENCES admins(id) ON DELETE SET NULL,
+		updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+		CONSTRAINT miniapp_content_key_format CHECK (content_key ~ '^[a-z0-9][a-z0-9._-]{1,119}$'),
+		CONSTRAINT miniapp_content_value_length CHECK (char_length(value) <= 4000)
+	)`,
+	`CREATE INDEX IF NOT EXISTS idx_miniapp_content_updated_at ON miniapp_content(updated_at DESC)`,
+
 	`CREATE TABLE IF NOT EXISTS seed_markers (
 		seed_name  TEXT        PRIMARY KEY,
 		created_at TIMESTAMPTZ NOT NULL DEFAULT now()
