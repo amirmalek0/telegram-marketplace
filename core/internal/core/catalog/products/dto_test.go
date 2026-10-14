@@ -17,6 +17,7 @@ func TestPublicProductResponseOmitsDeliveryReferences(t *testing.T) {
 	apiID := "internal-api-id"
 	product := &model.Product{
 		FileID:        &fileID,
+		FileIDs:       []string{fileID, "second-internal-file-id"},
 		MessageID:     &messageID,
 		InventoryID:   &inventoryID,
 		BundleID:      &bundleID,
@@ -34,7 +35,7 @@ func TestPublicProductResponseOmitsDeliveryReferences(t *testing.T) {
 		t.Fatalf("marshal response: %v", err)
 	}
 
-	for _, field := range []string{"file_id", "message_id", "inventory_id", "bundle_id", "api_id"} {
+	for _, field := range []string{"file_id", "file_ids", "message_id", "inventory_id", "bundle_id", "api_id"} {
 		if strings.Contains(string(payload), `"`+field+`"`) {
 			t.Fatalf("public response exposed %s: %s", field, payload)
 		}
@@ -49,7 +50,7 @@ func TestPublicProductResponseOmitsDeliveryReferences(t *testing.T) {
 
 func TestAdminProductResponseIncludesDeliveryReferences(t *testing.T) {
 	fileID := "internal-file-id"
-	product := &model.Product{FileID: &fileID}
+	product := &model.Product{FileID: &fileID, FileIDs: []string{fileID, "second-file"}}
 
 	response, err := (&Service{}).toResponse(context.Background(), product, true)
 	if err != nil {
@@ -57,5 +58,8 @@ func TestAdminProductResponseIncludesDeliveryReferences(t *testing.T) {
 	}
 	if response.FileID == nil || *response.FileID != fileID {
 		t.Fatalf("admin response did not include file_id")
+	}
+	if len(response.FileIDs) != 2 {
+		t.Fatal("admin response omitted multiple files")
 	}
 }

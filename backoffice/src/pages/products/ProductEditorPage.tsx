@@ -45,7 +45,7 @@ export default function ProductEditorPage() {
         form.reset({
           title: current.title, description: current.description, stars_price: current.stars_price,
           category_id: current.category_id, delivery_type: current.delivery_type,
-          file_id: current.file_id ?? '', message_id: current.message_id ?? '', inventory_id: current.inventory_id ?? '', bundle_id: current.bundle_id ?? '', api_id: current.api_id ?? '',
+          file_ids: current.file_ids ?? (current.file_id ? [current.file_id] : []), message_id: current.message_id ?? '', inventory_id: current.inventory_id ?? '', bundle_id: current.bundle_id ?? '', api_id: current.api_id ?? '',
           demo_url: current.demo_url ?? '', vip_only: current.vip_only, repurchasable: current.repurchasable, status: current.status,
         });
       }

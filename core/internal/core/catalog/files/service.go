@@ -97,12 +97,14 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 	}
 
 	file, err := s.repo.GetByID(ctx, id)
-	if err == nil {
-		_ = storage.DeleteFile(ctx, s.storage, file.StorageID)
+	if err != nil {
+		return fmt.Errorf("files.service.Delete: %w", err)
 	}
-
+	// Let database references (products, bundles and purchased deliveries)
+	// reject deletion before touching the actual storage object.
 	if err := s.repo.Delete(ctx, id); err != nil {
 		return fmt.Errorf("files.service.Delete: %w", err)
 	}
+	_ = storage.DeleteFile(ctx, s.storage, file.StorageID)
 	return nil
 }

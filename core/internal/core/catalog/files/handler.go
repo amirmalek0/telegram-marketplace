@@ -81,7 +81,7 @@ func (h *Handler) Delete(c *gin.Context) {
 	id := c.Param("id")
 
 	if err := h.service.Delete(c.Request.Context(), id); err != nil {
-		if errors.Is(err, ErrReferencedByBundle) {
+		if errors.Is(err, ErrReferencedByBundle) || errors.Is(err, repository.ErrReferenced) {
 			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 			return
 		}

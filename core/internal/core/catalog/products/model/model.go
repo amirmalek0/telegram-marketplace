@@ -45,6 +45,7 @@ type Product struct {
 	ImageStorageID string       `db:"image_storage_id"`
 	DeliveryType   DeliveryType `db:"delivery_type"`
 	FileID         *string      `db:"file_id"`
+	FileIDs        []string     `db:"file_ids"`
 	MessageID      *string      `db:"message_id"`
 	InventoryID    *string      `db:"inventory_id"`
 	BundleID       *string      `db:"bundle_id"`

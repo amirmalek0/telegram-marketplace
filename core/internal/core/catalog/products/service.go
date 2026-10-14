@@ -76,6 +76,11 @@ func NewService(
 
 // Create stores a new product.
 func (s *Service) Create(ctx context.Context, req CreateRequest) (*model.Product, error) {
+	fileIDs, fileID, err := normalizeProductFiles(req.FileID, req.FileIDs)
+	if err != nil {
+		return nil, err
+	}
+	req.FileID = fileID
 	deliveryType := model.DeliveryType(req.DeliveryType)
 	repurchasable := true
 	if req.Repurchasable != nil {
@@ -91,6 +96,9 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (*model.Product
 	if err := s.validateReferences(ctx, req.FileID, req.MessageID, req.InventoryID, req.BundleID, req.APIID); err != nil {
 		return nil, err
 	}
+	if err := s.validateAdditionalFiles(ctx, fileIDs); err != nil {
+		return nil, err
+	}
 
 	product := &model.Product{
 		Title:         req.Title,
@@ -99,6 +107,7 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (*model.Product
 		CategoryID:    req.CategoryID,
 		DeliveryType:  deliveryType,
 		FileID:        req.FileID,
+		FileIDs:       fileIDs,
 		MessageID:     req.MessageID,
 		InventoryID:   req.InventoryID,
 		BundleID:      req.BundleID,
@@ -201,10 +210,16 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) (*mo
 		product.CategoryID = *req.CategoryID
 	}
 	if req.DeliveryType != nil {
+		if product.DeliveryType != model.DeliveryType(*req.DeliveryType) {
+			clearDeliveryReferences(product)
+		}
 		product.DeliveryType = model.DeliveryType(*req.DeliveryType)
 	}
-	if req.FileID != nil {
-		product.FileID = req.FileID
+	if req.FileID != nil || req.FileIDs != nil {
+		product.FileIDs, product.FileID, err = normalizeProductFiles(req.FileID, req.FileIDs)
+		if err != nil {
+			return nil, err
+		}
 	}
 	if req.MessageID != nil {
 		product.MessageID = req.MessageID
@@ -238,6 +253,9 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) (*mo
 
 	// Validate foreign key references
 	if err := s.validateReferences(ctx, product.FileID, product.MessageID, product.InventoryID, product.BundleID, product.APIID); err != nil {
+		return nil, err
+	}
+	if err := s.validateAdditionalFiles(ctx, product.FileIDs); err != nil {
 		return nil, err
 	}
 

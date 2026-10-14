@@ -105,11 +105,24 @@ func createDeliverySnapshot(ctx context.Context, tx pgx.Tx, orderID, userID stri
 
 	switch product.DeliveryType {
 	case "file":
-		if product.FileID == nil {
+		rows, err := tx.Query(ctx, queryCheckoutFiles, product.ID)
+		if err != nil {
+			return "", err
+		}
+		fileIDs, err := pgx.CollectRows(rows, pgx.RowTo[string])
+		if err != nil {
+			return "", err
+		}
+		if len(fileIDs) == 0 && product.FileID != nil {
+			fileIDs = []string{*product.FileID}
+		}
+		if len(fileIDs) == 0 {
 			return "", ErrCheckoutUnavailable
 		}
-		if err := add(queryAddDeliveryFile, *product.FileID, 0); err != nil {
-			return "", err
+		for position, fileID := range fileIDs {
+			if err := add(queryAddDeliveryFile, fileID, position); err != nil {
+				return "", err
+			}
 		}
 	case "message":
 		if product.MessageID == nil {

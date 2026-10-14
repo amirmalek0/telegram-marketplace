@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Boxes, Code2, FileText, Layers3, LoaderCircle, MessageSquareText } from 'lucide-react';
 import { Controller, type Control, type FieldErrors } from 'react-hook-form';
-import { apisApi, bundlesApi, filesApi, inventoryApi, messagesApi } from '@/api';
+import { apisApi, bundlesApi, inventoryApi, messagesApi } from '@/api';
 import { Select } from '@/components/ui';
 import type { DeliveryType } from '@/types/products';
 import type { ApiResponse } from '@/types/apis';
 import type { BundleResponse } from '@/types/bundles';
-import type { FileResponse } from '@/types/files';
+import { ProductFilePicker } from './ProductFilePicker';
 import type { InventoryResponse } from '@/types/inventory';
 import type { MessageResponse } from '@/types/messages';
 import type { ProductFormValues } from './productForm';
@@ -14,7 +14,6 @@ import type { ProductFormValues } from './productForm';
 const icons = { file: FileText, message: MessageSquareText, inventory: Boxes, bundle: Layers3, api: Code2 };
 
 export function ProductDeliveryField({ deliveryType, control, errors }: { deliveryType: DeliveryType; control: Control<ProductFormValues>; errors: FieldErrors<ProductFormValues> }) {
-  const [files, setFiles] = useState<FileResponse[]>([]);
   const [messages, setMessages] = useState<MessageResponse[]>([]);
   const [inventories, setInventories] = useState<InventoryResponse[]>([]);
   const [bundles, setBundles] = useState<BundleResponse[]>([]);
@@ -22,10 +21,10 @@ export function ProductDeliveryField({ deliveryType, control, errors }: { delive
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (deliveryType === 'file') return;
     let active = true;
     setLoading(true);
     const load = async () => {
-      if (deliveryType === 'file') setFiles((await filesApi.list({ per_page: 100 })).data);
       if (deliveryType === 'message') setMessages((await messagesApi.list({ per_page: 100 })).data);
       if (deliveryType === 'inventory') setInventories((await inventoryApi.list({ per_page: 100 })).data);
       if (deliveryType === 'bundle') setBundles((await bundlesApi.list({ per_page: 100 })).data);
@@ -35,11 +34,11 @@ export function ProductDeliveryField({ deliveryType, control, errors }: { delive
     return () => { active = false; };
   }, [deliveryType]);
 
+  if (deliveryType === 'file') return <Controller name="file_ids" control={control} render={({ field }) => <ProductFilePicker value={field.value} onChange={field.onChange} error={errors.file_ids?.message} />} />;
+
   if (loading) return <div className="flex min-h-16 items-center gap-2 rounded-xl bg-[rgb(var(--color-surface-2))] px-4 text-xs text-[rgb(var(--color-text-secondary))]"><LoaderCircle size={16} className="animate-spin" />در حال دریافت منابع تحویل…</div>;
 
-  const config = deliveryType === 'file'
-    ? { name: 'file_id' as const, label: 'فایل قابل دریافت', placeholder: 'یک فایل انتخاب کنید', options: files.map(item => ({ value: item.id, label: item.name })) }
-    : deliveryType === 'message'
+  const config = deliveryType === 'message'
       ? { name: 'message_id' as const, label: 'پیام تحویل', placeholder: 'یک پیام انتخاب کنید', options: messages.map(item => ({ value: item.id, label: item.content.slice(0, 70) })) }
       : deliveryType === 'inventory'
         ? { name: 'inventory_id' as const, label: 'مخزن موجودی', placeholder: 'یک مخزن انتخاب کنید', options: inventories.map(item => ({ value: item.id, label: item.name })) }

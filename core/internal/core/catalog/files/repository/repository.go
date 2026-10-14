@@ -2,12 +2,16 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"telegram-marketplace/internal/core/catalog/files/model"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+var ErrReferenced = errors.New("فایل به محصول، بسته یا خرید ثبت‌شده متصل است و قابل حذف نیست")
 
 // ErrNotFound is returned when a requested file does not exist.
 var ErrNotFound = fmt.Errorf("file not found")
@@ -85,6 +89,10 @@ func (r *postgresRepository) Count(ctx context.Context) (int64, error) {
 func (r *postgresRepository) Delete(ctx context.Context, id string) error {
 	_, err := r.db.Exec(ctx, queryDeleteFile, id)
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23503" {
+			return ErrReferenced
+		}
 		return fmt.Errorf("files.repository.Delete: %w", err)
 	}
 	return nil

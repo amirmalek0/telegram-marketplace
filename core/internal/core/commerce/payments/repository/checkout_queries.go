@@ -1,6 +1,7 @@
 package repository
 
 const (
+	queryCheckoutFiles               = `SELECT file_id::text FROM product_files WHERE product_id=$1 ORDER BY sort_order`
 	queryProductAccess               = `SELECT p.vip_only,(u.has_active_plan AND u.plan_expire_at>now()) FROM products p CROSS JOIN users u WHERE p.id=$1 AND p.status='active' AND u.telegram_id=$2`
 	queryLockCheckoutUser            = `SELECT id,is_banned,wallet_balance,(has_active_plan AND plan_expire_at>now()) FROM users WHERE telegram_id=$1 FOR UPDATE`
 	queryGetCheckoutProduct          = `SELECT id,title,description,stars_price,delivery_type,file_id,message_id,inventory_id,bundle_id,api_id,vip_only,repurchasable FROM products WHERE id=$1 AND status='active' FOR SHARE`

@@ -21,7 +21,7 @@ export const productSchema = z.object({
   stars_price: z.number({ message: 'قیمت استار باید عدد باشد' }).int('قیمت باید عدد صحیح باشد').positive('قیمت باید بیشتر از صفر باشد'),
   category_id: z.string().min(1, 'دسته‌بندی الزامی است'),
   delivery_type: z.enum(['file', 'message', 'inventory', 'bundle', 'api'] as const),
-  file_id: z.string().optional(),
+  file_ids: z.array(z.string()).max(100, 'حداکثر ۱۰۰ فایل انتخاب کنید'),
   message_id: z.string().optional(),
   inventory_id: z.string().optional(),
   bundle_id: z.string().optional(),
@@ -30,13 +30,17 @@ export const productSchema = z.object({
   vip_only: z.boolean(),
   repurchasable: z.boolean(),
   status: z.enum(['active', 'draft', 'archived'] as const),
+}).superRefine((data, ctx) => {
+  if (data.delivery_type === 'file' && data.file_ids.length === 0) {
+    ctx.addIssue({ code: 'custom', path: ['file_ids'], message: 'حداقل یک فایل انتخاب کنید' });
+  }
 });
 
 export type ProductFormValues = z.infer<typeof productSchema>;
 
 export const productDefaultValues: ProductFormValues = {
   title: '', description: '', stars_price: 1, category_id: '', delivery_type: 'file',
-  file_id: '', message_id: '', inventory_id: '', bundle_id: '', api_id: '', demo_url: '',
+  file_ids: [], message_id: '', inventory_id: '', bundle_id: '', api_id: '', demo_url: '',
   vip_only: false, repurchasable: true, status: 'active',
 };
 
@@ -51,7 +55,7 @@ export function productPayload(data: ProductFormValues): CreateProductRequest & 
     vip_only: data.vip_only,
     repurchasable: data.repurchasable,
     status: data.status,
-    file_id: data.delivery_type === 'file' ? data.file_id || undefined : undefined,
+    file_ids: data.delivery_type === 'file' ? data.file_ids : undefined,
     message_id: data.delivery_type === 'message' ? data.message_id || undefined : undefined,
     inventory_id: data.delivery_type === 'inventory' ? data.inventory_id || undefined : undefined,
     bundle_id: data.delivery_type === 'bundle' ? data.bundle_id || undefined : undefined,

@@ -11,13 +11,15 @@ const (
 
 	// queryGetProductByID retrieves a product by its UUID.
 	queryGetProductByID = `
-		SELECT id, title, description, stars_price, category_id, image_storage_id, delivery_type, file_id, message_id, inventory_id, bundle_id, api_id, demo_url, vip_only, repurchasable, views_count, status, created_at
+		SELECT id, title, description, stars_price, category_id, image_storage_id, delivery_type, file_id, message_id, inventory_id, bundle_id, api_id, demo_url, vip_only, repurchasable, views_count, status, created_at,
+		ARRAY(SELECT pf.file_id::text FROM product_files pf WHERE pf.product_id = products.id ORDER BY pf.sort_order) AS file_ids
 		FROM products
 		WHERE id = $1`
 
 	// queryListProducts retrieves a paginated list of products ordered by creation date.
 	queryListProducts = `
-		SELECT id, title, description, stars_price, category_id, image_storage_id, delivery_type, file_id, message_id, inventory_id, bundle_id, api_id, demo_url, vip_only, repurchasable, views_count, status, created_at
+		SELECT id, title, description, stars_price, category_id, image_storage_id, delivery_type, file_id, message_id, inventory_id, bundle_id, api_id, demo_url, vip_only, repurchasable, views_count, status, created_at,
+		ARRAY(SELECT pf.file_id::text FROM product_files pf WHERE pf.product_id = products.id ORDER BY pf.sort_order) AS file_ids
 		FROM products
 		ORDER BY created_at DESC
 		LIMIT $1 OFFSET $2`

@@ -10,6 +10,7 @@ export interface CreateProductRequest {
   category_id: string;
   delivery_type: DeliveryType;
   file_id?: string;
+  file_ids?: string[];
   message_id?: string;
   inventory_id?: string;
   bundle_id?: string;
@@ -26,6 +27,7 @@ export interface UpdateProductRequest {
   category_id?: string;
   delivery_type?: DeliveryType;
   file_id?: string;
+  file_ids?: string[];
   message_id?: string;
   inventory_id?: string;
   bundle_id?: string;
@@ -45,6 +47,7 @@ export interface ProductResponse {
   image_url: string;
   delivery_type: DeliveryType;
   file_id?: string;
+  file_ids?: string[];
   message_id?: string;
   inventory_id?: string;
   bundle_id?: string;

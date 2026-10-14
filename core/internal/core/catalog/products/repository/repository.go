@@ -43,7 +43,12 @@ func NewPostgresRepository(db *pgxpool.Pool) Repository {
 var _ Repository = (*postgresRepository)(nil)
 
 func (r *postgresRepository) Create(ctx context.Context, p *model.Product) error {
-	err := r.db.QueryRow(ctx, queryCreateProduct,
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+	err = tx.QueryRow(ctx, queryCreateProduct,
 		p.Title, p.Description, p.StarsPrice, p.CategoryID, p.ImageStorageID, p.DeliveryType,
 		p.FileID, p.MessageID, p.InventoryID, p.BundleID, p.APIID,
 		p.DemoURL, p.VIPOnly, p.Repurchasable, p.ViewsCount, p.Status, p.CreatedAt,
@@ -55,7 +60,10 @@ func (r *postgresRepository) Create(ctx context.Context, p *model.Product) error
 		}
 		return fmt.Errorf("products.repository.Create: %w", err)
 	}
-	return nil
+	if err := replaceProductFiles(ctx, tx, p); err != nil {
+		return fmt.Errorf("products.repository.Create files: %w", err)
+	}
+	return tx.Commit(ctx)
 }
 
 func (r *postgresRepository) GetByID(ctx context.Context, id string) (*model.Product, error) {
@@ -96,7 +104,12 @@ func (r *postgresRepository) Count(ctx context.Context) (int64, error) {
 }
 
 func (r *postgresRepository) Update(ctx context.Context, p *model.Product) error {
-	_, err := r.db.Exec(ctx, queryUpdateProduct,
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+	tag, err := tx.Exec(ctx, queryUpdateProduct,
 		p.Title, p.Description, p.StarsPrice, p.CategoryID, p.ImageStorageID, p.DeliveryType,
 		p.FileID, p.MessageID, p.InventoryID, p.BundleID, p.APIID,
 		p.DemoURL, p.VIPOnly, p.Repurchasable, p.Status, p.ID,
@@ -104,7 +117,13 @@ func (r *postgresRepository) Update(ctx context.Context, p *model.Product) error
 	if err != nil {
 		return fmt.Errorf("products.repository.Update: %w", err)
 	}
-	return nil
+	if tag.RowsAffected() != 1 {
+		return ErrNotFound
+	}
+	if err := replaceProductFiles(ctx, tx, p); err != nil {
+		return fmt.Errorf("products.repository.Update files: %w", err)
+	}
+	return tx.Commit(ctx)
 }
 
 func (r *postgresRepository) UpdateImageStorageID(ctx context.Context, id, storageID string) error {

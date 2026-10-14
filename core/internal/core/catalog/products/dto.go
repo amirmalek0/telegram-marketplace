@@ -12,37 +12,39 @@ import (
 
 // CreateRequest represents the payload for creating a new product.
 type CreateRequest struct {
-	Title         string  `json:"title" binding:"required"`
-	Description   string  `json:"description"`
-	StarsPrice    int64   `json:"stars_price" binding:"required,gt=0"`
-	CategoryID    string  `json:"category_id" binding:"required"`
-	DeliveryType  string  `json:"delivery_type" binding:"required,oneof=file message inventory bundle api"`
-	FileID        *string `json:"file_id"`
-	MessageID     *string `json:"message_id"`
-	InventoryID   *string `json:"inventory_id"`
-	BundleID      *string `json:"bundle_id"`
-	APIID         *string `json:"api_id"`
-	DemoURL       *string `json:"demo_url"`
-	VIPOnly       bool    `json:"vip_only"`
-	Repurchasable *bool   `json:"repurchasable"`
+	Title         string   `json:"title" binding:"required"`
+	Description   string   `json:"description"`
+	StarsPrice    int64    `json:"stars_price" binding:"required,gt=0"`
+	CategoryID    string   `json:"category_id" binding:"required"`
+	DeliveryType  string   `json:"delivery_type" binding:"required,oneof=file message inventory bundle api"`
+	FileID        *string  `json:"file_id"`
+	FileIDs       []string `json:"file_ids"`
+	MessageID     *string  `json:"message_id"`
+	InventoryID   *string  `json:"inventory_id"`
+	BundleID      *string  `json:"bundle_id"`
+	APIID         *string  `json:"api_id"`
+	DemoURL       *string  `json:"demo_url"`
+	VIPOnly       bool     `json:"vip_only"`
+	Repurchasable *bool    `json:"repurchasable"`
 }
 
 // UpdateRequest represents the payload for updating a product.
 type UpdateRequest struct {
-	Title         *string `json:"title"`
-	Description   *string `json:"description"`
-	StarsPrice    *int64  `json:"stars_price" binding:"omitempty,gt=0"`
-	CategoryID    *string `json:"category_id"`
-	DeliveryType  *string `json:"delivery_type" binding:"omitempty,oneof=file message inventory bundle api"`
-	FileID        *string `json:"file_id"`
-	MessageID     *string `json:"message_id"`
-	InventoryID   *string `json:"inventory_id"`
-	BundleID      *string `json:"bundle_id"`
-	APIID         *string `json:"api_id"`
-	DemoURL       *string `json:"demo_url"`
-	VIPOnly       *bool   `json:"vip_only"`
-	Repurchasable *bool   `json:"repurchasable"`
-	Status        *string `json:"status" binding:"omitempty,oneof=active draft archived"`
+	Title         *string  `json:"title"`
+	Description   *string  `json:"description"`
+	StarsPrice    *int64   `json:"stars_price" binding:"omitempty,gt=0"`
+	CategoryID    *string  `json:"category_id"`
+	DeliveryType  *string  `json:"delivery_type" binding:"omitempty,oneof=file message inventory bundle api"`
+	FileID        *string  `json:"file_id"`
+	FileIDs       []string `json:"file_ids"`
+	MessageID     *string  `json:"message_id"`
+	InventoryID   *string  `json:"inventory_id"`
+	BundleID      *string  `json:"bundle_id"`
+	APIID         *string  `json:"api_id"`
+	DemoURL       *string  `json:"demo_url"`
+	VIPOnly       *bool    `json:"vip_only"`
+	Repurchasable *bool    `json:"repurchasable"`
+	Status        *string  `json:"status" binding:"omitempty,oneof=active draft archived"`
 }
 
 // --- Response DTOs ---
@@ -60,6 +62,7 @@ type Response struct {
 	ImageURL      string             `json:"image_url"`
 	DeliveryType  model.DeliveryType `json:"delivery_type"`
 	FileID        *string            `json:"file_id,omitempty"`
+	FileIDs       []string           `json:"file_ids,omitempty"`
 	MessageID     *string            `json:"message_id,omitempty"`
 	InventoryID   *string            `json:"inventory_id,omitempty"`
 	BundleID      *string            `json:"bundle_id,omitempty"`
@@ -103,6 +106,7 @@ func (s *Service) toResponse(ctx context.Context, p *model.Product, includeDeliv
 
 	if includeDeliveryReferences {
 		response.FileID = p.FileID
+		response.FileIDs = p.FileIDs
 		response.MessageID = p.MessageID
 		response.InventoryID = p.InventoryID
 		response.BundleID = p.BundleID

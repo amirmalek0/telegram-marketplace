@@ -301,6 +301,18 @@ var migrations = []string{
 	 $$`,
 	`CREATE INDEX IF NOT EXISTS idx_products_category_id ON products(category_id)`,
 	`CREATE INDEX IF NOT EXISTS idx_products_status       ON products(status)`,
+	`CREATE TABLE IF NOT EXISTS product_files (
+		product_id UUID NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+		file_id UUID NOT NULL REFERENCES files(id),
+		sort_order INTEGER NOT NULL CHECK (sort_order >= 0),
+		PRIMARY KEY (product_id, file_id),
+		UNIQUE (product_id, sort_order)
+	)`,
+	`INSERT INTO product_files (product_id, file_id, sort_order)
+	 SELECT id, file_id, 0 FROM products p WHERE delivery_type = 'file' AND file_id IS NOT NULL
+	 AND NOT EXISTS (SELECT 1 FROM product_files pf WHERE pf.product_id = p.id)
+	 ON CONFLICT DO NOTHING`,
+	`CREATE INDEX IF NOT EXISTS idx_product_files_file_id ON product_files(file_id)`,
 
 	`CREATE TABLE IF NOT EXISTS search_index (
 		id UUID PRIMARY KEY DEFAULT gen_random_uuid()
