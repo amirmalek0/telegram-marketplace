@@ -16,6 +16,29 @@ type fakeRepository struct {
 	deleted  string
 }
 
+func (f *fakeRepository) PhoneVerificationRequired(context.Context) (bool, error) {
+	return f.required, nil
+}
+
+func TestPhoneRequirementToggle(t *testing.T) {
+	repo := &fakeRepository{}
+	service := NewService(repo)
+	for _, required := range []bool{false, true, false} {
+		result, err := service.UpdateGeneral(context.Background(), required)
+		if err != nil || result.RequirePhoneVerification != required {
+			t.Fatalf("update failed: %v", err)
+		}
+		got, err := service.PhoneVerificationRequired(context.Background())
+		if err != nil || got != required {
+			t.Fatalf("unexpected requirement: %v, %v", got, err)
+		}
+	}
+}
+func (f *fakeRepository) SetPhoneVerificationRequired(_ context.Context, required bool) error {
+	f.required = required
+	return nil
+}
+
 func (f *fakeRepository) DeleteContent(_ context.Context, key string) error {
 	f.deleted = key
 	return nil

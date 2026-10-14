@@ -5,6 +5,8 @@ import { BottomNavigation } from '../components/layout/BottomNavigation'
 import { ScrollToTop } from '../components/layout/ScrollToTop'
 import { useCatalog } from '../features/catalog/useCatalog'
 import { useTelegramAuth, type UseTelegramAuthResult } from '../hooks/useTelegramAuth'
+import { usePhoneAccess } from '../features/auth/usePhoneAccess'
+import { PhoneVerificationGate } from '../components/feedback/PhoneVerificationGate'
 import { CategoryPage } from '../pages/CategoryPage'
 import { NewTicketPage } from '../pages/NewTicketPage'
 import { ProductPage } from '../pages/ProductPage'
@@ -19,9 +21,12 @@ import { useContent } from '../features/content/ContentProvider'
 export function Marketplace() {
   const auth = useTelegramAuth()
   const content = useContent()
+  const phone = usePhoneAccess(auth.initDataRaw, content.editorMode)
 
   if ((!auth.isAvailable || !auth.user || !auth.initDataRaw) && !content.editorMode) return <TelegramRequired />
   if (!content.editorReady) return <main className="standalone-state content-editor-wait" dir="rtl"><span className="skeleton" /><p>در حال اتصال به پنل مدیریت…</p></main>
+  if (content.editorMode && content.editorScenario.startsWith('phone-')) return <PhoneVerificationGate key={content.editorScenario} loading={content.editorScenario === 'phone-loading'} error={content.editorScenario === 'phone-error' ? 'بررسی دسترسی ممکن نشد. اتصال خود را بررسی و دوباره تلاش کنید.' : null} preview={content.editorScenario} onRefresh={() => {}} />
+  if (!phone.allowed) return <PhoneVerificationGate loading={phone.loading} error={phone.error} onRefresh={phone.refresh} />
   return <MarketplaceContent auth={auth} />
 }
 

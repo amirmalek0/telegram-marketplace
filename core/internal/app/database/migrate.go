@@ -55,6 +55,7 @@ var migrations = []string{
 		is_banned       BOOLEAN NOT NULL DEFAULT false,
 		created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 	)`,
+	`ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_verified_at TIMESTAMPTZ`,
 	`ALTER TABLE users ALTER COLUMN wallet_balance TYPE BIGINT USING GREATEST(0, ROUND(wallet_balance))::BIGINT`,
 	`ALTER TABLE users ALTER COLUMN wallet_balance SET DEFAULT 0`,
 	`ALTER TABLE users DROP CONSTRAINT IF EXISTS users_wallet_balance_check`,
@@ -530,6 +531,7 @@ var migrations = []string{
 		updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
 	)`,
 	`ALTER TABLE settings ADD COLUMN IF NOT EXISTS payment_test_mode BOOLEAN NOT NULL DEFAULT false`,
+	`ALTER TABLE settings ADD COLUMN IF NOT EXISTS require_phone_verification BOOLEAN NOT NULL DEFAULT false`,
 	`ALTER TABLE settings ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now()`,
 	`INSERT INTO settings (id, payment_test_mode, updated_at)
 	 VALUES ('00000000-0000-0000-0000-000000000001', false, now())

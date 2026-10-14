@@ -10,6 +10,8 @@ import (
 )
 
 type Repository interface {
+	PhoneVerificationRequired(ctx context.Context) (bool, error)
+	SetPhoneVerificationRequired(ctx context.Context, required bool) error
 	ListContent(ctx context.Context) ([]model.ContentEntry, error)
 	UpsertContent(ctx context.Context, key, value, adminID string) (*model.ContentEntry, error)
 	DeleteContent(ctx context.Context, key string) error

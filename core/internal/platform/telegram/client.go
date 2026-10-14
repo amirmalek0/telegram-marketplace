@@ -139,10 +139,19 @@ type Message struct {
 	From              *User              `json:"from"`
 	Chat              Chat               `json:"chat"`
 	SuccessfulPayment *SuccessfulPayment `json:"successful_payment"`
+	Contact           *Contact           `json:"contact"`
+	Text              string             `json:"text"`
+	ForwardOrigin     json.RawMessage    `json:"forward_origin"`
+}
+
+type Contact struct {
+	PhoneNumber string `json:"phone_number"`
+	UserID      int64  `json:"user_id"`
 }
 
 type Chat struct {
-	ID int64 `json:"id"`
+	ID   int64  `json:"id"`
+	Type string `json:"type"`
 }
 
 type Update struct {
@@ -193,5 +202,13 @@ func (c *Client) SendMessage(ctx context.Context, chatID int64, text string) err
 		return errors.New("telegram chat id is required")
 	}
 	_, err := call[Message](ctx, c, "sendMessage", map[string]any{"chat_id": chatID, "text": text})
+	return err
+}
+
+func (c *Client) RequestContact(ctx context.Context, chatID int64) error {
+	_, err := call[Message](ctx, c, "sendMessage", map[string]any{
+		"chat_id": chatID, "text": "برای تأیید شماره حساب تلگرام خود، دکمه زیر را بزنید. شماره فقط برای حساب خود شما ثبت می‌شود.",
+		"reply_markup": map[string]any{"keyboard": [][]map[string]any{{{"text": "اشتراک‌گذاری شماره من", "request_contact": true}}}, "resize_keyboard": true, "one_time_keyboard": true},
+	})
 	return err
 }

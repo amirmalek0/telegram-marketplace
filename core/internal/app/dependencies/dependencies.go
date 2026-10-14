@@ -95,7 +95,7 @@ func Wire(ctx context.Context, db *pgxpool.Pool, cfg config.Config) router.Handl
 	settingsHandler := settings.NewHandler(settingsService)
 	userRepo := userrepo.NewPostgresRepository(db)
 	userService := users.NewService(userRepo)
-	userHandler := users.NewHandler(userService)
+	userHandler := users.NewHandler(userService, settingsService)
 
 	// --- catalog/categories ---
 	categoryRepo := categoryrepo.NewPostgresRepository(db)
@@ -179,6 +179,7 @@ func Wire(ctx context.Context, db *pgxpool.Pool, cfg config.Config) router.Handl
 		Auth:             authHandler,
 		AuthService:      authService,
 		Users:            userHandler,
+		UsersService:     userService,
 		Categories:       categoryHandler,
 		Files:            fileHandler,
 		Messages:         msgHandler,
@@ -195,5 +196,6 @@ func Wire(ctx context.Context, db *pgxpool.Pool, cfg config.Config) router.Handl
 		TicketCategories: ticketCategoryHandler,
 		VIP:              vipHandler,
 		Settings:         settingsHandler,
+		SettingsService:  settingsService,
 	}
 }

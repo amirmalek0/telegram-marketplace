@@ -6,7 +6,6 @@ import (
 	"telegram-marketplace/internal/core/membership/users/model"
 	"telegram-marketplace/internal/core/membership/users/repository"
 	"telegram-marketplace/pkg/pagination"
-	"time"
 )
 
 // Service holds the business logic for the users domain.
@@ -22,43 +21,17 @@ func NewService(repo repository.Repository) *Service {
 // Upsert creates a new user or updates an existing one by Telegram ID.
 // Returns the user and a boolean indicating if it was created (true) or updated (false).
 func (s *Service) Upsert(ctx context.Context, req CreateUserRequest) (*model.User, bool, error) {
-	existing, err := s.repo.GetByTelegramID(ctx, req.TelegramID)
-
-	// User exists - update their info
-	if err == nil && existing != nil {
-		existing.FirstName = req.FirstName
-		existing.LastName = req.LastName
-		existing.Username = req.Username
-		if req.PhoneNumber != "" {
-			existing.PhoneNumber = req.PhoneNumber
-		}
-
-		if err := s.repo.Update(ctx, existing); err != nil {
-			return nil, false, fmt.Errorf("users.service.Upsert update: %w", err)
-		}
-		return existing, false, nil
-	}
-
-	// User doesn't exist - create new
 	var referredBy *int64
 	if req.ReferredBy != 0 {
 		referredBy = &req.ReferredBy
 	}
-
-	user := &model.User{
-		FirstName:   req.FirstName,
-		LastName:    req.LastName,
-		Username:    req.Username,
-		TelegramID:  req.TelegramID,
-		PhoneNumber: req.PhoneNumber,
-		ReferredBy:  referredBy,
-		CreatedAt:   time.Now(),
+	user := &model.User{TelegramID: req.TelegramID, FirstName: req.FirstName, LastName: req.LastName, Username: req.Username, ReferredBy: referredBy}
+	created, err := s.repo.UpsertProfile(ctx, user)
+	if err != nil {
+		return nil, false, fmt.Errorf("users.service.Upsert: %w", err)
 	}
-
-	if err := s.repo.Create(ctx, user); err != nil {
-		return nil, false, fmt.Errorf("users.service.Upsert create: %w", err)
-	}
-	return user, true, nil
+	user, err = s.repo.GetByID(ctx, user.ID)
+	return user, created, err
 }
 
 // GetByID returns a user by its internal ID.
@@ -117,6 +90,9 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateUserRequest) 
 		user.Username = *req.Username
 	}
 	if req.PhoneNumber != nil {
+		if user.PhoneNumber != *req.PhoneNumber {
+			user.PhoneVerifiedAt = nil
+		}
 		user.PhoneNumber = *req.PhoneNumber
 	}
 

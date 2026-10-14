@@ -13,6 +13,8 @@ func RegisterPublicRoutes(rg *gin.RouterGroup, h *settings.Handler) {
 }
 
 func RegisterAdminRoutes(rg *gin.RouterGroup, h *settings.Handler) {
+	rg.GET("/settings/general", middleware.RequireAdmin(), h.General)
+	rg.PATCH("/settings/general", middleware.RequireAdmin(), h.UpdateGeneral)
 	admin := rg.Group("/miniapp-content", middleware.RequireAdmin())
 	admin.PUT("/:key", h.UpdateContent)
 	admin.DELETE("/:key", h.ResetContent)

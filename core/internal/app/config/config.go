@@ -15,7 +15,7 @@ type Config struct {
 	BotToken           string
 	Addr               string
 	WebhookURL         string // Optional: webhook URL for bot (empty = polling mode)
-	WebhookSecret      string // Optional secret verified on incoming Telegram webhooks.
+	WebhookSecret      string // Required in webhook mode; verified on incoming Telegram updates.
 	JWTSecret          string // Secret key for signing admin JWT tokens
 	CORSAllowedOrigins []string
 

@@ -9,13 +9,17 @@ import (
 // RegisterRoutes mounts all user endpoints onto the provided RouterGroup.
 // Telegram users can create their own profile and look up by telegram ID.
 // Admin-only operations include listing, viewing, updating, banning, and deleting users.
+func RegisterOnboardingRoutes(rg *gin.RouterGroup, h *users.Handler) {
+	rg.POST("/user", middleware.RequireTelegram(), h.Save)
+	rg.GET("/user/phone-verification", middleware.RequireTelegram(), h.PhoneVerification)
+}
+
 func RegisterRoutes(rg *gin.RouterGroup, h *users.Handler) {
 	g := rg.Group("/user")
 
 	// Telegram users only
 	tma := g.Group("", middleware.RequireTelegram())
 	{
-		tma.POST("", h.Save)
 		tma.GET("/me", h.Me)
 		tma.GET("/t/:id", h.GetByTelegramID)
 	}

@@ -1,5 +1,7 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1'
 
+export const PHONE_ACCESS_EVENT = 'phone-access-required'
+
 export interface ApiClientOptions {
   initDataRaw?: string
   bearerToken?: string
@@ -12,6 +14,13 @@ export class ApiClient {
   constructor(options: ApiClientOptions = {}) {
     this.initDataRaw = options.initDataRaw
     this.bearerToken = options.bearerToken
+  }
+
+  private responseError(error: { error?: string; code?: string }, status: number): Error {
+    if (this.initDataRaw && !this.bearerToken && (error.code === 'PHONE_VERIFICATION_REQUIRED' || error.code === 'PHONE_VERIFICATION_UNAVAILABLE')) {
+      window.dispatchEvent(new CustomEvent(PHONE_ACCESS_EVENT, { detail: error.code }))
+    }
+    return new Error(error.error || `HTTP ${status}`)
   }
 
   private getHeaders(): HeadersInit {
@@ -36,7 +45,7 @@ export class ApiClient {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ error: 'Unknown error' }))
-      throw new Error(error.error || `HTTP ${response.status}`)
+      throw this.responseError(error, response.status)
     }
 
     return response.json()
@@ -51,7 +60,7 @@ export class ApiClient {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ error: 'Unknown error' }))
-      throw new Error(error.error || `HTTP ${response.status}`)
+      throw this.responseError(error, response.status)
     }
 
     return response.json()
@@ -66,7 +75,7 @@ export class ApiClient {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ error: 'Unknown error' }))
-      throw new Error(error.error || `HTTP ${response.status}`)
+      throw this.responseError(error, response.status)
     }
 
     return response.json()
@@ -80,7 +89,7 @@ export class ApiClient {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ error: 'Unknown error' }))
-      throw new Error(error.error || `HTTP ${response.status}`)
+      throw this.responseError(error, response.status)
     }
   }
 }

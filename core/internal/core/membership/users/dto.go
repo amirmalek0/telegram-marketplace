@@ -34,36 +34,38 @@ type BanUserRequest struct {
 type PaginatedResponse = pagination.Response[Response]
 
 type Response struct {
-	ID            string     `json:"id"`
-	FirstName     string     `json:"first_name"`
-	LastName      string     `json:"last_name"`
-	Username      string     `json:"username"`
-	TelegramID    int64      `json:"telegram_id"`
-	PhoneNumber   string     `json:"phone_number"`
-	HasActivePlan bool       `json:"has_active_plan"`
-	ActivePlanID  *string    `json:"active_plan_id,omitempty"`
-	WalletBalance int64      `json:"wallet_balance"`
-	PlanExpireAt  *time.Time `json:"plan_expire_at,omitempty"`
-	ReferredBy    *int64     `json:"referred_by,omitempty"`
-	IsBanned      bool       `json:"is_banned"`
-	CreatedAt     time.Time  `json:"created_at"`
+	ID              string     `json:"id"`
+	FirstName       string     `json:"first_name"`
+	LastName        string     `json:"last_name"`
+	Username        string     `json:"username"`
+	TelegramID      int64      `json:"telegram_id"`
+	PhoneNumber     string     `json:"phone_number"`
+	PhoneVerifiedAt *time.Time `json:"phone_verified_at,omitempty"`
+	HasActivePlan   bool       `json:"has_active_plan"`
+	ActivePlanID    *string    `json:"active_plan_id,omitempty"`
+	WalletBalance   int64      `json:"wallet_balance"`
+	PlanExpireAt    *time.Time `json:"plan_expire_at,omitempty"`
+	ReferredBy      *int64     `json:"referred_by,omitempty"`
+	IsBanned        bool       `json:"is_banned"`
+	CreatedAt       time.Time  `json:"created_at"`
 }
 
 func toResponse(user *model.User) Response {
 	hasActivePlan := user.HasActivePlan && user.PlanExpireAt != nil && user.PlanExpireAt.After(time.Now())
 	return Response{
-		ID:            user.ID,
-		FirstName:     user.FirstName,
-		LastName:      user.LastName,
-		Username:      user.Username,
-		TelegramID:    user.TelegramID,
-		PhoneNumber:   user.PhoneNumber,
-		HasActivePlan: hasActivePlan,
-		ActivePlanID:  user.ActivePlanID,
-		WalletBalance: user.WalletBalance,
-		PlanExpireAt:  user.PlanExpireAt,
-		ReferredBy:    user.ReferredBy,
-		IsBanned:      user.IsBanned,
-		CreatedAt:     user.CreatedAt,
+		ID:              user.ID,
+		FirstName:       user.FirstName,
+		LastName:        user.LastName,
+		Username:        user.Username,
+		TelegramID:      user.TelegramID,
+		PhoneNumber:     user.PhoneNumber,
+		PhoneVerifiedAt: user.PhoneVerifiedAt,
+		HasActivePlan:   hasActivePlan,
+		ActivePlanID:    user.ActivePlanID,
+		WalletBalance:   user.WalletBalance,
+		PlanExpireAt:    user.PlanExpireAt,
+		ReferredBy:      user.ReferredBy,
+		IsBanned:        user.IsBanned,
+		CreatedAt:       user.CreatedAt,
 	}
 }

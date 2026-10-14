@@ -14,6 +14,7 @@ import (
 	"telegram-marketplace/internal/app/config"
 	"telegram-marketplace/internal/app/router"
 	"telegram-marketplace/internal/core/commerce/payments"
+	"telegram-marketplace/internal/core/membership/users"
 	telegramclient "telegram-marketplace/internal/platform/telegram"
 )
 
@@ -61,6 +62,10 @@ func (h *Handler) StartPolling() error {
 }
 
 func (h *Handler) StartWebhook(addr, webhookURL string) error {
+	// A forged webhook must never be able to verify phones or settle payments.
+	if strings.TrimSpace(h.webhookSecret) == "" {
+		return errors.New("TELEGRAM_WEBHOOK_SECRET is required in webhook mode")
+	}
 	url := strings.TrimRight(webhookURL, "/")
 	if !strings.HasSuffix(url, webhookPath) {
 		url += webhookPath
@@ -99,11 +104,34 @@ func (h *Handler) StartWebhook(addr, webhookURL string) error {
 }
 
 func (h *Handler) processUpdate(ctx context.Context, update telegramclient.Update) error {
+	if message := update.Message; message != nil && message.Contact != nil {
+		return h.processContact(ctx, message)
+	}
+	if message := update.Message; message != nil && message.Text == "/verify" && message.From != nil && message.Chat.Type == "private" && message.Chat.ID == message.From.ID {
+		return h.telegram.RequestContact(ctx, message.Chat.ID)
+	}
 	if h.services.PaymentsService == nil {
 		return errors.New("payment service is not configured")
 	}
 	if query := update.PreCheckoutQuery; query != nil {
-		err := h.services.PaymentsService.ValidatePreCheckout(
+		// Also reject already-open invoices if the admin enables the gate.
+		if h.services.SettingsService == nil || h.services.UsersService == nil {
+			return errors.New("phone verification services are not configured")
+		}
+		required, err := h.services.SettingsService.PhoneVerificationRequired(ctx)
+		if err != nil {
+			return err
+		}
+		if required {
+			verified, err := h.services.UsersService.PhoneVerified(ctx, query.From.ID)
+			if err != nil {
+				return err
+			}
+			if !verified {
+				return h.telegram.AnswerPreCheckoutQuery(ctx, query.ID, false, "ابتدا شماره تلفن خود را در مینی‌اپ تأیید کنید.")
+			}
+		}
+		err = h.services.PaymentsService.ValidatePreCheckout(
 			ctx, query.From.ID, query.InvoicePayload, query.Currency, query.TotalAmount,
 		)
 		if err != nil {
@@ -137,6 +165,32 @@ func (h *Handler) processUpdate(ctx context.Context, update telegramclient.Updat
 	}
 	if err := h.telegram.SendMessage(ctx, message.Chat.ID, "پرداخت شما با موفقیت انجام شد ✅\nحساب شما در مینی‌اپ به‌روزرسانی شده است."); err != nil {
 		log.Printf("telegram payment confirmation message: %v", err)
+	}
+	return nil
+}
+
+func (h *Handler) processContact(ctx context.Context, message *telegramclient.Message) error {
+	if message.From == nil {
+		return nil
+	}
+	if h.services.UsersService == nil {
+		return errors.New("user service is not configured")
+	}
+	err := h.services.UsersService.VerifyTelegramContact(ctx, users.TelegramContact{
+		SenderID: message.From.ID, ContactUserID: message.Contact.UserID, ChatID: message.Chat.ID,
+		Private: message.Chat.Type == "private", Forwarded: len(message.ForwardOrigin) > 0 && string(message.ForwardOrigin) != "null",
+		PhoneNumber: message.Contact.PhoneNumber, FirstName: message.From.FirstName,
+		LastName: message.From.LastName, Username: message.From.Username,
+	})
+	if errors.Is(err, users.ErrInvalidContact) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	// Do not retry an already-verified contact just because confirmation failed.
+	if err := h.telegram.SendMessage(ctx, message.Chat.ID, "شماره تلفن شما تأیید شد ✅\nاکنون می‌توانید به مینی‌اپ برگردید."); err != nil {
+		log.Printf("telegram contact confirmation failed")
 	}
 	return nil
 }

@@ -1,0 +1,10 @@
+.phone-verification-card { width: min(100%, 380px); padding: 26px 22px; border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface-solid); text-align: center; }
+.phone-verification-icon { display: grid; place-items: center; width: 60px; height: 60px; margin: 0 auto 18px; border-radius: 20px; background: var(--accent-soft); color: var(--accent); }
+.phone-verification-card h1 { margin: 0 0 10px; font-size: var(--font-heading); }
+.phone-verification-card p { margin: 0 0 18px; color: var(--secondary); font-size: var(--font-body); line-height: 2; }
+.phone-verification-card button { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 12px; border: 0; border-radius: var(--radius-control); font-size: var(--font-body); font-weight: 650; }
+.phone-share-button { background: var(--accent); color: white; }
+.phone-share-button:disabled { opacity: .6; }
+.phone-refresh-button { margin-top: 8px; background: var(--surface-soft); color: var(--text); }
+.phone-verification-card .phone-verification-notice { margin: 16px 0 0; padding: 12px; border-radius: 12px; background: var(--accent-soft); color: var(--text); font-size: var(--font-support); }
+.phone-verification-card small { display: block; margin-top: 18px; color: var(--secondary); font-size: var(--font-caption); line-height: 1.9; }

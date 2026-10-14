@@ -1,6 +1,7 @@
 package users
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -11,7 +12,8 @@ import (
 
 // Handler wires HTTP concerns to the Service layer.
 type Handler struct {
-	service *Service
+	service     *Service
+	phonePolicy middleware.PhonePolicy
 }
 
 // Me returns the authenticated Telegram user's current profile and account state.
@@ -30,17 +32,23 @@ func (h *Handler) Me(c *gin.Context) {
 }
 
 // NewHandler constructs a Handler with the given Service.
-func NewHandler(service *Service) *Handler {
-	return &Handler{service: service}
+func NewHandler(service *Service, phonePolicy middleware.PhonePolicy) *Handler {
+	return &Handler{service: service, phonePolicy: phonePolicy}
 }
 
 // Save creates a new user or updates an existing one by Telegram ID.
 func (h *Handler) Save(c *gin.Context) {
 	var req CreateUserRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	id, ok := middleware.GetTelegramUserID(c)
+	if !ok || json.Unmarshal([]byte(middleware.GetInitData(c).Get("user")), &req) != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "telegram authentication required"})
 		return
 	}
+	// Identity and profile come exclusively from signed Telegram data. Never
+	// accept phone verification, another user's ID, or profile data from JSON.
+	req.TelegramID = id
+	req.PhoneNumber = ""
+	req.ReferredBy = 0
 
 	user, created, err := h.service.Upsert(c.Request.Context(), req)
 	if err != nil {
@@ -52,7 +60,7 @@ func (h *Handler) Save(c *gin.Context) {
 	if created {
 		status = http.StatusCreated
 	}
-	c.JSON(status, toResponse(user))
+	c.JSON(status, gin.H{"id": user.ID, "telegram_id": user.TelegramID})
 }
 
 // GetByID returns a single user by their internal UUID.
@@ -75,6 +83,11 @@ func (h *Handler) GetByTelegramID(c *gin.Context) {
 	telegramID, err := strconv.ParseInt(rawID, 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "telegram_id must be a valid integer"})
+		return
+	}
+	callerID, ok := middleware.GetTelegramUserID(c)
+	if !ok || callerID != telegramID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "access denied"})
 		return
 	}
 

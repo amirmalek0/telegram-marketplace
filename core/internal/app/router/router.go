@@ -48,6 +48,7 @@ type Handlers struct {
 	Auth             *auth.Handler
 	AuthService      *auth.Service
 	Users            *users.Handler
+	UsersService     *users.Service
 	Categories       *categories.Handler
 	Files            *files.Handler
 	Messages         *messages.Handler
@@ -64,6 +65,7 @@ type Handlers struct {
 	TicketCategories *ticketcategories.Handler
 	VIP              *vip.Handler
 	Settings         *settings.Handler
+	SettingsService  *settings.Service
 }
 
 // New creates and configures the gin.Engine:
@@ -91,8 +93,9 @@ func New(botToken string, corsAllowedOrigins []string, h Handlers) *gin.Engine {
 
 		// Domain routes — Auth requires valid Telegram (tma) or JWT (Bearer)
 		// authentication. Per-route guards enforce role-specific access control.
-		domain := api.Group("")
-		domain.Use(middleware.Auth(botToken, h.AuthService))
+		authenticated := api.Group("", middleware.Auth(botToken, h.AuthService))
+		userrouter.RegisterOnboardingRoutes(authenticated, h.Users)
+		domain := authenticated.Group("", middleware.RequireVerifiedPhone(h.SettingsService, h.UsersService))
 		{
 			userrouter.RegisterRoutes(domain, h.Users)
 			categoryrouter.RegisterRoutes(domain, h.Categories)
