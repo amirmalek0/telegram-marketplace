@@ -1,14 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { TicketApi } from './ticketApi'
 import type { Ticket } from './types'
+import { editorTickets } from '../content/editorFixtures'
 
-export function useTickets(initDataRaw: string | null, ready: boolean) {
+export function useTickets(initDataRaw: string | null, ready: boolean, preview = false) {
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const api = useMemo(() => initDataRaw ? new TicketApi(initDataRaw) : null, [initDataRaw])
 
   const reload = useCallback(async () => {
+    if (preview) {
+      setTickets(editorTickets)
+      setError(null)
+      setLoading(false)
+      return
+    }
     if (!api || !ready) return
 
     setLoading(true)
@@ -21,12 +28,16 @@ export function useTickets(initDataRaw: string | null, ready: boolean) {
     } finally {
       setLoading(false)
     }
-  }, [api, ready])
+  }, [api, preview, ready])
 
   useEffect(() => {
+    if (preview) {
+      void reload()
+      return
+    }
     if (!api || !ready) return
     void reload()
-  }, [api, ready, reload])
+  }, [api, preview, ready, reload])
 
-  return { tickets, loading: loading || !ready, error, reload }
+  return { tickets, loading: loading || (!ready && !preview), error, reload }
 }

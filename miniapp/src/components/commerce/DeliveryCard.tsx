@@ -23,10 +23,11 @@ function itemIcon(kind: DeliveryItem['kind']): IconName {
 
 export function DeliveryCard({ delivery, showProductTitle = true }: DeliveryCardProps) {
   return (
-    <article className="delivery-card">
+    <article className={`delivery-card${showProductTitle ? '' : ' delivery-card-compact'}`}>
       <header>
-        <div>
-          <h3>{showProductTitle ? delivery.product_title : 'محتوای خریداری‌شده'}</h3>
+        {showProductTitle && <span className="delivery-product-icon"><Icon name={delivery.status === 'delivered' ? 'box' : 'clock'} size={20} /></span>}
+        <div className="delivery-title-copy">
+          {showProductTitle && <h3>{delivery.product_title}</h3>}
           <p>خرید در {formatDate(delivery.created_at)}</p>
         </div>
         <span className={`delivery-status delivery-${delivery.status}`}>{statusLabels[delivery.status]}</span>
@@ -38,9 +39,10 @@ export function DeliveryCard({ delivery, showProductTitle = true }: DeliveryCard
               <span className="commerce-icon"><Icon name={itemIcon(item.kind)} size={18} /></span>
               <div className="delivery-item-copy">
                 <strong>{item.label}</strong>
+                <small>{item.kind === 'file' ? 'فایل' : item.kind === 'message' ? 'پیام' : item.kind === 'inventory' ? 'کد آماده' : 'تحویل API'}</small>
                 {item.content && <pre>{item.content}</pre>}
               </div>
-              {item.download_url && <a href={publicAssetURL(item.download_url)} target="_blank" rel="noreferrer">دریافت فایل</a>}
+              {item.download_url && <a href={publicAssetURL(item.download_url)} target="_blank" rel="noreferrer"><Icon name="download" size={14} /> دریافت فایل</a>}
             </div>
           ))}
         </div>

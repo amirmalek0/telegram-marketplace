@@ -3,15 +3,18 @@
 .standalone-state { min-height: 100vh; padding: 24px; background: var(--bg); }
 .construction-card, .state-card { width: 100%; max-width: 380px; padding: 36px 25px; border-radius: 30px; background: var(--surface-solid); box-shadow: var(--shadow); text-align: center; }
 .construction-icon { margin: 0 auto 18px; width: 72px; height: 72px; display: grid; place-items: center; border-radius: 24px; background: linear-gradient(145deg, #e8f3ff, #e7e5ff); color: var(--accent); }
-.construction-card h1, .construction-card h2, .state-card h2 { margin: 7px 0; font-size: 23px; }
-.construction-card > p:not(.eyebrow), .state-card p { margin: 0; color: var(--secondary); font-size: 13px; line-height: 1.8; }
-.construction-pill { display: inline-block; margin-top: 20px; padding: 7px 13px; border-radius: 999px; background: var(--surface-soft); color: var(--secondary); font-size: 10px; font-weight: 700; }
-.inline-empty { min-height: 110px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px dashed rgba(60,60,67,.15); border-radius: 20px; color: var(--secondary); font-size: 12px; }
+.construction-card h1, .construction-card h2, .state-card h2 { margin: 7px 0; font-size: var(--font-heading); }
+.construction-card > p:not(.eyebrow), .state-card p { margin: 0; color: var(--secondary); font-size: var(--font-body); line-height: 1.8; }
+.construction-pill { display: inline-block; margin-top: 20px; padding: 7px 13px; border-radius: 999px; background: var(--surface-soft); color: var(--secondary); font-size: var(--font-caption); font-weight: 700; }
+.inline-empty { min-height: 110px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px dashed rgba(60,60,67,.15); border-radius: 20px; color: var(--secondary); font-size: var(--font-support); }
 .skeleton { background: linear-gradient(90deg, #e8e8ec 25%, #f5f5f7 45%, #e8e8ec 65%); background-size: 220% 100%; animation: shimmer 1.4s infinite linear; }
 .title-skeleton { width: 130px; height: 20px; border-radius: 8px; margin: 28px 0 14px; }
-.category-grid-skeleton { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-.category-skeleton { height: 122px; border-radius: 22px; }
-.product-skeleton { width: min(81vw,296px); height: 365px; border-radius: 25px; }
+.category-grid-skeleton { display: flex; gap: 12px; overflow: hidden; }
+.category-skeleton { flex: 0 0 min(248px, calc(100vw - 36px)); height: 84px; border-radius: var(--radius-card); }
+.product-skeleton { width: 100%; height: 180px; margin-bottom: 14px; border-radius: var(--radius-card); }
+.product-overview-skeleton { height: 300px; border-radius: var(--radius-card); }
+.product-checkout-skeleton { height: 216px; border-radius: var(--radius-card); }
+.product-description-skeleton { height: 160px; border-radius: var(--radius-card); }
 
 @keyframes shimmer {
   to { background-position: -220% 0; }

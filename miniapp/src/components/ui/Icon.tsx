@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 
 export type IconName =
   | 'shop'
+  | 'star'
   | 'orders'
   | 'download'
   | 'tickets'
@@ -19,8 +20,18 @@ export type IconName =
   | 'send'
   | 'clock'
   | 'check'
+  | 'refresh'
+  | 'wallet'
+  | 'file'
+  | 'info'
+  | 'alert'
+  | 'phone'
 
 const iconPaths: Record<IconName, ReactNode> = {
+  star: <path d="m12 2.5 2.94 5.96 6.58.96-4.76 4.64 1.12 6.55L12 17.52l-5.88 3.09 1.12-6.55-4.76-4.64 6.58-.96L12 2.5Z" fill="currentColor" stroke="none" />,
+  phone: <><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M10 5h4M11 18h2"/></>,
+  info: <><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/></>,
+  alert: <><path d="m12 3 10 18H2L12 3Z"/><path d="M12 9v5M12 17h.01"/></>,
   shop: <><path d="M6.5 8.5V6a5.5 5.5 0 0 1 11 0v2.5"/><path d="M4 8.5h16l-1 12H5l-1-12Z"/></>,
   orders: <><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Z"/><path d="M9 8h6M9 12h6"/></>,
   download: <><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></>,
@@ -39,6 +50,9 @@ const iconPaths: Record<IconName, ReactNode> = {
   send: <><path d="m22 2-7 20-4-9-9-4 20-7Z"/><path d="M22 2 11 13"/></>,
   clock: <><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></>,
   check: <><circle cx="12" cy="12" r="9"/><path d="m8 12 2.5 2.5L16 9"/></>,
+  refresh: <><path d="M20 7v5h-5"/><path d="M4 17v-5h5"/><path d="M6.1 9a7 7 0 0 1 11.5-2.6L20 9M4 15l2.4 2.6A7 7 0 0 0 17.9 15"/></>,
+  wallet: <><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4H19v16H6.5A2.5 2.5 0 0 1 4 17.5v-11Z"/><path d="M4 7h15M15 11h6v5h-6a2.5 2.5 0 0 1 0-5Z"/></>,
+  file: <><path d="M7 3h7l4 4v14H7V3Z"/><path d="M14 3v5h5M10 13h5M10 17h5"/></>,
 }
 
 interface IconProps {

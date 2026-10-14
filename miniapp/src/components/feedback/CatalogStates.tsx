@@ -12,11 +12,20 @@ export function ShopSkeleton() {
   return (
     <div className="page skeleton-page">
       <div className="skeleton title-skeleton" />
-      <div className="skeleton category-grid-skeleton">
-        {[1, 2, 3, 4].map((item) => <div key={item} className="skeleton category-skeleton" />)}
+      <div className="category-grid-skeleton">
+        {[1, 2, 3].map((item) => <div key={item} className="skeleton category-skeleton" />)}
       </div>
       <div className="skeleton title-skeleton" />
       <div className="skeleton product-skeleton" />
+      <div className="skeleton product-skeleton" />
     </div>
   )
+}
+
+export function ProductSkeleton() {
+  return <div className="page product-detail" aria-busy="true">
+    <div className="skeleton product-overview-skeleton" />
+    <div className="skeleton product-checkout-skeleton" />
+    <div className="skeleton product-description-skeleton" />
+  </div>
 }

@@ -10,6 +10,8 @@ import { useTickets } from '../features/tickets/useTickets'
 interface TicketsPageProps {
   initDataRaw: string | null
   ready: boolean
+  preview?: boolean
+  scenario?: string
 }
 
 type TicketFilter = 'all' | TicketStatus
@@ -21,13 +23,17 @@ const filters: { value: TicketFilter; label: string }[] = [
   { value: 'closed', label: ticketStatusLabels.closed },
 ]
 
-export function TicketsPage({ initDataRaw, ready }: TicketsPageProps) {
-  const { tickets, loading, error, reload } = useTickets(initDataRaw, ready)
+export function TicketsPage({ initDataRaw, ready, preview = false, scenario = 'content' }: TicketsPageProps) {
+  const { tickets, loading, error, reload } = useTickets(initDataRaw, ready, preview)
   const [filter, setFilter] = useState<TicketFilter>('all')
-  const visibleTickets = useMemo(
+  const filteredTickets = useMemo(
     () => filter === 'all' ? tickets : tickets.filter((ticket) => ticket.status === filter),
     [filter, tickets],
   )
+  const visibleTickets = preview && (scenario === 'empty' || scenario === 'filtered-empty') ? [] : filteredTickets
+  const visibleLoading = preview ? scenario === 'loading' : loading
+  const visibleError = preview && scenario === 'error' ? 'دریافت تیکت‌ها ناموفق بود' : error
+  const hasTickets = scenario === 'filtered-empty' ? true : tickets.length > 0
   return (
     <div className="page tickets-page">
       <section className="ticket-overview">
@@ -56,7 +62,7 @@ export function TicketsPage({ initDataRaw, ready }: TicketsPageProps) {
         ))}
       </div>
 
-      {loading ? <TicketListSkeleton /> : error ? (
+      {visibleLoading ? <TicketListSkeleton /> : visibleError ? (
         <section className="ticket-error">
           <Icon name="tickets" size={26} />
           <h3>دریافت تیکت‌ها انجام نشد</h3>
@@ -67,7 +73,7 @@ export function TicketsPage({ initDataRaw, ready }: TicketsPageProps) {
         <div className="ticket-list">
           {visibleTickets.map((ticket) => <TicketCard key={ticket.id} ticket={ticket} />)}
         </div>
-      ) : <TicketEmpty filtered={tickets.length > 0} />}
+      ) : <TicketEmpty filtered={hasTickets} />}
     </div>
   )
 }

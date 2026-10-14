@@ -5,13 +5,17 @@ import { Icon } from '../components/ui/Icon'
 import type { CatalogState } from '../features/catalog/types'
 import { publicAssetURL } from '../utils/assets'
 
-export function CategoryPage({ products, categoryById, loading, error }: CatalogState) {
-  const { categoryId = '' } = useParams()
-  const category = categoryById.get(categoryId)
-  const categoryProducts = products.filter((product) => product.category_id === categoryId)
+interface CategoryPageProps extends CatalogState { preview?: boolean; scenario?: string }
 
-  if (loading) return <ShopSkeleton />
-  if (error) return <StateCard title="اطلاعات دریافت نشد" body={error} />
+export function CategoryPage({ products, categoryById, loading, error, preview = false, scenario = 'content' }: CategoryPageProps) {
+  const { categoryId = '' } = useParams()
+  const category = preview && scenario === 'not-found' ? undefined : categoryById.get(categoryId)
+  const categoryProducts = preview && scenario === 'empty' ? [] : products.filter((product) => product.category_id === categoryId)
+  const visibleLoading = preview ? scenario === 'loading' : loading
+  const visibleError = preview && scenario === 'error' ? 'دریافت اطلاعات فروشگاه ناموفق بود' : error
+
+  if (visibleLoading) return <ShopSkeleton />
+  if (visibleError) return <StateCard title="اطلاعات دریافت نشد" body={visibleError} />
   if (!category) return <StateCard title="دسته‌بندی پیدا نشد" body="ممکن است این دسته حذف یا غیرفعال شده باشد." />
 
   return (

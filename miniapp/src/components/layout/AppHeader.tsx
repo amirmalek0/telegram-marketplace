@@ -7,6 +7,8 @@ import { ThemeToggle } from './ThemeToggle'
 interface AppHeaderProps {
   categories: Category[]
   products: Product[]
+  preview?: boolean
+  scenario?: string
 }
 
 function resolveHeader(pathname: string, categories: Category[], products: Product[]) {
@@ -18,8 +20,11 @@ function resolveHeader(pathname: string, categories: Category[], products: Produ
   const category = categories.find((item) => item.id === categoryId)
   const product = products.find((item) => item.id === productId)
 
+  const accountDetail = pathname.startsWith('/orders') || pathname.startsWith('/downloads')
   const header = pathname.startsWith('/orders') ? { title: 'سفارش‌ها', icon: 'orders' as IconName }
     : pathname.startsWith('/downloads') ? { title: 'دانلودها', icon: 'download' as IconName }
+      : pathname.startsWith('/wallet') ? { title: 'کیف پول', icon: 'wallet' as IconName }
+      : pathname.startsWith('/vip') ? { title: 'پلن‌های VIP', icon: 'crown' as IconName }
       : isNewTicket ? { title: 'تیکت جدید', icon: 'plus' as IconName }
         : isTicketDetail ? { title: 'گفت‌وگوی پشتیبانی', icon: 'tickets' as IconName }
           : pathname.startsWith('/tickets') ? { title: 'تیکت‌ها', icon: 'tickets' as IconName }
@@ -30,16 +35,17 @@ function resolveHeader(pathname: string, categories: Category[], products: Produ
 
   return {
     ...header,
-    isDetail: Boolean(categoryId || productId || isTicketDetail),
+    isDetail: Boolean(categoryId || productId || isTicketDetail || accountDetail),
     isTicketDetail,
     showSearch: pathname === '/',
   }
 }
 
-export function AppHeader({ categories, products }: AppHeaderProps) {
+export function AppHeader({ categories, products, preview = false, scenario = 'content' }: AppHeaderProps) {
   const navigate = useNavigate()
   const location = useLocation()
-  const header = resolveHeader(location.pathname, categories, products)
+  const simulateMissing = preview && scenario === 'not-found'
+  const header = resolveHeader(location.pathname, simulateMissing ? [] : categories, simulateMissing ? [] : products)
 
   return (
     <header className="top-region">

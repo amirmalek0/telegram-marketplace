@@ -5,17 +5,27 @@ import { OrderCard } from '../components/commerce/OrderCard'
 import { Icon } from '../components/ui/Icon'
 import type { Product, PaginatedResponse } from '../features/catalog/types'
 import type { Order } from '../features/commerce/types'
+import { editorOrders } from '../features/content/editorFixtures'
 
-interface OrdersPageProps { initDataRaw: string | null; products: Product[] }
+interface OrdersPageProps { initDataRaw: string | null; products: Product[]; preview?: boolean; scenario?: string }
 
-export function OrdersPage({ initDataRaw, products }: OrdersPageProps) {
+export function OrdersPage({ initDataRaw, products, preview = false, scenario = 'content' }: OrdersPageProps) {
   const [orders, setOrders] = useState<Order[]>([])
+  const [filter, setFilter] = useState<'all' | 'paid' | 'open'>('all')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [total, setTotal] = useState(0)
   const productById = useMemo(() => new Map(products.map((product) => [product.id, product])), [products])
 
   const loadOrders = useCallback(async () => {
+    if (preview) {
+      const nextOrders = editorOrders(products)
+      setOrders(nextOrders)
+      setTotal(nextOrders.length)
+      setError(null)
+      setLoading(false)
+      return
+    }
     if (!initDataRaw) {
       setLoading(false)
       return
@@ -31,26 +41,52 @@ export function OrdersPage({ initDataRaw, products }: OrdersPageProps) {
     } finally {
       setLoading(false)
     }
-  }, [initDataRaw])
+  }, [initDataRaw, preview, products])
 
   useEffect(() => { void loadOrders() }, [loadOrders])
 
-  if (loading) return <div className="page order-page"><div className="order-skeleton skeleton" /><div className="order-skeleton skeleton" /></div>
-  if (error) return <div className="page"><section className="commerce-empty"><Icon name="orders" size={30} /><h2>دریافت سفارش‌ها ناموفق بود</h2><p>{error}</p><button onClick={() => void loadOrders()}>تلاش دوباره</button></section></div>
+  const visibleOrders = preview && scenario === 'empty' ? [] : orders
+  const visibleLoading = preview ? scenario === 'loading' : loading
+  const visibleError = preview && scenario === 'error' ? 'سفارش‌ها دریافت نشد' : error
+  const visibleTotal = preview ? visibleOrders.length : total
+  const paidCount = visibleOrders.filter((order) => order.status === 'paid').length
+  const openCount = visibleOrders.filter((order) => order.status === 'pending' || order.delivery_status === 'processing').length
+  const filteredOrders = filter === 'paid'
+    ? visibleOrders.filter((order) => order.status === 'paid')
+    : filter === 'open'
+      ? visibleOrders.filter((order) => order.status === 'pending' || order.delivery_status === 'processing')
+      : visibleOrders
+
+  if (visibleLoading) return <div className="page order-page"><div className="order-skeleton skeleton" /><div className="order-skeleton skeleton" /></div>
+  if (visibleError) return <div className="page"><section className="commerce-empty"><Icon name="orders" size={30} /><h2>دریافت سفارش‌ها ناموفق بود</h2><p>{visibleError}</p><button onClick={() => void loadOrders()}>تلاش دوباره</button></section></div>
 
   return (
     <div className="page order-page">
-      {orders.length === 0 ? (
+      {visibleOrders.length === 0 ? (
         <section className="commerce-empty"><Icon name="orders" size={30} /><h2>هنوز سفارشی ندارید</h2><p>محصول دلخواهتان را از فروشگاه انتخاب کنید.</p><NavLink to="/">رفتن به فروشگاه</NavLink></section>
       ) : (
         <>
-          <section className="orders-overview">
-            <span className="orders-overview-icon"><Icon name="orders" size={21} /></span>
-            <div><strong>{total.toLocaleString('fa-IR')} سفارش</strong><p>سوابق پرداخت و وضعیت تحویل محصولات</p></div>
-            <button type="button" onClick={() => void loadOrders()}>به‌روزرسانی</button>
+          <section className="commerce-dashboard orders-dashboard">
+            <div className="commerce-dashboard-head">
+              <span className="commerce-dashboard-icon"><Icon name="orders" size={21} /></span>
+              <div><strong>سفارش‌های من</strong><p>سوابق پرداخت و وضعیت تحویل محصولات</p></div>
+              <button type="button" className="commerce-refresh" onClick={() => void loadOrders()} aria-label="به‌روزرسانی"><Icon name="refresh" size={16} /></button>
+            </div>
+            <div className="commerce-stats">
+              <div><strong>{visibleTotal.toLocaleString('fa-IR')}</strong><span>همه سفارش‌ها</span></div>
+              <div className="is-success"><strong>{paidCount.toLocaleString('fa-IR')}</strong><span>پرداخت‌شده</span></div>
+              <div className="is-warning"><strong>{openCount.toLocaleString('fa-IR')}</strong><span>در جریان</span></div>
+            </div>
           </section>
+
+          <div className="commerce-filters" role="group" aria-label="فیلتر سفارش‌ها">
+            <button type="button" aria-pressed={filter === 'all'} className={filter === 'all' ? 'active' : ''} onClick={() => setFilter('all')}>همه</button>
+            <button type="button" aria-pressed={filter === 'paid'} className={filter === 'paid' ? 'active' : ''} onClick={() => setFilter('paid')}>پرداخت‌شده</button>
+            <button type="button" aria-pressed={filter === 'open'} className={filter === 'open' ? 'active' : ''} onClick={() => setFilter('open')}>در جریان</button>
+          </div>
           <div className="order-list">
-            {orders.map((order) => <OrderCard order={order} product={productById.get(order.product_id)} key={order.id} />)}
+            {filteredOrders.map((order) => <OrderCard order={order} product={productById.get(order.product_id)} key={order.id} />)}
+            {filteredOrders.length === 0 && <div className="commerce-filter-empty"><Icon name="orders" size={20} /><span>سفارشی در این وضعیت نیست</span></div>}
           </div>
         </>
       )}

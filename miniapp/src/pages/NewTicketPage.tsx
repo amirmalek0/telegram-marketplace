@@ -4,15 +4,18 @@ import { Icon } from '../components/ui/Icon'
 import { ticketCategoryLabel, ticketPriorityLabels } from '../features/tickets/metadata'
 import { TicketApi } from '../features/tickets/ticketApi'
 import type { TicketCategory, TicketPriority } from '../features/tickets/types'
+import { editorTicketCategories } from '../features/content/editorFixtures'
 
 interface NewTicketPageProps {
   initDataRaw: string | null
   ready: boolean
+  preview?: boolean
+  scenario?: string
 }
 
 const priorities: TicketPriority[] = ['low', 'medium', 'high', 'urgent']
 
-export function NewTicketPage({ initDataRaw, ready }: NewTicketPageProps) {
+export function NewTicketPage({ initDataRaw, ready, preview = false, scenario = 'form' }: NewTicketPageProps) {
   const navigate = useNavigate()
   const api = useMemo(() => initDataRaw ? new TicketApi(initDataRaw) : null, [initDataRaw])
   const [categories, setCategories] = useState<TicketCategory[]>([])
@@ -25,6 +28,13 @@ export function NewTicketPage({ initDataRaw, ready }: NewTicketPageProps) {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (preview) {
+      setCategories(editorTicketCategories)
+      setCategory(editorTicketCategories[0].name)
+      setLoadingCategories(false)
+      setError(null)
+      return
+    }
     if (!api || !ready) return
     let active = true
 
@@ -46,13 +56,20 @@ export function NewTicketPage({ initDataRaw, ready }: NewTicketPageProps) {
 
     void loadCategories()
     return () => { active = false }
-  }, [api, ready])
+  }, [api, preview, ready])
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const cleanSubject = subject.trim()
     const cleanMessage = message.trim()
-    if (!api || !category || cleanSubject.length < 3 || !cleanMessage) return
+    if (!category || cleanSubject.length < 3 || !cleanMessage) return
+
+    if (preview) {
+      navigate('/tickets/preview-ticket-open', { replace: true })
+      return
+    }
+
+    if (!api) return
 
     setSubmitting(true)
     setError(null)
@@ -65,6 +82,12 @@ export function NewTicketPage({ initDataRaw, ready }: NewTicketPageProps) {
       setSubmitting(false)
     }
   }
+
+  const visibleCategories = preview && scenario === 'empty' ? [] : categories
+  const visibleLoadingCategories = preview ? scenario === 'loading' : loadingCategories
+  const visibleSubmitting = preview ? scenario === 'submitting' : submitting
+  const visibleError = preview && scenario === 'error' ? 'دسته‌بندی‌های پشتیبانی دریافت نشد. دوباره تلاش کنید.' : error
+  const visibleCategory = preview && (scenario === 'empty' || scenario === 'loading' || scenario === 'error') ? '' : category
 
   return (
     <div className="page new-ticket-page">
@@ -96,14 +119,14 @@ export function NewTicketPage({ initDataRaw, ready }: NewTicketPageProps) {
             <label className="ticket-field">
               <span>دسته‌بندی</span>
               <select
-                value={category}
+                value={visibleCategory}
                 onChange={(event) => setCategory(event.target.value)}
-                disabled={loadingCategories || categories.length === 0}
+                disabled={visibleLoadingCategories || visibleCategories.length === 0}
                 required
               >
-                {loadingCategories && <option value="">در حال دریافت...</option>}
-                {!loadingCategories && categories.length === 0 && <option value="">دسته‌بندی موجود نیست</option>}
-                {categories.map((item) => (
+                {visibleLoadingCategories && <option value="">در حال دریافت...</option>}
+                {!visibleLoadingCategories && visibleCategories.length === 0 && <option value="">دسته‌بندی موجود نیست</option>}
+                {visibleCategories.map((item) => (
                   <option key={item.id} value={item.name}>{ticketCategoryLabel(item.name)}</option>
                 ))}
               </select>
@@ -146,15 +169,15 @@ export function NewTicketPage({ initDataRaw, ready }: NewTicketPageProps) {
           </div>
         </section>
 
-        {error && <div className="ticket-form-error" role="alert">{error}</div>}
+        {visibleError && <div className="ticket-form-error" role="alert">{visibleError}</div>}
 
         <button
           className="ticket-submit-button pressable"
           type="submit"
-          disabled={submitting || loadingCategories || !category || subject.trim().length < 3 || !message.trim()}
+          disabled={visibleSubmitting || visibleLoadingCategories || !visibleCategory || subject.trim().length < 3 || !message.trim()}
         >
-          {submitting ? <span className="button-spinner" /> : <Icon name="send" size={19} />}
-          <span>{submitting ? 'در حال ارسال...' : 'ارسال تیکت'}</span>
+          {visibleSubmitting ? <span className="button-spinner" /> : <Icon name="send" size={19} />}
+          <span>{visibleSubmitting ? 'در حال ارسال...' : 'ارسال تیکت'}</span>
         </button>
         <p className="ticket-submit-hint">پس از ارسال، پاسخ پشتیبانی در همین بخش نمایش داده می‌شود.</p>
       </form>
