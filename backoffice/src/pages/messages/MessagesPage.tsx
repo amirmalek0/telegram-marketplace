@@ -13,10 +13,12 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { Textarea } from '@/components/ui/Textarea';
+import { Input } from '@/components/ui/Input';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
 
 // --- Zod Schemas ---
 const messageSchema = z.object({
+  name: z.string().trim().min(1, 'نام پیام الزامی است').max(120, 'نام پیام باید حداکثر ۱۲۰ نویسه باشد'),
   content: z.string().min(1, 'محتوای پیام الزامی است'),
 });
 
@@ -47,12 +49,12 @@ export default function MessagesPage() {
   // Forms
   const createForm = useForm<MessageForm>({
     resolver: zodResolver(messageSchema),
-    defaultValues: { content: '' },
+    defaultValues: { name: '', content: '' },
   });
 
   const editForm = useForm<MessageForm>({
     resolver: zodResolver(messageSchema),
-    defaultValues: { content: '' },
+    defaultValues: { name: '', content: '' },
   });
 
   // --- Data Fetching ---
@@ -77,7 +79,7 @@ export default function MessagesPage() {
   const handleCreate = async (data: MessageForm) => {
     setCreating(true);
     try {
-      await messagesApi.create({ content: data.content });
+      await messagesApi.create(data);
       toast.success('پیام با موفقیت ایجاد شد');
       setCreateOpen(false);
       createForm.reset();
@@ -93,7 +95,7 @@ export default function MessagesPage() {
     if (!selected) return;
     setEditing(true);
     try {
-      await messagesApi.update(selected.id, { content: data.content });
+      await messagesApi.update(selected.id, data);
       toast.success('پیام با موفقیت ویرایش شد');
       setEditOpen(false);
       setRefreshKey(k => k + 1);
@@ -121,7 +123,7 @@ export default function MessagesPage() {
 
   const handleOpenEdit = (msg: MessageResponse) => {
     setSelected(msg);
-    editForm.reset({ content: msg.content });
+    editForm.reset({ name: msg.name, content: msg.content });
     setEditOpen(true);
   };
 
@@ -132,6 +134,11 @@ export default function MessagesPage() {
 
   // --- Table Columns ---
   const columns: Column<MessageResponse>[] = [
+    {
+      key: 'name',
+      title: 'نام پیام',
+      render: value => <span className="font-semibold text-[rgb(var(--color-text))]">{value as string}</span>,
+    },
     {
       key: 'content',
       title: 'محتوا',
@@ -192,7 +199,7 @@ export default function MessagesPage() {
         className="flex items-center justify-between"
       >
         <div>
-          <h1 className="text-2xl font-bold text-[rgb(var(--color-text))]">پیام‌ها</h1>
+          <h1 className="text-2xl font-bold text-[rgb(var(--color-text))]">پیام تحویل</h1>
           <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">
             مدیریت پیام‌های از پیش تعریف شده
           </p>
@@ -253,6 +260,7 @@ export default function MessagesPage() {
         }
       >
         <div className="space-y-4">
+          <Input label="نام پیام" placeholder="مثلاً راهنمای فعال‌سازی محصول" maxLength={120} error={createForm.formState.errors.name?.message} {...createForm.register('name')} />
           <Textarea
             label="محتوای پیام"
             placeholder="متن پیام را وارد کنید..."
@@ -285,6 +293,7 @@ export default function MessagesPage() {
         }
       >
         <div className="space-y-4">
+          <Input label="نام پیام" placeholder="مثلاً راهنمای فعال‌سازی محصول" maxLength={120} error={editForm.formState.errors.name?.message} {...editForm.register('name')} />
           <Textarea
             label="محتوای پیام"
             placeholder="متن پیام را وارد کنید..."
@@ -301,7 +310,7 @@ export default function MessagesPage() {
         onClose={() => setDeleteOpen(false)}
         onConfirm={handleDelete}
         title="حذف پیام"
-        message={`آیا از حذف پیام "${selected?.content.substring(0, 50)}${(selected?.content.length ?? 0) > 50 ? '...' : ''}" اطمینان دارید؟ این عمل قابل بازگشت نیست.`}
+        message={`آیا از حذف پیام «${selected?.name}» اطمینان دارید؟ این عمل قابل بازگشت نیست.`}
         loading={deleting}
       />
     </div>

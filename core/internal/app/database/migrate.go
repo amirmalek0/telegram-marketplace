@@ -216,6 +216,9 @@ var migrations = []string{
 		content     TEXT        NOT NULL,
 		created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 	)`,
+	`ALTER TABLE delivery_messages ADD COLUMN IF NOT EXISTS name TEXT`,
+	`UPDATE delivery_messages SET name = 'پیام ' || LEFT(id::text, 8) WHERE name IS NULL`,
+	`ALTER TABLE delivery_messages ALTER COLUMN name SET NOT NULL`,
 
 	`CREATE TABLE IF NOT EXISTS inventories (
 		id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),

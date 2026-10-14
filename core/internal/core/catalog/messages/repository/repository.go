@@ -38,7 +38,7 @@ var _ Repository = (*postgresRepository)(nil)
 
 func (r *postgresRepository) Create(ctx context.Context, m *model.DeliveryMessage) error {
 	err := r.db.QueryRow(ctx, queryCreateMessage,
-		m.Content, m.CreatedAt,
+		m.Name, m.Content, m.CreatedAt,
 	).Scan(&m.ID)
 	if err != nil {
 		return fmt.Errorf("messages.repository.Create: %w", err)
@@ -84,7 +84,7 @@ func (r *postgresRepository) Count(ctx context.Context) (int64, error) {
 }
 
 func (r *postgresRepository) Update(ctx context.Context, m *model.DeliveryMessage) error {
-	_, err := r.db.Exec(ctx, queryUpdateMessage, m.Content, m.ID)
+	_, err := r.db.Exec(ctx, queryUpdateMessage, m.Name, m.Content, m.ID)
 	if err != nil {
 		return fmt.Errorf("messages.repository.Update: %w", err)
 	}

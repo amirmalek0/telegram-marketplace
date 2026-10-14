@@ -309,7 +309,7 @@ export default function BundlesPage() {
         className="flex items-center justify-between"
       >
         <div>
-          <h1 className="text-2xl font-bold text-[rgb(var(--color-text))]">باندل‌ها</h1>
+          <h1 className="text-2xl font-bold text-[rgb(var(--color-text))]">باندل</h1>
           <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">
             مدیریت باندل‌های تحویل محصول
           </p>
@@ -409,7 +409,7 @@ export default function BundlesPage() {
                 { value: '', label: 'انتخاب پیام...' },
                 ...messages.map((m) => ({
                   value: m.id,
-                  label: m.content.length > 50 ? `${m.content.substring(0, 50)}...` : m.content,
+                  label: m.name,
                 })),
               ]}
             />
@@ -500,7 +500,7 @@ export default function BundlesPage() {
                 { value: '', label: 'انتخاب پیام...' },
                 ...messages.map((m) => ({
                   value: m.id,
-                  label: m.content.length > 50 ? `${m.content.substring(0, 50)}...` : m.content,
+                  label: m.name,
                 })),
               ]}
             />

@@ -39,7 +39,7 @@ export function ProductDeliveryField({ deliveryType, control, errors }: { delive
   if (loading) return <div className="flex min-h-16 items-center gap-2 rounded-xl bg-[rgb(var(--color-surface-2))] px-4 text-xs text-[rgb(var(--color-text-secondary))]"><LoaderCircle size={16} className="animate-spin" />در حال دریافت منابع تحویل…</div>;
 
   const config = deliveryType === 'message'
-      ? { name: 'message_id' as const, label: 'پیام تحویل', placeholder: 'یک پیام انتخاب کنید', options: messages.map(item => ({ value: item.id, label: item.content.slice(0, 70) })) }
+      ? { name: 'message_id' as const, label: 'پیام تحویل', placeholder: 'یک پیام انتخاب کنید', options: messages.map(item => ({ value: item.id, label: item.name })) }
       : deliveryType === 'inventory'
         ? { name: 'inventory_id' as const, label: 'مخزن موجودی', placeholder: 'یک مخزن انتخاب کنید', options: inventories.map(item => ({ value: item.id, label: item.name })) }
         : deliveryType === 'bundle'

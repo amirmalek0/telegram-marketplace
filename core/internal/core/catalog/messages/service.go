@@ -4,11 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	bundlesrepo "telegram-marketplace/internal/core/catalog/bundles/repository"
 	"telegram-marketplace/internal/core/catalog/messages/model"
 	"telegram-marketplace/internal/core/catalog/messages/repository"
 	"telegram-marketplace/pkg/pagination"
 	"time"
+	"unicode/utf8"
 )
 
 // ErrReferencedByBundle is returned when a message is referenced by a bundle and cannot be deleted.
@@ -27,7 +29,12 @@ func NewService(repo repository.Repository, bundlesRepo bundlesrepo.Repository) 
 
 // Create stores a new delivery message.
 func (s *Service) Create(ctx context.Context, req CreateRequest) (*model.DeliveryMessage, error) {
+	name, err := normalizeName(req.Name)
+	if err != nil {
+		return nil, err
+	}
 	msg := &model.DeliveryMessage{
+		Name:      name,
 		Content:   req.Content,
 		CreatedAt: time.Now(),
 	}
@@ -69,13 +76,20 @@ func (s *Service) List(ctx context.Context, params pagination.Params) (*Paginate
 	return &result, nil
 }
 
-// Update modifies the content of an existing message.
+// Update modifies the name or content of an existing message.
 func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) (*model.DeliveryMessage, error) {
 	msg, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("messages.service.Update: %w", err)
 	}
 
+	if req.Name != nil {
+		name, err := normalizeName(*req.Name)
+		if err != nil {
+			return nil, err
+		}
+		msg.Name = name
+	}
 	if req.Content != nil {
 		msg.Content = *req.Content
 	}
@@ -85,6 +99,14 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) (*mo
 	}
 
 	return msg, nil
+}
+
+func normalizeName(name string) (string, error) {
+	name = strings.TrimSpace(name)
+	if name == "" || utf8.RuneCountInString(name) > 120 {
+		return "", errors.New("نام پیام الزامی است و باید حداکثر ۱۲۰ نویسه باشد")
+	}
+	return name, nil
 }
 
 // Delete removes a message from the database.
