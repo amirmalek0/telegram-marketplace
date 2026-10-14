@@ -32,7 +32,7 @@ export default function PaymentsPage() {
   ];
   const successTotal = rows.filter(x => !x.is_test && x.status === 'succeeded').reduce((sum, payment) => sum + payment.stars, 0);
   return <div>
-    <PageHeader eyebrow="TELEGRAM STARS" title="پرداخت‌ها" description="پرداخت محصول، اشتراک VIP و شارژ کیف پول" action={<Button variant="secondary" icon={<RefreshCw size={16} />} onClick={() => void load()}>به‌روزرسانی</Button>} />
+    <PageHeader title="پرداخت‌ها" action={<Button variant="secondary" icon={<RefreshCw size={16} />} onClick={() => void load()}>به‌روزرسانی</Button>} />
     <div className="surface-card mb-4 flex items-center justify-between p-5"><div><p className="text-xs text-[rgb(var(--color-text-secondary))]">مجموع پرداخت واقعی موفق در این صفحه</p><p className="mt-1 text-2xl font-extrabold">{successTotal.toLocaleString('fa-IR')} ستاره</p></div><div className="grid h-12 w-12 place-items-center rounded-2xl bg-amber-500/10 text-amber-500"><Star size={22} /></div></div>
     <DataTable columns={columns} data={rows} loading={loading} keyExtractor={r => r.id} pagination={{ page, perPage: 20, total, onPageChange: setPage }} emptyMessage="تراکنش Stars برای نمایش وجود ندارد" />
   </div>;

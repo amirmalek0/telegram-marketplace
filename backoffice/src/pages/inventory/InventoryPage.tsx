@@ -321,7 +321,7 @@ export default function InventoryPage() {
         className="flex items-center justify-between"
       >
         <div>
-          <h1 className="text-2xl font-bold text-[rgb(var(--color-text))]">مخزن‌ها</h1>
+          <h1 className="text-2xl font-bold text-[rgb(var(--color-text))]">مخزن</h1>
           <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">
             مدیریت مخزن‌ها و آیتم‌های قابل فروش
           </p>

@@ -8,7 +8,7 @@ import { adminsApi } from '@/api';
 import { Button, Modal } from '@/components/ui';
 
 const titles: Record<string, string> = {
-  '/': 'داشبورد', '/products': 'محصولات', '/categories': 'دسته‌بندی‌ها', '/bundles': 'باندل‌ها', '/inventory': 'مخزن', '/files': 'فایل‌ها', '/messages': 'پیام‌های تحویل', '/apis': 'اتصال‌های API', '/orders': 'سفارش‌ها', '/payments': 'پرداخت‌ها', '/coupons': 'کدهای تخفیف', '/users': 'کاربران', '/vip': 'پلن‌های VIP', '/tickets': 'تیکت‌ها', '/admins': 'مدیران', '/settings': 'تنظیمات عمومی',
+  '/': 'داشبورد', '/products': 'محصولات', '/categories': 'دسته‌بندی‌ها', '/bundles': 'باندل', '/inventory': 'مخزن', '/files': 'فایل', '/messages': 'پیام تحویل', '/apis': 'اتصال API', '/orders': 'سفارش‌ها', '/payments': 'پرداخت‌ها', '/coupons': 'کدهای تخفیف', '/users': 'کاربران', '/vip': 'پلن‌های VIP', '/tickets': 'تیکت‌ها', '/admins': 'مدیران', '/settings': 'تنظیمات عمومی',
 };
 
 function getAdminId(token: string | null) {

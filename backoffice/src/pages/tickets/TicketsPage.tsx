@@ -100,7 +100,7 @@ export default function TicketsPage() {
   const totalPages = Math.max(1, Math.ceil(total / perPage));
 
   return <div>
-    <PageHeader eyebrow="SUPPORT" title="مرکز تیکت‌ها" description="درخواست‌های کاربران، مرتب و آماده رسیدگی" action={<Button variant="secondary" icon={<Settings2 size={16} />} onClick={() => { setCategoriesOpen(true); void loadCategories(); }}>دسته‌ها</Button>} />
+    <PageHeader title="مرکز تیکت‌ها" action={<Button variant="secondary" icon={<Settings2 size={16} />} onClick={() => { setCategoriesOpen(true); void loadCategories(); }}>دسته‌ها</Button>} />
 
     <div className="filter-bar">
       <Select aria-label="فیلتر وضعیت" value={status} onChange={event => { setStatus(event.target.value as TicketStatus | ''); setPage(1); }} options={[{ value: '', label: 'همه وضعیت‌ها' }, ...statusOptions]} />

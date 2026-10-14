@@ -84,9 +84,7 @@ export default function TicketDetailPage() {
 
   return <div className="pb-8">
     <PageHeader
-      eyebrow="TICKET CONVERSATION"
       title={ticket.subject}
-      description="گفت‌وگو، وضعیت درخواست و اطلاعات کاربر در یک صفحه"
       action={<Button variant="secondary" icon={<ArrowRight size={15} />} onClick={() => navigate(-1)}>بازگشت</Button>}
     />
 

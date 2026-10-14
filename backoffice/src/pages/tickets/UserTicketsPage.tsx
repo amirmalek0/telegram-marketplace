@@ -80,9 +80,7 @@ export default function UserTicketsPage() {
   return (
     <div>
       <PageHeader
-        eyebrow="USER SUPPORT HISTORY"
         title={`تیکت‌های ${name}`}
-        description="تاریخچه کامل درخواست‌ها و گفت‌وگوهای پشتیبانی این کاربر"
         action={<Button variant="secondary" icon={<ArrowRight size={15} />} onClick={() => navigate('/users')}>بازگشت به کاربران</Button>}
       />
 

@@ -197,7 +197,7 @@ export default function FilesPage() {
         className="flex items-center justify-between"
       >
         <div>
-          <h1 className="text-2xl font-bold text-[rgb(var(--color-text))]">فایل‌ها</h1>
+          <h1 className="text-2xl font-bold text-[rgb(var(--color-text))]">فایل</h1>
           <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">
             مدیریت فایل‌های آپلود شده
           </p>

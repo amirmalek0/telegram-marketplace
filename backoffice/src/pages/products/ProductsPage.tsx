@@ -60,7 +60,7 @@ export default function ProductsPage() {
   ];
 
   return <div>
-    <PageHeader eyebrow="CATALOG" title="محصولات" description="مدیریت محصولات، قیمت و روش تحویل" action={<Button icon={<Plus size={16}/>} onClick={() => navigate('/products/new')}>محصول جدید</Button>}/>
+    <PageHeader title="محصولات" action={<Button icon={<Plus size={16}/>} onClick={() => navigate('/products/new')}>محصول جدید</Button>}/>
     <div className="surface-card overflow-hidden"><DataTable columns={columns} data={products} loading={loading} keyExtractor={row => row.id} emptyMessage="هیچ محصولی یافت نشد" pagination={{ page, perPage: PER_PAGE, total, onPageChange: setPage }}/></div>
     <ConfirmationModal isOpen={Boolean(selected)} onClose={() => !deleting && setSelected(null)} onConfirm={() => void remove()} title="حذف محصول" message={selected ? `محصول «${selected.title}» حذف شود؟ این عملیات قابل بازگشت نیست.` : ''} confirmText="حذف محصول" cancelText="انصراف" loading={deleting}/>
   </div>;
