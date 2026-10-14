@@ -23,8 +23,8 @@ export class TicketApi {
     return this.client.get<PaginatedTicketResponse<TicketCategory>>('/ticket/category?per_page=100')
   }
 
-  getTicket(ticketId: string) {
-    return this.client.get<TicketWithMessages>(`/ticket/${encodeURIComponent(ticketId)}`)
+  getTicket(ticketId: string, signal?: AbortSignal) {
+    return this.client.get<TicketWithMessages>(`/ticket/${encodeURIComponent(ticketId)}`, signal)
   }
 
   createTicket(input: CreateTicketInput) {

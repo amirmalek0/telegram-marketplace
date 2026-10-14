@@ -37,9 +37,10 @@ export class ApiClient {
     return headers
   }
 
-  async get<T>(path: string): Promise<T> {
+  async get<T>(path: string, signal?: AbortSignal): Promise<T> {
     const response = await fetch(`${API_BASE_URL}${path}`, {
       method: 'GET',
+      signal,
       headers: this.getHeaders(),
     })
 

@@ -1,19 +1,23 @@
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { TicketMessageBubble } from '../components/tickets/TicketMessageBubble'
 import { TicketStatusBadge } from '../components/tickets/TicketStatusBadge'
 import { Icon } from '../components/ui/Icon'
 import { ticketCategoryLabel, ticketPriorityLabels } from '../features/tickets/metadata'
 import { TicketApi } from '../features/tickets/ticketApi'
+import { startTicketPolling } from '../features/tickets/ticketPolling'
 import type { TicketWithMessages } from '../features/tickets/types'
+import { editorTicketThread } from '../features/content/editorFixtures'
 import { formatDateTime } from '../utils/format'
 
 interface TicketPageProps {
   initDataRaw: string | null
   ready: boolean
+  preview?: boolean
+  scenario?: string
 }
 
-export function TicketPage({ initDataRaw, ready }: TicketPageProps) {
+export function TicketPage({ initDataRaw, ready, preview = false, scenario = 'open' }: TicketPageProps) {
   const { ticketId } = useParams()
   const api = useMemo(() => initDataRaw ? new TicketApi(initDataRaw) : null, [initDataRaw])
   const [thread, setThread] = useState<TicketWithMessages | null>(null)
@@ -22,42 +26,91 @@ export function TicketPage({ initDataRaw, ready }: TicketPageProps) {
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const messageEndRef = useRef<HTMLDivElement>(null)
+  const pollerRef = useRef<ReturnType<typeof startTicketPolling> | null>(null)
+  const sendingRef = useRef(false)
 
-  const loadTicket = useCallback(async () => {
-    if (!api || !ready || !ticketId) return
+  useEffect(() => {
+    setThread(null)
+    setReply('')
     setLoading(true)
-    setError(null)
-    try {
-      setThread(await api.getTicket(ticketId))
-    } catch {
-      setError('این گفت‌وگو در دسترس نیست یا دریافت آن ناموفق بود.')
-    } finally {
+    setSending(false)
+    sendingRef.current = false
+    if (preview && ticketId) {
+      setThread(editorTicketThread(ticketId))
+      setError(null)
       setLoading(false)
+      return
     }
-  }, [api, ready, ticketId])
-
-  useEffect(() => { void loadTicket() }, [loadTicket])
+    if (!api || !ready || !ticketId) return
+    const poller = startTicketPolling({
+      fetchTicket: signal => api.getTicket(ticketId, signal),
+      onUpdate: setThread,
+      onLoading: setLoading,
+      onLoadError: setError,
+    })
+    pollerRef.current = poller
+    return () => {
+      poller.stop()
+      pollerRef.current = null
+    }
+  }, [api, preview, ready, ticketId])
 
   async function handleReply(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const cleanReply = reply.trim()
-    if (!api || !ticketId || !thread || thread.ticket.status === 'closed' || !cleanReply) return
+    if (!ticketId || !thread || thread.ticket.status === 'closed' || !cleanReply || sendingRef.current) return
 
+    if (preview) {
+      setThread((current) => current ? {
+        ...current,
+        messages: [...current.messages, {
+          id: `preview-message-${current.messages.length + 1}`,
+          ticket_id: ticketId,
+          sender_type: 'user',
+          sender_id: 'preview-user',
+          message: cleanReply,
+          created_at: new Date().toISOString(),
+        }],
+      } : current)
+      setReply('')
+      window.requestAnimationFrame(() => messageEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }))
+      return
+    }
+
+    if (!api) return
+
+    const poller = pollerRef.current
+    sendingRef.current = true
+    // An older GET must not overwrite the newly submitted message.
+    poller?.pause()
     setSending(true)
     setError(null)
     try {
       const message = await api.addMessage(ticketId, cleanReply)
+      if (pollerRef.current !== poller) return
       setThread((current) => current ? { ...current, messages: [...current.messages, message] } : current)
       setReply('')
       window.requestAnimationFrame(() => messageEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }))
     } catch {
+      if (pollerRef.current !== poller) return
       setError('ارسال پیام انجام نشد. دوباره تلاش کنید.')
     } finally {
-      setSending(false)
+      if (pollerRef.current === poller) {
+        sendingRef.current = false
+        setSending(false)
+        poller?.resume()
+      }
     }
   }
 
-  if (loading || !ready) {
+  const previewThread = preview && scenario === 'closed'
+    ? editorTicketThread('preview-ticket-closed')
+    : thread
+  const visibleThread = preview && scenario === 'error' ? null : previewThread
+  const visibleLoading = preview ? scenario === 'loading' : loading || !ready
+  const visibleError = preview && scenario === 'error' ? 'این گفت‌وگو در دسترس نیست یا دریافت آن ناموفق بود.' : error
+
+  if (visibleLoading) {
     return (
       <div className="page ticket-thread-page">
         <div className="skeleton ticket-detail-skeleton is-head" />
@@ -67,20 +120,20 @@ export function TicketPage({ initDataRaw, ready }: TicketPageProps) {
     )
   }
 
-  if (!thread) {
+  if (!visibleThread) {
     return (
       <div className="page ticket-thread-page">
         <section className="ticket-error">
           <Icon name="tickets" size={26} />
           <h3>گفت‌وگو پیدا نشد</h3>
-          <p>{error || 'امکان نمایش این تیکت وجود ندارد.'}</p>
-          <button type="button" onClick={() => void loadTicket()}>تلاش دوباره</button>
+          <p>{visibleError || 'امکان نمایش این تیکت وجود ندارد.'}</p>
+          <button type="button" onClick={() => void pollerRef.current?.refresh()}>تلاش دوباره</button>
         </section>
       </div>
     )
   }
 
-  const { ticket, messages } = thread
+  const { ticket, messages } = visibleThread
   const isClosed = ticket.status === 'closed'
 
   return (
