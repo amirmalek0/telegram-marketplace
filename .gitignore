@@ -42,3 +42,6 @@ coverage/
 *.tgz
 .npm
 .eslintcache
+
+# Local recovery snapshots (may contain private purchase data)
+.local-backups/
