@@ -96,6 +96,7 @@ export interface VipPlanResponse {
   title: string;
   stars_price: number;
   duration: number;
+  tier: number;
   status: 'active' | 'inactive';
   created_at: string;
 }
@@ -103,10 +104,47 @@ export interface CreateVipPlanRequest {
   title: string;
   stars_price: number;
   duration: number;
+  tier: number;
   status: 'active' | 'inactive';
 }
 export type UpdateVipPlanRequest = Partial<CreateVipPlanRequest>;
 export type VipPlansPaginatedResponse = PaginatedResponse<VipPlanResponse>;
+
+export interface WalletTopupPackResponse {
+  id: string;
+  title: string;
+  stars: number;
+  status: 'active' | 'inactive';
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+export type CreateWalletTopupPackRequest = Omit<WalletTopupPackResponse, 'id' | 'created_at' | 'updated_at'>;
+export interface WalletTransactionResponse {
+  id: string;
+  type: 'purchase' | 'reward' | 'topup' | 'refund' | 'admin_adjust';
+  amount: number;
+  balance_before: number;
+  balance_after: number;
+  description: string;
+  created_at: string;
+}
+export interface AdminWalletResponse {
+  user_id: string;
+  first_name: string;
+  last_name: string;
+  username: string;
+  telegram_id: number;
+  balance: number;
+  has_active_plan: boolean;
+  plan_expire_at?: string;
+  transaction_count: number;
+}
+export interface AdminWalletDetailResponse {
+  wallet: AdminWalletResponse;
+  transactions: WalletTransactionResponse[];
+}
+export type AdminWalletsPaginatedResponse = PaginatedResponse<AdminWalletResponse>;
 
 export type TicketStatus = 'open' | 'in_progress' | 'closed';
 export type TicketPriority = 'low' | 'medium' | 'high' | 'urgent';

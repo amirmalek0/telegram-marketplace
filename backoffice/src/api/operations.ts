@@ -19,6 +19,10 @@ import {
   UserResponse,
   UsersPaginatedResponse,
   VipPlansPaginatedResponse,
+  AdminWalletDetailResponse,
+  AdminWalletsPaginatedResponse,
+  CreateWalletTopupPackRequest,
+  WalletTopupPackResponse,
 } from '@/types';
 
 type PageParams = { page?: number; per_page?: number };
@@ -57,6 +61,16 @@ export const vipApi = {
   create: (data: CreateVipPlanRequest) => apiClient.post('/vip/plan', data).then(r => r.data),
   update: (id: string, data: UpdateVipPlanRequest) => apiClient.patch(`/vip/plan/${id}`, data).then(r => r.data),
   delete: (id: string) => apiClient.delete(`/vip/plan/${id}`),
+};
+
+export const walletsApi = {
+  list: (params?: PageParams, signal?: AbortSignal) => apiClient.get<AdminWalletsPaginatedResponse>('/payment/wallets', { params, signal }).then(r => r.data),
+  get: (userId: string, signal?: AbortSignal) => apiClient.get<AdminWalletDetailResponse>(`/payment/wallets/${userId}`, { signal }).then(r => r.data),
+  adjust: (userId: string, amount: number, description: string) => apiClient.post<AdminWalletDetailResponse>(`/payment/wallets/${userId}/adjust`, { amount, description }).then(r => r.data),
+  listPacks: (signal?: AbortSignal) => apiClient.get<WalletTopupPackResponse[]>('/payment/wallet-topup-packs', { signal }).then(r => r.data),
+  createPack: (data: CreateWalletTopupPackRequest) => apiClient.post<WalletTopupPackResponse>('/payment/wallet-topup-packs', data).then(r => r.data),
+  updatePack: (id: string, data: CreateWalletTopupPackRequest) => apiClient.patch<WalletTopupPackResponse>(`/payment/wallet-topup-packs/${id}`, data).then(r => r.data),
+  deletePack: (id: string) => apiClient.delete(`/payment/wallet-topup-packs/${id}`),
 };
 
 export const ticketsApi = {

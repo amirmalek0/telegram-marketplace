@@ -38,6 +38,7 @@ func (s *Service) Create(ctx context.Context, req CreatePlanRequest) (*model.Pla
 		Title:      req.Title,
 		StarsPrice: req.StarsPrice,
 		Duration:   req.Duration,
+		Tier:       req.Tier,
 		Status:     status,
 		CreatedAt:  time.Now(),
 	}
@@ -100,6 +101,9 @@ func (s *Service) Update(ctx context.Context, id string, req UpdatePlanRequest) 
 	}
 	if req.Duration != nil {
 		plan.Duration = *req.Duration
+	}
+	if req.Tier != nil {
+		plan.Tier = *req.Tier
 	}
 	if req.Status != nil {
 		status := model.PlanStatus(*req.Status)

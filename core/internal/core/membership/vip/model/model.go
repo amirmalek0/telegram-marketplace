@@ -35,6 +35,7 @@ type Plan struct {
 	Title      string     `db:"title"      json:"title"`
 	StarsPrice int64      `db:"stars_price" json:"stars_price"`
 	Duration   int        `db:"duration"   json:"duration"`
+	Tier       int        `db:"tier"       json:"tier"`
 	Status     PlanStatus `db:"status"     json:"status"`
 	CreatedAt  time.Time  `db:"created_at" json:"created_at"`
 }

@@ -156,7 +156,7 @@ func Wire(ctx context.Context, db *pgxpool.Pool, cfg config.Config) router.Handl
 	paymentsRepo := paymentsrepo.NewPostgresRepository(db)
 	telegramAPI := telegramclient.NewClient(cfg.BotToken)
 	paymentsService := payments.NewService(
-		paymentsRepo, db, telegramAPI, apiService, productFilesStore,
+		paymentsRepo, telegramAPI, apiService, productFilesStore,
 	)
 	paymentsHandler := payments.NewHandler(paymentsService)
 

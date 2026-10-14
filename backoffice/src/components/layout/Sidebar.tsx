@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import {
   BarChart3, Bot, Boxes, ChevronLeft, CircleDollarSign, Code2, Crown, FileText,
   FolderTree, Layers3, LogOut, MessageSquareText, Package, ReceiptText,
-  Smartphone, Settings, ShieldCheck, ShoppingBag, Ticket, Users, X,
+  WalletCards, Smartphone, Settings, ShieldCheck, ShoppingBag, Ticket, Users, X,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { useUIStore } from '@/stores/uiStore';
@@ -27,6 +27,7 @@ const groups = [
   ]},
   { label: 'مشتریان', items: [
     { label: 'کاربران', to: '/users', icon: Users },
+    { label: 'کیف پول‌ها', to: '/wallets', icon: WalletCards },
     { label: 'پلن‌های VIP', to: '/vip', icon: Crown },
   ]},
   { label: 'پشتیبانی و سیستم', items: [

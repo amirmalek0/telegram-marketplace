@@ -85,12 +85,121 @@ func (h *Handler) CreateWalletTopup(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	result, err := h.service.CreateWalletTopup(c.Request.Context(), telegramID, req.Stars)
+	result, err := h.service.CreateWalletTopup(c.Request.Context(), telegramID, req.PackID)
 	if err != nil {
 		h.writeCheckoutError(c, err)
 		return
 	}
 	c.JSON(http.StatusCreated, result)
+}
+
+func (h *Handler) GetVIPQuote(c *gin.Context) {
+	telegramID, ok := middleware.GetTelegramUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "telegram authentication required"})
+		return
+	}
+	var req VIPQuoteRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	result, err := h.service.VIPQuote(c.Request.Context(), telegramID, req.PlanID)
+	if err != nil {
+		h.writeCheckoutError(c, err)
+		return
+	}
+	c.JSON(http.StatusOK, result)
+}
+
+func (h *Handler) ListWalletTopupPacks(c *gin.Context) {
+	result, err := h.service.ListWalletTopupPacks(c.Request.Context(), true)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "دریافت بسته‌های شارژ ناموفق بود"})
+		return
+	}
+	c.JSON(http.StatusOK, result)
+}
+
+func (h *Handler) AdminListWalletTopupPacks(c *gin.Context) {
+	result, err := h.service.ListWalletTopupPacks(c.Request.Context(), false)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, result)
+}
+
+func (h *Handler) AdminCreateWalletTopupPack(c *gin.Context) {
+	var req CreateWalletTopupPackRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	result, err := h.service.CreateWalletTopupPack(c.Request.Context(), req)
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusCreated, result)
+}
+
+func (h *Handler) AdminUpdateWalletTopupPack(c *gin.Context) {
+	var req UpdateWalletTopupPackRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	result, err := h.service.UpdateWalletTopupPack(c.Request.Context(), c.Param("id"), req)
+	if err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, result)
+}
+
+func (h *Handler) AdminDeleteWalletTopupPack(c *gin.Context) {
+	if err := h.service.DeleteWalletTopupPack(c.Request.Context(), c.Param("id")); err != nil {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		return
+	}
+	c.Status(http.StatusNoContent)
+}
+
+func (h *Handler) AdminListWallets(c *gin.Context) {
+	result, err := h.service.ListAdminWallets(c.Request.Context(), pagination.FromQuery(c))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, result)
+}
+
+func (h *Handler) AdminGetWallet(c *gin.Context) {
+	result, err := h.service.AdminWalletDetail(c.Request.Context(), c.Param("user_id"))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, result)
+}
+
+func (h *Handler) AdminAdjustWallet(c *gin.Context) {
+	var req AdjustWalletRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	result, err := h.service.AdjustWallet(c.Request.Context(), c.Param("user_id"), req.Amount, req.Description)
+	if err != nil {
+		if errors.Is(err, ErrWalletWouldBeNegative) {
+			c.JSON(http.StatusConflict, gin.H{"error": "موجودی کیف پول نمی‌تواند منفی شود"})
+			return
+		}
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, result)
 }
 
 func (h *Handler) GetWallet(c *gin.Context) {

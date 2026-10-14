@@ -66,6 +66,12 @@ added through the processor contract without changing the payment table.
 Orders can only be created by an enabled provider checkout; there is no generic
 order-creation endpoint and administrators cannot manually mark an order paid.
 
+Backend modules follow the same dependency direction: HTTP router and handler,
+service business logic, repository contract/implementation, then model. Services
+must not depend on the database pool or execute SQL directly. Repository SQL is
+kept in an adjacent `queries.go` or `*_queries.go` file; repository methods own
+transactions and reference those named query constants.
+
 Stars checkout flow:
 
 1. An admin assigns every sellable product an integer `stars_price`.

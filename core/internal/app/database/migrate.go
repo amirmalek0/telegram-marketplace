@@ -155,7 +155,8 @@ var migrations = []string{
 	`ALTER TABLE vip_plans ADD COLUMN IF NOT EXISTS duration INT NOT NULL DEFAULT 30`,
 	`ALTER TABLE vip_plans ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'active'`,
 	`ALTER TABLE vip_plans ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT now()`,
-	// Introduce the explicit Stars amount once and preserve whole legacy values.
+	// Introduce the explicit Stars amount before tier inference so legacy id-only
+	// installations can be ranked safely during the same migration run.
 	`DO $$
 	 BEGIN
 		IF NOT EXISTS (
@@ -167,10 +168,27 @@ var migrations = []string{
 		END IF;
 	 END
 	 $$`,
-	`INSERT INTO vip_plans (id, title, stars_price, duration, status, created_at) VALUES
-	 ('10000000-0000-0000-0000-000000000030', 'VIP یک‌ماهه', 50, 30, 'active', now()),
-	 ('10000000-0000-0000-0000-000000000090', 'VIP سه‌ماهه', 130, 90, 'active', now()),
-	 ('10000000-0000-0000-0000-000000000365', 'VIP یک‌ساله', 450, 365, 'active', now())
+	`DO $$
+	 BEGIN
+		IF NOT EXISTS (
+			SELECT 1 FROM information_schema.columns
+			WHERE table_schema = 'public' AND table_name = 'vip_plans' AND column_name = 'tier'
+		) THEN
+			ALTER TABLE vip_plans ADD COLUMN tier INTEGER NOT NULL DEFAULT 1;
+			WITH ranked AS (
+				SELECT id, DENSE_RANK() OVER (ORDER BY duration ASC, stars_price ASC)::int AS inferred_tier
+				FROM vip_plans
+			)
+			UPDATE vip_plans SET tier = ranked.inferred_tier FROM ranked WHERE vip_plans.id = ranked.id;
+		END IF;
+	 END
+	 $$`,
+	`ALTER TABLE vip_plans DROP CONSTRAINT IF EXISTS vip_plans_tier_check`,
+	`ALTER TABLE vip_plans ADD CONSTRAINT vip_plans_tier_check CHECK (tier > 0)`,
+	`INSERT INTO vip_plans (id, title, stars_price, duration, tier, status, created_at) VALUES
+	 ('10000000-0000-0000-0000-000000000030', 'VIP یک‌ماهه', 50, 30, 1, 'active', now()),
+	 ('10000000-0000-0000-0000-000000000090', 'VIP سه‌ماهه', 130, 90, 2, 'active', now()),
+	 ('10000000-0000-0000-0000-000000000365', 'VIP یک‌ساله', 450, 365, 3, 'active', now())
 	 ON CONFLICT (id) DO NOTHING`,
 
 	`CREATE TABLE IF NOT EXISTS categories (
@@ -552,6 +570,31 @@ var migrations = []string{
 	`CREATE INDEX IF NOT EXISTS idx_wallet_transactions_user_id ON wallet_transactions(user_id)`,
 	`CREATE INDEX IF NOT EXISTS idx_wallet_transactions_type ON wallet_transactions(type)`,
 	`CREATE INDEX IF NOT EXISTS idx_wallet_transactions_created_at ON wallet_transactions(created_at DESC)`,
+
+	`CREATE TABLE IF NOT EXISTS wallet_topup_packs (
+		id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+		title      TEXT NOT NULL,
+		stars      BIGINT NOT NULL CHECK (stars > 0),
+		status     TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','inactive')),
+		sort_order INTEGER NOT NULL DEFAULT 0,
+		created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+		updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+	)`,
+	`CREATE INDEX IF NOT EXISTS idx_wallet_topup_packs_sort ON wallet_topup_packs(status, sort_order, stars)`,
+	`WITH first_seed AS (
+		INSERT INTO seed_markers (seed_name) VALUES ('default_wallet_topup_packs')
+		ON CONFLICT (seed_name) DO NOTHING RETURNING seed_name
+	)
+	INSERT INTO wallet_topup_packs (id, title, stars, status, sort_order)
+	SELECT pack_values.id::uuid, pack_values.title, pack_values.stars, 'active', pack_values.sort_order
+	FROM first_seed
+	CROSS JOIN (VALUES
+	 ('20000000-0000-0000-0000-000000000025', 'بسته شروع', 25::bigint, 10),
+	 ('20000000-0000-0000-0000-000000000050', 'بسته کاربردی', 50::bigint, 20),
+	 ('20000000-0000-0000-0000-000000000100', 'بسته محبوب', 100::bigint, 30),
+	 ('20000000-0000-0000-0000-000000000250', 'بسته حرفه‌ای', 250::bigint, 40)
+	) AS pack_values(id, title, stars, sort_order)
+	ON CONFLICT (id) DO NOTHING`,
 
 	`CREATE TABLE IF NOT EXISTS user_vip_subscriptions (
 		id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),

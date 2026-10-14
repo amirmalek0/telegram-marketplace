@@ -14,6 +14,7 @@ export {
   ordersApi,
   paymentsApi,
   vipApi,
+  walletsApi,
   ticketsApi,
   ticketCategoriesApi,
 } from './operations';

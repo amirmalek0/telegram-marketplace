@@ -13,6 +13,7 @@ type CreatePlanRequest struct {
 	Title      string `json:"title" binding:"required,min=1,max=100"`
 	StarsPrice int64  `json:"stars_price" binding:"required,gt=0"`
 	Duration   int    `json:"duration" binding:"required,gt=0"`
+	Tier       int    `json:"tier" binding:"required,gt=0"`
 	Status     string `json:"status" binding:"omitempty,oneof=active inactive"`
 }
 
@@ -21,6 +22,7 @@ type UpdatePlanRequest struct {
 	Title      *string `json:"title" binding:"omitempty,min=1,max=100"`
 	StarsPrice *int64  `json:"stars_price" binding:"omitempty,gt=0"`
 	Duration   *int    `json:"duration" binding:"omitempty,gt=0"`
+	Tier       *int    `json:"tier" binding:"omitempty,gt=0"`
 	Status     *string `json:"status" binding:"omitempty,oneof=active inactive"`
 }
 
@@ -32,6 +34,7 @@ type PlanResponse struct {
 	Title      string    `json:"title"`
 	StarsPrice int64     `json:"stars_price"`
 	Duration   int       `json:"duration"`
+	Tier       int       `json:"tier"`
 	Status     string    `json:"status"`
 	CreatedAt  time.Time `json:"created_at"`
 }
@@ -48,6 +51,7 @@ func toPlanResponse(p *model.Plan) PlanResponse {
 		Title:      p.Title,
 		StarsPrice: p.StarsPrice,
 		Duration:   p.Duration,
+		Tier:       p.Tier,
 		Status:     string(p.Status),
 		CreatedAt:  p.CreatedAt,
 	}

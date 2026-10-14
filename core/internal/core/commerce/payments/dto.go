@@ -21,7 +21,26 @@ type CreateVIPCheckoutRequest struct {
 }
 
 type CreateWalletTopupRequest struct {
-	Stars int64 `json:"stars" binding:"required,min=1,max=100000"`
+	PackID string `json:"pack_id" binding:"required,uuid"`
+}
+
+type VIPQuoteRequest struct {
+	PlanID string `json:"plan_id" binding:"required,uuid"`
+}
+
+type VIPQuoteResponse struct {
+	PlanID           string     `json:"plan_id"`
+	PlanTitle        string     `json:"plan_title"`
+	OriginalStars    int64      `json:"original_stars"`
+	CreditStars      int64      `json:"credit_stars"`
+	PayableStars     int64      `json:"payable_stars"`
+	RemainingDays    int        `json:"remaining_days"`
+	IsUpgrade        bool       `json:"is_upgrade"`
+	CurrentPlanID    *string    `json:"current_plan_id,omitempty"`
+	CurrentPlanTitle string     `json:"current_plan_title,omitempty"`
+	CurrentTier      int        `json:"current_tier"`
+	TargetTier       int        `json:"target_tier"`
+	CurrentExpireAt  *time.Time `json:"current_expire_at,omitempty"`
 }
 
 type CreateStarsInvoiceResponse struct {
@@ -73,6 +92,49 @@ type WalletResponse struct {
 	Balance      int64                       `json:"balance"`
 	Transactions []WalletTransactionResponse `json:"transactions"`
 }
+
+type WalletTopupPackResponse struct {
+	ID        string    `json:"id"`
+	Title     string    `json:"title"`
+	Stars     int64     `json:"stars"`
+	Status    string    `json:"status"`
+	SortOrder int       `json:"sort_order"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type CreateWalletTopupPackRequest struct {
+	Title     string `json:"title" binding:"required,min=1,max=100"`
+	Stars     int64  `json:"stars" binding:"required,min=1,max=100000"`
+	Status    string `json:"status" binding:"required,oneof=active inactive"`
+	SortOrder int    `json:"sort_order"`
+}
+
+type UpdateWalletTopupPackRequest = CreateWalletTopupPackRequest
+
+type AdminWalletResponse struct {
+	UserID           string     `json:"user_id"`
+	FirstName        string     `json:"first_name"`
+	LastName         string     `json:"last_name"`
+	Username         string     `json:"username"`
+	TelegramID       int64      `json:"telegram_id"`
+	Balance          int64      `json:"balance"`
+	HasActivePlan    bool       `json:"has_active_plan"`
+	PlanExpireAt     *time.Time `json:"plan_expire_at,omitempty"`
+	TransactionCount int64      `json:"transaction_count"`
+}
+
+type AdminWalletDetailResponse struct {
+	Wallet       AdminWalletResponse         `json:"wallet"`
+	Transactions []WalletTransactionResponse `json:"transactions"`
+}
+
+type AdjustWalletRequest struct {
+	Amount      int64  `json:"amount" binding:"required"`
+	Description string `json:"description" binding:"required,min=2,max=300"`
+}
+
+type AdminWalletsPaginatedResponse = pagination.Response[AdminWalletResponse]
 
 type ListDeliveriesQuery struct {
 	ProductID string `form:"product_id" binding:"omitempty,uuid"`
