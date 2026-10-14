@@ -4,8 +4,8 @@ import { Icon, type IconName } from '../ui/Icon'
 
 const navItems: { path: string; label: string; icon: IconName }[] = [
   { path: '/', label: 'فروشگاه', icon: 'shop' },
-  { path: '/orders', label: 'سفارش‌ها', icon: 'orders' },
-  { path: '/downloads', label: 'دانلودها', icon: 'download' },
+  { path: '/wallet', label: 'کیف پول', icon: 'wallet' },
+  { path: '/vip', label: 'VIP', icon: 'crown' },
   { path: '/tickets', label: 'تیکت‌ها', icon: 'tickets' },
   { path: '/profile', label: 'پروفایل', icon: 'profile' },
 ]

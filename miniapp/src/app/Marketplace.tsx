@@ -45,10 +45,12 @@ function MarketplaceContent({ auth }: { auth: UseTelegramAuthResult }) {
           <Route path="/products/:productId" element={<ProductPage {...catalog} initDataRaw={auth.initDataRaw} preview={content.editorMode} scenario={content.editorScenario} />} />
           <Route path="/orders" element={<OrdersPage initDataRaw={auth.initDataRaw} products={catalog.products} preview={content.editorMode} scenario={content.editorScenario} />} />
           <Route path="/downloads" element={<DownloadsPage initDataRaw={auth.initDataRaw} products={catalog.products} preview={content.editorMode} scenario={content.editorScenario} />} />
+          <Route path="/wallet" element={<ProfilePage initDataRaw={auth.initDataRaw} telegramUser={auth.user} preview={content.editorMode} scenario={content.editorScenario} view="wallet" />} />
+          <Route path="/vip" element={<ProfilePage initDataRaw={auth.initDataRaw} telegramUser={auth.user} preview={content.editorMode} scenario={content.editorScenario} view="vip" />} />
           <Route path="/tickets" element={<TicketsPage initDataRaw={auth.initDataRaw} ready={!catalog.loading} preview={content.editorMode} scenario={content.editorScenario} />} />
           <Route path="/tickets/new" element={<NewTicketPage initDataRaw={auth.initDataRaw} ready={!catalog.loading} preview={content.editorMode} scenario={content.editorScenario} />} />
           <Route path="/tickets/:ticketId" element={<TicketPage initDataRaw={auth.initDataRaw} ready={!catalog.loading} />} />
-          <Route path="/profile" element={<ProfilePage initDataRaw={auth.initDataRaw} telegramUser={auth.user} />} />
+          <Route path="/profile" element={<ProfilePage initDataRaw={auth.initDataRaw} telegramUser={auth.user} preview={content.editorMode} scenario={content.editorScenario} view="profile" />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
