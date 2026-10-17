@@ -7,17 +7,18 @@ import (
 )
 
 // RegisterRoutes mounts all inventory endpoints onto the provided RouterGroup.
-// Read operations are accessible to both admins and telegram users.
+// Delivery resources and provider configuration are admin-only.
+// Customers use ownership-checked payment delivery endpoints.
 // Write operations (create, update, delete, bulk add items, delete item) are admin-only.
 func RegisterRoutes(rg *gin.RouterGroup, h *inventory.Handler) {
 	g := rg.Group("/inventory")
 
-	// Accessible by both admins and telegram users
-	public := g.Group("", middleware.RequireAny())
+	// Admin-only resource inspection
+	read := g.Group("", middleware.RequireAdmin())
 	{
-		public.GET("", h.List)
-		public.GET("/:id", h.GetByID)
-		public.GET("/:id/item", h.ListItems)
+		read.GET("", h.List)
+		read.GET("/:id", h.GetByID)
+		read.GET("/:id/item", h.ListItems)
 	}
 
 	// Admin-only operations
