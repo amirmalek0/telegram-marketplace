@@ -1,12 +1,15 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowRight, MessageSquareText } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { ticketsApi, usersApi } from '@/api';
-import { Badge, Button, DataTable, PageHeader, Select } from '@/components/ui';
+import { Badge, Button, Select } from '@/components/ui';
+import { CatalogTable } from '@/components/catalog/CatalogTable';
+import { SystemHeader } from '@/components/system/SystemHeader';
+import { CopyIdentifier } from '@/components/ui/CopyIdentifier';
 import type { Column } from '@/components/ui';
 import type { TicketPriority, TicketResponse, TicketStatus, UserResponse } from '@/types';
-import { formatDateTime, shortId } from '@/utils/format';
+import { formatDateTime } from '@/utils/format';
 import { TicketUserPanel } from './TicketUserSummary';
 
 const statuses: Record<TicketStatus, { label: string; variant: 'success' | 'warning' | 'default' }> = {
@@ -32,6 +35,8 @@ export default function UserTicketsPage() {
   const [status, setStatus] = useState<TicketStatus | ''>('');
   const [priority, setPriority] = useState<TicketPriority | ''>('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const requestSequence = useRef(0);
 
   useEffect(() => {
     if (!userId) return;
@@ -46,7 +51,9 @@ export default function UserTicketsPage() {
 
   const loadTickets = useCallback(async () => {
     if (!userId) return;
+    const sequence = ++requestSequence.current;
     setLoading(true);
+    setError(false);
     try {
       const response = await ticketsApi.list({
         page,
@@ -55,19 +62,20 @@ export default function UserTicketsPage() {
         ...(status && { status }),
         ...(priority && { priority }),
       });
+      if (sequence !== requestSequence.current) return;
       setRows(response.data);
       setTotal(response.total);
     } catch {
-      toast.error('تیکت‌های کاربر دریافت نشد');
+      if (sequence === requestSequence.current) setError(true);
     } finally {
-      setLoading(false);
+      if (sequence === requestSequence.current) setLoading(false);
     }
   }, [page, priority, status, userId]);
 
-  useEffect(() => { void loadTickets(); }, [loadTickets]);
+  useEffect(() => { void loadTickets(); return () => { requestSequence.current++; }; }, [loadTickets]);
 
   const columns: Column<TicketResponse>[] = [
-    { key: 'subject', title: 'موضوع', render: (value, row) => <div><b>{String(value)}</b><p className="mt-1 text-[10px] text-[rgb(var(--color-text-muted))]">#{shortId(row.id)}</p></div> },
+    { key: 'subject', title: 'موضوع', render: (value, row) => <div><button className="support-ticket-title" onClick={() => navigate(`/tickets/${row.id}`)}>{String(value)}</button><div className="mt-2"><CopyIdentifier value={row.id} label="شناسه تیکت" /></div></div> },
     { key: 'category', title: 'دسته', render: value => <Badge>{String(value)}</Badge> },
     { key: 'priority', title: 'اولویت', render: value => <Badge variant={priorities[value as TicketPriority].variant} dot>{priorities[value as TicketPriority].label}</Badge> },
     { key: 'status', title: 'وضعیت', render: value => <Badge variant={statuses[value as TicketStatus].variant} dot>{statuses[value as TicketStatus].label}</Badge> },
@@ -78,15 +86,12 @@ export default function UserTicketsPage() {
   const name = user ? `${user.first_name} ${user.last_name}`.trim() || 'کاربر بدون نام' : 'کاربر';
 
   return (
-    <div>
-      <PageHeader
-        title={`تیکت‌های ${name}`}
-        action={<Button variant="secondary" icon={<ArrowRight size={15} />} onClick={() => navigate('/users')}>بازگشت به کاربران</Button>}
-      />
+    <div className="system-page">
+      <SystemHeader title={`تیکت‌های ${name}`} icon={MessageSquareText}><Button variant="secondary" icon={<ArrowRight size={15} />} onClick={() => navigate('/users')}>کاربران</Button></SystemHeader>
 
       {user && <div className="mb-5"><TicketUserPanel user={user} showTicketsLink={false} /></div>}
 
-      <div className="filter-bar">
+      <div className="surface-card system-toolbar">
         <Select
           aria-label="فیلتر وضعیت"
           value={status}
@@ -102,10 +107,13 @@ export default function UserTicketsPage() {
         <Badge variant="info">{total.toLocaleString('fa-IR')} تیکت</Badge>
       </div>
 
-      <DataTable
+      <CatalogTable
         columns={columns}
         data={rows}
         loading={loading}
+        error={error}
+        onRefresh={() => void loadTickets()}
+        searchText={row => `${row.subject} ${row.category} ${row.id}`}
         keyExtractor={row => row.id}
         pagination={{ page, perPage: 20, total, onPageChange: setPage }}
         emptyMessage="این کاربر تیکتی با فیلترهای انتخاب‌شده ندارد"

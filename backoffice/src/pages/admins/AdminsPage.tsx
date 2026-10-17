@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, ShieldCheck, KeyRound } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -8,14 +7,18 @@ import toast from 'react-hot-toast';
 
 import { adminsApi } from '@/api/admins';
 import { AdminResponse } from '@/types/admins';
-import { DataTable, Column } from '@/components/ui/DataTable';
+import { Column } from '@/components/ui/DataTable';
+import { CatalogTable } from '@/components/catalog/CatalogTable';
+import { CatalogHeader } from '@/components/catalog/CatalogHeader';
+import { CatalogIdentity } from '@/components/catalog/CatalogIdentity';
+import { CatalogFormSection } from '@/components/catalog/CatalogFormSection';
+import '@/components/system/system.css';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { Input } from '@/components/ui/Input';
 import { Toggle } from '@/components/ui/Toggle';
 import { Badge } from '@/components/ui/Badge';
-import { PageLoader } from '@/components/ui/LoadingSpinner';
 
 // --- Zod Schemas ---
 const createSchema = z.object({
@@ -25,7 +28,7 @@ const createSchema = z.object({
 
 const editSchema = z.object({
   username: z.string().min(3, 'نام کاربری باید حداقل ۳ کاراکتر باشد'),
-  password: z.string().optional(),
+  password: z.string().refine(value => !value || value.length >= 8, 'رمز عبور باید حداقل ۸ کاراکتر باشد').optional(),
   is_active: z.boolean(),
 });
 
@@ -83,6 +86,7 @@ function PasswordStrength({ password }: { password: string }) {
 export default function AdminsPage() {
   const [admins, setAdmins] = useState<AdminResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const PER_PAGE = 20;
@@ -118,21 +122,25 @@ export default function AdminsPage() {
 
   // --- Data Fetching ---
   useEffect(() => {
+    let active = true;
     const fetchAdmins = async () => {
       setLoading(true);
+      setError(false);
       try {
         const res = await adminsApi.list({ page, per_page: PER_PAGE });
+        if (!active) return;
         // Backend returns { admins: [...], total, ... }
         setAdmins(Array.isArray(res.admins) ? res.admins : []);
         setTotal(res.total ?? 0);
       } catch {
-        toast.error('خطا در دریافت مدیران');
+        if (active) setError(true);
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
 
     fetchAdmins();
+    return () => { active = false; };
   }, [page, refreshKey]);
 
   // --- Handlers ---
@@ -202,9 +210,7 @@ export default function AdminsPage() {
     {
       key: 'username',
       title: 'نام کاربری',
-      render: (value) => (
-        <span className="font-medium text-[rgb(var(--color-text))]">{value as string}</span>
-      ),
+      render: (_, row) => <CatalogIdentity title={row.username} icon={ShieldCheck} onClick={() => handleOpenEdit(row)} />,
     },
     {
       key: 'is_active',
@@ -251,24 +257,9 @@ export default function AdminsPage() {
     },
   ];
 
-  if (loading && admins.length === 0) {
-    return <PageLoader />;
-  }
-
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between"
-      >
-        <div>
-          <h1 className="text-2xl font-bold text-[rgb(var(--color-text))]">مدیران</h1>
-          <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">
-            مدیریت حساب‌های ادمین سیستم
-          </p>
-        </div>
+    <div className="system-page">
+      <CatalogHeader title="مدیران" icon={ShieldCheck} total={total} loading={loading} actions={
         <Button
           variant="primary"
           icon={<Plus size={16} />}
@@ -279,19 +270,15 @@ export default function AdminsPage() {
         >
           مدیر جدید
         </Button>
-      </motion.div>
-
-      {/* Table */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="glass-card rounded-2xl p-6"
-      >
-        <DataTable
+      } />
+        <CatalogTable
           columns={columns}
           data={admins}
           loading={loading}
+          error={error}
+          onRefresh={() => setRefreshKey(k => k + 1)}
+          searchText={row => row.username}
+          filter={{ label: 'وضعیت دسترسی', options: [{ value: 'active', label: 'فعال' }, { value: 'inactive', label: 'غیرفعال' }], value: row => row.is_active ? 'active' : 'inactive' }}
           keyExtractor={(row) => row.id}
           pagination={{
             page,
@@ -301,33 +288,35 @@ export default function AdminsPage() {
           }}
           emptyMessage="هیچ مدیری یافت نشد"
         />
-      </motion.div>
 
       {/* ===== CREATE MODAL ===== */}
       <Modal
         isOpen={createOpen}
-        onClose={() => setCreateOpen(false)}
+        onClose={() => !creating && setCreateOpen(false)}
         title="ایجاد مدیر جدید"
+        icon={<ShieldCheck size={19} />}
         size="md"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setCreateOpen(false)}>
+            <Button variant="secondary" disabled={creating} onClick={() => setCreateOpen(false)}>
               انصراف
             </Button>
             <Button
               variant="primary"
               loading={creating}
-              onClick={createForm.handleSubmit(handleCreate)}
+              type="submit" form="create-admin"
             >
               ایجاد
             </Button>
           </>
         }
       >
-        <div className="space-y-4">
+        <form id="create-admin" onSubmit={createForm.handleSubmit(handleCreate)}><fieldset disabled={creating}>
+        <CatalogFormSection title="حساب و دسترسی" icon={KeyRound}>
           <Input
             label="نام کاربری"
             placeholder="حداقل ۳ کاراکتر"
+            dir="ltr" autoComplete="off"
             error={createForm.formState.errors.username?.message}
             {...createForm.register('username')}
           />
@@ -335,40 +324,44 @@ export default function AdminsPage() {
             <Input
               label="رمز عبور"
               type="password"
+              autoComplete="new-password"
               placeholder="حداقل ۸ کاراکتر"
               error={createForm.formState.errors.password?.message}
               {...createForm.register('password')}
             />
             <PasswordStrength password={createPassword} />
           </div>
-        </div>
+        </CatalogFormSection></fieldset></form>
       </Modal>
 
       {/* ===== EDIT MODAL ===== */}
       <Modal
         isOpen={editOpen}
-        onClose={() => setEditOpen(false)}
+        onClose={() => !editing && setEditOpen(false)}
         title="ویرایش مدیر"
+        icon={<ShieldCheck size={19} />}
         size="md"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setEditOpen(false)}>
+            <Button variant="secondary" disabled={editing} onClick={() => setEditOpen(false)}>
               انصراف
             </Button>
             <Button
               variant="primary"
               loading={editing}
-              onClick={editForm.handleSubmit(handleEdit)}
+              type="submit" form="edit-admin"
             >
               ذخیره تغییرات
             </Button>
           </>
         }
       >
-        <div className="space-y-4">
+        <form id="edit-admin" onSubmit={editForm.handleSubmit(handleEdit)}><fieldset disabled={editing}>
+        <CatalogFormSection title="حساب و دسترسی" icon={KeyRound}>
           <Input
             label="نام کاربری"
             placeholder="نام کاربری"
+            dir="ltr" autoComplete="off"
             error={editForm.formState.errors.username?.message}
             {...editForm.register('username')}
           />
@@ -376,6 +369,8 @@ export default function AdminsPage() {
             <Input
               label="رمز عبور جدید (اختیاری)"
               type="password"
+              autoComplete="new-password"
+              hint="برای حفظ رمز فعلی، این فیلد را خالی بگذارید."
               placeholder="در صورت تغییر وارد کنید"
               error={editForm.formState.errors.password?.message}
               {...editForm.register('password')}
@@ -385,17 +380,18 @@ export default function AdminsPage() {
           <div className="flex items-center justify-between p-3 rounded-xl bg-[rgb(var(--color-bg))] border border-[rgb(var(--color-border))]">
             <span className="text-sm font-medium text-[rgb(var(--color-text))]">وضعیت فعال</span>
             <Toggle
+              ariaLabel="دسترسی مدیر" disabled={editing}
               checked={editForm.watch('is_active')}
               onChange={(val) => editForm.setValue('is_active', val)}
             />
           </div>
-        </div>
+        </CatalogFormSection></fieldset></form>
       </Modal>
 
       {/* ===== DELETE CONFIRMATION MODAL ===== */}
       <ConfirmationModal
         isOpen={deleteOpen}
-        onClose={() => setDeleteOpen(false)}
+        onClose={() => !deleting && setDeleteOpen(false)}
         onConfirm={handleDelete}
         title="حذف مدیر"
         message={`آیا از حذف مدیر "${selected?.username}" اطمینان دارید؟ این عمل قابل بازگشت نیست.`}

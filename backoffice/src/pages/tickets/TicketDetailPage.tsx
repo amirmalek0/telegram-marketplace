@@ -4,7 +4,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { ticketsApi } from '@/api';
 import type { TicketPriority, TicketStatus, TicketWithMessagesResponse } from '@/types';
-import { Badge, Button, PageHeader, Select, Skeleton, Textarea } from '@/components/ui';
+import { Badge, Button, Select, Skeleton, Textarea } from '@/components/ui';
+import { SystemHeader } from '@/components/system/SystemHeader';
+import { CopyIdentifier } from '@/components/ui/CopyIdentifier';
 import { formatDateTime } from '@/utils/format';
 import { TicketUserPanel } from './TicketUserSummary';
 import { priorityOptions, statusOptions, ticketPriorities, ticketStatuses } from './ticketMeta';
@@ -16,6 +18,7 @@ export default function TicketDetailPage() {
   const [reply, setReply] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [revision, setRevision] = useState(0);
   const [sending, setSending] = useState(false);
   const [updating, setUpdating] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -26,7 +29,7 @@ export default function TicketDetailPage() {
     setLoading(true);
     setError(false);
     ticketsApi.get(ticketId, controller.signal)
-      .then(setThread)
+      .then(result => { if (!controller.signal.aborted) setThread(result); })
       .catch(requestError => {
         if (requestError?.code !== 'ERR_CANCELED') setError(true);
       })
@@ -34,7 +37,7 @@ export default function TicketDetailPage() {
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [ticketId]);
+  }, [ticketId, revision]);
 
   useEffect(() => {
     if (!loading && thread) messagesEndRef.current?.scrollIntoView({ block: 'end' });
@@ -56,7 +59,7 @@ export default function TicketDetailPage() {
 
   const sendReply = async (event: FormEvent) => {
     event.preventDefault();
-    if (!ticketId || !thread || thread.ticket.status === 'closed' || !reply.trim()) return;
+    if (!ticketId || !thread || sending || thread.ticket.status === 'closed' || !reply.trim()) return;
     setSending(true);
     try {
       const message = await ticketsApi.addMessage(ticketId, reply.trim());
@@ -76,20 +79,17 @@ export default function TicketDetailPage() {
 
   if (loading) return <div className="space-y-5"><Skeleton className="h-24 rounded-2xl" /><div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]"><Skeleton className="h-[650px] rounded-2xl" /><Skeleton className="h-[520px] rounded-2xl" /></div></div>;
 
-  if (error || !thread) return <div className="surface-card flex min-h-[420px] flex-col items-center justify-center p-8 text-center"><span className="mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-rose-500/10 text-rose-500"><AlertCircle size={25} /></span><h1 className="font-extrabold">دریافت تیکت ناموفق بود</h1><p className="mt-2 text-sm text-[rgb(var(--color-text-secondary))]">ممکن است تیکت حذف شده باشد یا دسترسی به آن امکان‌پذیر نباشد.</p><Button className="mt-5" variant="secondary" icon={<ArrowRight size={15} />} onClick={() => navigate('/tickets')}>بازگشت به تیکت‌ها</Button></div>;
+  if (error || !thread) return <div className="surface-card catalog-empty" role="alert"><AlertCircle size={28} /><h1>دریافت تیکت ناموفق بود</h1><Button variant="secondary" onClick={() => setRevision(value => value + 1)}>تلاش دوباره</Button><Button variant="ghost" icon={<ArrowRight size={15} />} onClick={() => navigate('/tickets')}>بازگشت به تیکت‌ها</Button></div>;
 
   const { ticket, messages } = thread;
   const status = ticketStatuses[ticket.status];
   const priority = ticketPriorities[ticket.priority];
 
-  return <div className="pb-8">
-    <PageHeader
-      title={ticket.subject}
-      action={<Button variant="secondary" icon={<ArrowRight size={15} />} onClick={() => navigate(-1)}>بازگشت</Button>}
-    />
+  return <div className="system-page pb-8">
+    <SystemHeader title={ticket.subject} icon={MessageSquareText}><Button variant="secondary" icon={<ArrowRight size={15} />} onClick={() => navigate('/tickets')}>تیکت‌ها</Button></SystemHeader>
 
     <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_330px]">
-      <section className="surface-card flex h-[calc(100vh-205px)] min-h-[520px] max-h-[760px] flex-col overflow-hidden">
+      <section className="surface-card support-chat">
         <header className="flex flex-wrap items-center gap-2 border-b border-[rgb(var(--color-border))] px-5 py-4">
           <span className="grid h-10 w-10 place-items-center rounded-xl bg-blue-500/10 text-blue-600"><MessageSquareText size={19} /></span>
           <div className="min-w-0 flex-1"><h2 className="truncate text-sm font-extrabold">گفت‌وگوی پشتیبانی</h2><p className="mt-0.5 text-[10px] text-[rgb(var(--color-text-muted))]">{messages.length.toLocaleString('fa-IR')} پیام</p></div>
@@ -97,14 +97,14 @@ export default function TicketDetailPage() {
           <Badge variant={priority.variant}>{`اولویت ${priority.label}`}</Badge>
         </header>
 
-        <div className="flex flex-1 flex-col gap-4 overflow-y-auto bg-[rgb(var(--color-bg))]/65 p-4 sm:p-5">
+        <div className="support-messages" role="log" aria-label="پیام‌های تیکت" aria-live="polite">
           {messages.map(message => {
             const isAdmin = message.sender_type === 'admin';
-            return <article key={message.id} className={`max-w-[84%] sm:max-w-[72%] ${isAdmin ? 'ml-auto' : 'mr-auto'}`}>
-              <div className={`rounded-2xl px-4 py-3 shadow-sm ${isAdmin ? 'rounded-br-md bg-blue-600 text-white' : 'rounded-bl-md border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))]'}`}>
+            return <article key={message.id} className={`support-bubble ${isAdmin ? 'is-admin' : 'is-user'}`}>
+              <div className="support-bubble-content">
                 <div className={`mb-2 flex items-center gap-1.5 text-[10px] font-bold ${isAdmin ? 'text-blue-100' : 'text-[rgb(var(--color-text-secondary))]'}`}>{isAdmin ? <Headphones size={12} /> : <UserRound size={12} />}<span>{isAdmin ? 'پشتیبانی' : ticket.user ? `${ticket.user.first_name} ${ticket.user.last_name}`.trim() || 'کاربر' : 'کاربر'}</span></div>
                 <p className="whitespace-pre-wrap break-words text-xs leading-7 sm:text-sm">{message.message}</p>
-                <time className={`mt-2 block text-[9px] ${isAdmin ? 'text-blue-100/80' : 'text-[rgb(var(--color-text-muted))]'}`} dateTime={message.created_at}>{formatDateTime(message.created_at)}</time>
+                <time className={`mt-2 block text-[11px] ${isAdmin ? 'text-white/80' : 'text-[rgb(var(--color-text-muted))]'}`} dateTime={message.created_at}>{formatDateTime(message.created_at)}</time>
               </div>
             </article>;
           })}
@@ -112,8 +112,8 @@ export default function TicketDetailPage() {
           <div ref={messagesEndRef} />
         </div>
 
-        {ticket.status === 'closed' ? <div className="border-t border-[rgb(var(--color-border))] bg-slate-500/5 p-4 text-center text-xs text-[rgb(var(--color-text-secondary))]">این تیکت بسته شده است. برای ارسال پاسخ، وضعیت را از پنل اطلاعات باز کنید.</div> : <form onSubmit={sendReply} className="flex items-end gap-3 border-t border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] p-4">
-          <div className="min-w-0 flex-1"><Textarea aria-label="متن پاسخ" rows={2} value={reply} onChange={event => setReply(event.target.value)} placeholder="پاسخ خود را بنویسید..." className="min-h-[76px] resize-none" /></div>
+        {ticket.status === 'closed' ? <div className="border-t border-[rgb(var(--color-border))] bg-slate-500/5 p-4 text-center text-xs text-[rgb(var(--color-text-secondary))]">این تیکت بسته شده است. برای ارسال پاسخ، وضعیت را از پنل اطلاعات باز کنید.</div> : <form onSubmit={sendReply} className="support-composer">
+          <div className="min-w-0 flex-1"><Textarea aria-label="متن پاسخ" disabled={sending} rows={2} value={reply} onChange={event => setReply(event.target.value)} placeholder="پاسخ خود را بنویسید..." className="min-h-[76px] resize-none" /></div>
           <Button type="submit" loading={sending} disabled={!reply.trim()} icon={<Send size={15} />} className="mb-0.5 shrink-0">ارسال</Button>
         </form>}
       </section>
@@ -142,5 +142,5 @@ export default function TicketDetailPage() {
 }
 
 function TicketFact({ icon, label, value, ltr = false }: { icon: React.ReactNode; label: string; value: string; ltr?: boolean }) {
-  return <div className="py-3"><span className="flex items-center gap-1.5 text-[9px] text-[rgb(var(--color-text-muted))]">{icon}{label}</span><b dir={ltr ? 'ltr' : undefined} className={`mt-1 block break-all text-[10px] ${ltr ? 'text-right font-mono' : ''}`}>{value}</b></div>;
+  return <div className="py-3"><span className="mb-1 flex items-center gap-1.5 text-xs text-[rgb(var(--color-text-muted))]">{icon}{label}</span>{ltr ? <CopyIdentifier value={value} label={label} full /> : <b className="block text-xs font-medium">{value}</b>}</div>;
 }

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { BookOpen, ChevronDown, ExternalLink, Keyboard, ListFilter, RefreshCw, Type } from 'lucide-react';
+import { BookOpen, ChevronDown, ExternalLink, Keyboard, ListFilter, RefreshCw, Type, Smartphone } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { Button, PageHeader } from '@/components/ui';
+import { Button, Select } from '@/components/ui';
+import { SystemHeader } from '@/components/system/SystemHeader';
 import { useAuthStore } from '@/stores/authStore';
 
 function editorURL() {
@@ -29,12 +30,20 @@ export default function MiniappContentPage() {
   const accessToken = useAuthStore((state) => state.accessToken);
   const [frameKey, setFrameKey] = useState(0);
   const [connected, setConnected] = useState(false);
+  const [connectionSlow, setConnectionSlow] = useState(false);
   const [previewPage, setPreviewPage] = useState<PreviewPageState | null>(null);
   const previewURL = useMemo(() => {
     const url = editorURL();
     url.searchParams.set('preview-reload', String(frameKey));
     return url;
   }, [frameKey]);
+
+  useEffect(() => {
+    setConnectionSlow(false);
+    if (connected) return;
+    const timer = window.setTimeout(() => setConnectionSlow(true), 12000);
+    return () => window.clearTimeout(timer);
+  }, [connected, frameKey]);
 
   const sendCredentials = useCallback((target?: Window | null) => {
     const receiver = target || iframeRef.current?.contentWindow;
@@ -100,35 +109,31 @@ export default function MiniappContentPage() {
   };
 
   return (
-    <div className="space-y-5">
-      <PageHeader
-        title="ویرایش زنده مینی‌اپ"
-        action={(
-          <div className="flex items-center gap-2">
+    <div className="system-page">
+      <SystemHeader title="ویرایش مینی‌اپ" icon={Smartphone}>
+          <div className="flex flex-wrap items-center gap-2">
             <Button variant="secondary" size="sm" icon={<RefreshCw size={15} />} onClick={reload}>بارگذاری مجدد</Button>
             <Button variant="secondary" size="sm" icon={<ExternalLink size={15} />} onClick={openEditorWindow}>باز کردن</Button>
           </div>
-        )}
-      />
+      </SystemHeader>
 
-      <section className="grid gap-5 xl:grid-cols-[minmax(260px,340px)_minmax(420px,1fr)]">
+      <section className="editor-workspace">
         <aside className="space-y-4">
           <div className="surface-card space-y-4 p-4">
             <div className="flex items-start gap-3">
               <div className="flex items-center gap-3">
                 <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-violet-500/10 text-violet-500"><ListFilter size={17} /></span>
-                <div><b className="text-xs">حالت صفحه</b><p className="mt-1 text-[10px] text-[rgb(var(--color-text-secondary))]">تمام حالت‌های همین صفحه را بررسی کنید</p></div>
+                <h2 className="text-sm font-semibold">حالت صفحه</h2>
               </div>
             </div>
-            <select
+            <Select
+              aria-label="حالت صفحه"
               value={previewPage?.scenario || ''}
               disabled={!connected || !previewPage}
               onChange={(event) => selectScenario(event.target.value)}
-              className="h-11 w-full rounded-xl border border-[rgb(var(--color-border))] bg-[rgb(var(--color-surface))] px-3 text-xs font-bold text-[rgb(var(--color-text))] outline-none transition focus:border-violet-500 disabled:opacity-50"
-            >
-              {!previewPage && <option value="">در حال دریافت حالت‌ها…</option>}
-              {previewPage?.scenarios.map((scenario) => <option value={scenario.value} key={scenario.value}>{scenario.label}</option>)}
-            </select>
+              className="h-11 text-xs font-bold outline-none focus:border-violet-500 disabled:opacity-50"
+              options={previewPage?.scenarios || [{ value: '', label: 'در حال دریافت حالت‌ها…' }]}
+            />
             <button
               type="button"
               disabled={!connected}
@@ -137,13 +142,14 @@ export default function MiniappContentPage() {
             >
               <Type size={16} /> همه متن‌ها
             </button>
+            {!connected && <div className="system-note" role="status"><p>{connectionSlow ? 'پیش‌نمایش آماده نشد. اتصال مینی‌اپ را بررسی کنید یا بارگذاری مجدد را بزنید.' : 'در حال بارگذاری پیش‌نمایش…'}</p></div>}
           </div>
 
           <details className="surface-card group overflow-hidden">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3.5 [&::-webkit-details-marker]:hidden">
               <div className="flex items-center gap-3">
                 <span className="grid h-8 w-8 place-items-center rounded-lg bg-sky-500/10 text-sky-500"><BookOpen size={16} /></span>
-                <div><h3 className="text-xs font-extrabold">راهنمای ویرایش</h3><p className="mt-0.5 text-[9px] text-[rgb(var(--color-text-secondary))]">روش ویرایش و میانبرها</p></div>
+                <h3 className="text-sm font-semibold">راهنمای ویرایش</h3>
               </div>
               <ChevronDown size={17} className="text-[rgb(var(--color-text-secondary))] transition-transform duration-200 group-open:rotate-180" />
             </summary>
@@ -167,9 +173,9 @@ export default function MiniappContentPage() {
           </details>
         </aside>
 
-        <div className="surface-card min-h-[760px] overflow-hidden p-3 sm:p-5">
-          <div className="mx-auto overflow-hidden rounded-[34px] border-[7px] border-slate-900 bg-slate-900 shadow-2xl dark:border-slate-700" style={{ width: 'min(100%, 430px)' }}>
-            <div className="flex h-7 items-center justify-center bg-slate-900 dark:bg-slate-700"><span className="h-1.5 w-20 rounded-full bg-white/20" /></div>
+        <div className="editor-preview">
+          <div className="mb-4 flex items-center justify-between gap-3 text-xs text-[rgb(var(--color-text-secondary))]"><span className="flex items-center gap-2"><Smartphone size={16} />پیش‌نمایش زنده</span><span>موبایل</span></div>
+          <div className="editor-device">
             <iframe
               key={frameKey}
               ref={iframeRef}
