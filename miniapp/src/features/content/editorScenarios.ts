@@ -28,6 +28,11 @@ const category: EditorScenarioOption[] = [
 
 const product: EditorScenarioOption[] = [
   { value: 'content', label: 'محصول — حالت عادی' },
+  { value: 'coupon-empty', label: 'محصول — ورود کد تخفیف' },
+  { value: 'coupon-applied', label: 'محصول — کد اعمال‌شده' },
+  { value: 'coupon-free', label: 'محصول — تخفیف کامل' },
+  { value: 'coupon-error', label: 'محصول — کد نامعتبر' },
+  { value: 'coupon-checking', label: 'محصول — بررسی کد تخفیف' },
   { value: 'vip', label: 'محصول — رایگان برای VIP' },
   { value: 'purchased', label: 'محصول — خرید یک‌باره انجام‌شده' },
   { value: 'access', label: 'محصول — دسترسی خرید' },
@@ -78,6 +83,14 @@ const newTicket: EditorScenarioOption[] = [
 
 const profile: EditorScenarioOption[] = [
   { value: 'vip', label: 'پروفایل — کاربر VIP' },
+  { value: 'referral-open', label: 'دعوت — پاداش ورود' },
+  { value: 'referral-purchase', label: 'دعوت — پاداش خرید' },
+  { value: 'referral-empty', label: 'دعوت — بدون دعوت' },
+  { value: 'referral-pending', label: 'دعوت — هدیه در انتظار تأیید شماره' },
+  { value: 'referral-rewarded', label: 'دعوت — هدیه واریزشده' },
+  { value: 'referral-disabled', label: 'دعوت — غیرفعال' },
+  { value: 'referral-loading', label: 'دعوت — در حال بارگذاری' },
+  { value: 'referral-error', label: 'دعوت — خطای دریافت' },
   { value: 'standard', label: 'پروفایل — کاربر عادی' },
   { value: 'empty-wallet', label: 'پروفایل — کیف پول خالی' },
   { value: 'payment-test', label: 'پروفایل — پرداخت آزمایشی' },
@@ -88,13 +101,19 @@ const profile: EditorScenarioOption[] = [
 ]
 
 export function editorScenariosForPath(pathname: string): EditorScenarioOption[] {
+  if (pathname === '/notifications') return [
+    { value: 'content', label: 'اعلان‌ها — خوانده‌شده و جدید' },
+    { value: 'empty', label: 'اعلان‌ها — صندوق خالی' },
+    { value: 'loading', label: 'اعلان‌ها — در حال دریافت' },
+    { value: 'error', label: 'اعلان‌ها — خطای دریافت' },
+  ]
   if (pathname === '/') return shop
   if (/^\/categories\//.test(pathname)) return category
   if (/^\/products\//.test(pathname)) return product
   if (pathname === '/orders') return orders
   if (pathname === '/downloads') return downloads
-  if (pathname === '/vip') return profile.map((item) => ({ ...item, label: item.label.replace('پروفایل', 'VIP') }))
-  if (pathname === '/wallet') return profile.map((item) => ({ ...item, label: item.label.replace('پروفایل', 'کیف پول') }))
+  if (pathname === '/vip') return [...profile.filter(item => !item.value.startsWith('referral-')).map((item) => ({ ...item, label: item.label.replace('پروفایل', 'VIP') })), { value: 'no-plans', label: 'VIP — بدون پلن' }]
+  if (pathname === '/wallet') return [...profile.filter(item => !item.value.startsWith('referral-')).map((item) => ({ ...item, label: item.label.replace('پروفایل', 'کیف پول') })), { value: 'no-packs', label: 'کیف پول — بدون بسته شارژ' }]
   if (pathname === '/tickets/new') return newTicket
   if (/^\/tickets\/[^/]+/.test(pathname)) return ticketThread
   if (pathname === '/tickets') return tickets

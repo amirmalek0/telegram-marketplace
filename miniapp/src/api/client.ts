@@ -52,6 +52,18 @@ export class ApiClient {
     return response.json()
   }
 
+  async photo(path: string, signal?: AbortSignal): Promise<Blob> {
+    if (!/^\/user\/[\da-f-]{36}\/photos\/[\da-f-]{36}\/content$/i.test(path)) throw new Error('Invalid photo path')
+    const response = await fetch(`${API_BASE_URL}${path}`, { headers: this.getHeaders(), signal })
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'Photo unavailable' }))
+      throw this.responseError(error, response.status)
+    }
+    const blob = await response.blob()
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(blob.type)) throw new Error('Invalid photo')
+    return blob
+  }
+
   async post<T>(path: string, body?: unknown): Promise<T> {
     const response = await fetch(`${API_BASE_URL}${path}`, {
       method: 'POST',

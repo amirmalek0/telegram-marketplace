@@ -70,6 +70,7 @@ export interface VipQuote {
 }
 
 export interface UserAccount {
+  photo_url?: string
   id: string
   telegram_id: number
   first_name: string
