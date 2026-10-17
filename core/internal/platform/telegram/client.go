@@ -212,3 +212,30 @@ func (c *Client) RequestContact(ctx context.Context, chatID int64) error {
 	})
 	return err
 }
+
+func (c *Client) BotUsername(ctx context.Context) (string, error) {
+	user, err := call[User](ctx, c, "getMe", map[string]any{})
+	return user.Username, err
+}
+
+func (c *Client) SendMiniAppWelcome(ctx context.Context, chatID int64) error {
+	// Reuse the configured menu URL (including its tunnel) rather than assuming
+	// that a separate Main Mini App has been configured in BotFather.
+	type menuButton struct {
+		Type   string `json:"type"`
+		WebApp struct {
+			URL string `json:"url"`
+		} `json:"web_app"`
+	}
+	menu, lookupErr := call[menuButton](ctx, c, "getChatMenuButton", map[string]any{"chat_id": chatID})
+	if lookupErr == nil && menu.Type == "default" {
+		menu, lookupErr = call[menuButton](ctx, c, "getChatMenuButton", map[string]any{})
+	}
+	input := map[string]any{"chat_id": chatID, "text": "به فروشگاه خوش آمدید. مینی‌اپ را از منوی ربات باز کنید."}
+	if lookupErr == nil && menu.Type == "web_app" && strings.HasPrefix(menu.WebApp.URL, "https://") {
+		input["text"] = "به فروشگاه خوش آمدید. برای ورود، دکمه زیر را بزنید."
+		input["reply_markup"] = map[string]any{"inline_keyboard": [][]map[string]any{{{"text": "ورود به فروشگاه", "web_app": map[string]string{"url": menu.WebApp.URL}}}}}
+	}
+	_, err := call[Message](ctx, c, "sendMessage", input)
+	return err
+}

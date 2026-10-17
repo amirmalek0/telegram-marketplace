@@ -29,7 +29,7 @@ func Migrate(ctx context.Context, db *pgxpool.Pool) {
 		}
 	}()
 
-	for i, stmt := range migrations {
+	for i, stmt := range append(migrations, referralMigrations...) {
 		if _, err := conn.Exec(ctx, stmt); err != nil {
 			log.Fatalf("migration %d failed: %v", i+1, err)
 		}

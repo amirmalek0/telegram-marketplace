@@ -21,6 +21,26 @@ func jsonResponse(body string) *http.Response {
 	return &http.Response{StatusCode: http.StatusOK, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(body))}
 }
 
+func TestSendReferralMessageUsesPlainText(t *testing.T) {
+	message := "Sara <b> received 10 credits thanks to Amir & friends"
+	client := NewTestClient("test-token", "http://telegram.test", mockHTTPClient(func(r *http.Request) (*http.Response, error) {
+		if r.URL.Path != "/bottest-token/sendMessage" {
+			t.Fatal(r.URL.Path)
+		}
+		var payload map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+			t.Fatal(err)
+		}
+		if payload["chat_id"] != float64(42) || payload["text"] != message || payload["parse_mode"] != nil {
+			t.Fatalf("unexpected message payload: %+v", payload)
+		}
+		return jsonResponse(`{"ok":true,"result":{"message_id":1}}`), nil
+	}))
+	if err := client.SendMessage(context.Background(), 42, message); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestCreateInvoiceLinkUsesStarsContract(t *testing.T) {
 	client := NewTestClient("test-token", "http://telegram.test", mockHTTPClient(func(r *http.Request) (*http.Response, error) {
 		if r.URL.Path != "/bottest-token/createInvoiceLink" {
