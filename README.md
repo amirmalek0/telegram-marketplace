@@ -124,6 +124,44 @@ The project follows a clean architecture pattern with separation of concerns:
 
 All services share the same PostgreSQL database and can communicate through the internal Docker network.
 
+## Backend security and payment recovery
+
+- Use Go 1.26.9 (also pinned in the backend Dockerfiles). Rebuild the API and bot
+  together: startup migrations add admin sessions and the durable bot retry queue.
+- Admin access tokens expire after 15 minutes; refresh tokens rotate on use and
+  expire after 7 days. Logout, disabling an account, and password changes revoke
+  access. Tokens issued before this upgrade require a fresh login.
+- Telegram Mini App authentication accepts signed initialization data for one hour,
+  with one minute of future clock skew. Reopen the Mini App to obtain fresh data.
+- File, inventory, message, bundle, and provider-API management routes are
+  admin-only. Customers obtain content through ownership-checked deliveries.
+- Stars test mode simulates the charge but uses real settlement: successful tests
+  credit wallets, activate VIP, and deliver products. Product checkouts reserve
+  inventory and coupons and enforce purchase limits just like paid checkouts.
+  This is a global setting, not a per-user sandbox; enable it only when you intend
+  users to receive these benefits without paying Telegram Stars. Disabling it
+  rejects pending simulations. Historical simulation-only payments are not
+  retroactively fulfilled; start a new checkout to test the restored behavior.
+- Unapproved invoices expire after 30 minutes. Accepted pre-checkouts retain their
+  reservations for up to 24 hours; genuine payments arriving after expiration are
+  refunded through Telegram rather than discarded.
+- API delivery jobs retry with a one-minute failure delay and a two-minute
+  processing lease. External providers must honor the stable `Idempotency-Key`
+  header (the delivery-item UUID) to prevent duplicate effects after a timeout.
+  Configure only public HTTPS endpoints on port 443. Redirects, private addresses,
+  environment proxies, and responses larger than 2 MiB are blocked.
+- Failed bot updates are stored in `telegram_failed_updates` before acknowledgement.
+  Financial updates keep retrying. Other updates become dead letters after ten
+  attempts. Monitor dead letters and aged `pending`, `processing`, or `failed`
+  payments/deliveries; database errors are logged without discarding the update.
+- Login throttling is bounded and process-local. Multi-replica deployments should
+  additionally enforce shared rate limits at the ingress/proxy.
+
+Verification: run `go test ./...`, `go vet ./...`, and
+`go run golang.org/x/vuln/cmd/govulncheck@latest ./...` inside `core`.
+Set `COUPON_TEST_DATABASE_URL` to a development PostgreSQL database to run isolated
+schema integration tests; these clone table definitions, not customer records.
+
 ## License
 
 MIT
