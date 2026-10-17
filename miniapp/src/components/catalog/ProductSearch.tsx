@@ -4,9 +4,12 @@ import { deliveryGradients } from '../../features/catalog/constants'
 import type { Product } from '../../features/catalog/types'
 import { publicAssetURL } from '../../utils/assets'
 import { Icon } from '../ui/Icon'
+import { useContent } from '../../features/content/ContentProvider'
 
 export function ProductSearch({ products }: { products: Product[] }) {
   const navigate = useNavigate()
+  const { editorMode, text } = useContent()
+  const searchRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
@@ -24,6 +27,18 @@ export function ProductSearch({ products }: { products: Product[] }) {
     if (searchOpen) inputRef.current?.focus()
   }, [searchOpen])
 
+  useEffect(() => {
+    if (!searchOpen) return
+    const closeOutside = (event: PointerEvent) => {
+      const target = event.target
+      if (!(target instanceof Element) || searchRef.current?.contains(target)) return
+      if (editorMode && target.closest('.content-editor-backdrop')) return
+      setSearchOpen(false)
+    }
+    document.addEventListener('pointerdown', closeOutside)
+    return () => document.removeEventListener('pointerdown', closeOutside)
+  }, [editorMode, searchOpen])
+
   const openProduct = (productId: string) => {
     setSearchOpen(false)
     setSearchQuery('')
@@ -32,14 +47,20 @@ export function ProductSearch({ products }: { products: Product[] }) {
 
   return (
     <div
+      ref={searchRef}
       className={`header-search ${searchOpen ? 'is-open' : ''}`}
-      onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setSearchOpen(false) }}
+      onBlur={(event) => {
+        const next = event.relatedTarget
+        if (!next || event.currentTarget.contains(next)) return
+        if (editorMode && next instanceof Element && next.closest('.content-editor-backdrop')) return
+        setSearchOpen(false)
+      }}
       onKeyDown={(event) => { if (event.key === 'Escape') setSearchOpen(false) }}
     >
       <button
         type="button"
         className="search-toggle"
-        aria-label="باز کردن جست‌وجوی محصولات"
+        aria-label={text('search.open')}
         aria-expanded={searchOpen}
         aria-controls="product-search-panel"
         onClick={() => setSearchOpen((open) => !open)}
@@ -54,17 +75,17 @@ export function ProductSearch({ products }: { products: Product[] }) {
               ref={inputRef}
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="جست‌وجوی محصولات"
-              aria-label="جست‌وجوی محصولات"
+              placeholder={text('search.placeholder')}
+              aria-label={text('search.placeholder')}
             />
             {searchQuery && (
-              <button type="button" className="clear-search" onClick={() => setSearchQuery('')} aria-label="پاک کردن جست‌وجو">×</button>
+              <button type="button" className="clear-search" onClick={() => setSearchQuery('')} aria-label={text('search.clear')}>×</button>
             )}
           </form>
           {normalizedSearch ? (
             <div className="search-results-menu">
               <div className="search-results-head">
-                <strong>نتایج محصولات</strong>
+                <strong>{text('search.results')}</strong>
                 <span>{searchResults.length.toLocaleString('fa-IR')}</span>
               </div>
               {searchResults.length > 0 ? searchResults.map((item) => (
@@ -72,7 +93,7 @@ export function ProductSearch({ products }: { products: Product[] }) {
                   key={item.id}
                   type="button"
                   className="search-result-item"
-                  onPointerDown={(event) => { event.preventDefault(); openProduct(item.id) }}
+                  onClick={() => openProduct(item.id)}
                 >
                   <span className={`search-result-image ${deliveryGradients[item.delivery_type]}`}>
                     {item.image_url ? <img src={publicAssetURL(item.image_url)} alt="" /> : <Icon name="box" size={20} />}
@@ -81,11 +102,11 @@ export function ProductSearch({ products }: { products: Product[] }) {
                   <Icon name="arrow" size={15} />
                 </button>
               )) : (
-                <div className="search-no-result"><Icon name="search" size={20} /><span>محصولی پیدا نشد.</span></div>
+                <div className="search-no-result"><Icon name="search" size={20} /><span>{text('search.empty')}</span></div>
               )}
             </div>
           ) : (
-            <div className="search-prompt"><Icon name="search" size={19} /><span>نام محصول موردنظر را وارد کنید.</span></div>
+            <div className="search-prompt"><Icon name="search" size={19} /><span>{text('search.prompt')}</span></div>
           )}
         </div>
       )}

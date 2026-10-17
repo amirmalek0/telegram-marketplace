@@ -1,14 +1,13 @@
-.content-editor-mode [data-content-key] {
-  cursor: text !important;
-  outline: 1px dashed color-mix(in srgb, #0a84ff 48%, transparent);
-  outline-offset: 3px;
-  border-radius: 5px;
-  transition: outline-color 150ms ease, background-color 150ms ease;
+::highlight(miniapp-editable) {
+  text-decoration: underline dashed #0a84ff;
+  background-color: color-mix(in srgb, #0a84ff 6%, transparent);
 }
 
-.content-editor-mode [data-content-key]:hover {
-  outline-color: #0a84ff;
-  background: color-mix(in srgb, #0a84ff 10%, transparent);
+.content-editor-mode [data-editable-text],
+.content-editor-mode input[data-content-key]::placeholder,
+.content-editor-mode textarea[data-content-key]::placeholder {
+  text-decoration: underline dashed #0a84ff;
+  text-underline-offset: 4px;
 }
 
 .content-editor-wait { gap: 14px; color: var(--text-secondary); }

@@ -5,6 +5,7 @@ import { contentCatalog, type ContentKey } from './contentCatalog'
 import { editorScenariosForPath } from './editorScenarios'
 import { paletteKey } from '../theme/palette'
 import { usePalette } from '../theme/usePalette'
+import { editableTextAtPoint, highlightEditableText, type EditableText } from './textSelection'
 
 interface ContentResponse { data: Record<string, string> }
 interface ContentEntry { key: string; value: string }
@@ -68,6 +69,8 @@ export function ContentProvider({ children }: { children: ReactNode }) {
   const scenarioOptions = useMemo(() => editorScenariosForPath(location.pathname), [location.pathname])
   const [editorScenario, setEditorScenario] = useState(scenarioOptions[0].value)
   const rootRef = useRef<HTMLDivElement>(null)
+  const editableTextsRef = useRef<EditableText[]>([])
+  const renderedTextsRef = useRef(new WeakMap<Text, { key: ContentKey; value: string; parameters: string[] }>())
 
   useEffect(() => { setEditorScenario(scenarioOptions[0].value) }, [location.pathname, scenarioOptions])
 
@@ -130,12 +133,20 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     }
     templates.sort((left, right) => right.score - left.score)
 
+    let clearHighlights = () => {}
     const decorate = () => {
+      clearHighlights()
+      const editableTexts: EditableText[] = []
       const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
       let node = walker.nextNode() as Text | null
       while (node) {
         const raw = node.nodeValue || ''
         const value = raw.trim()
+        const parent = node.parentElement
+        if (!value || !parent || parent.closest('svg, script, style, textarea, option, [aria-hidden="true"], .content-editor-panel')) {
+          node = walker.nextNode() as Text | null
+          continue
+        }
         let key = knownValues.get(value)
         let parameters: string[] = []
         if (!key) {
@@ -144,11 +155,13 @@ export function ContentProvider({ children }: { children: ReactNode }) {
             if (match) { key = template.key; parameters = match.slice(1); break }
           }
         }
-        const parent = node.parentElement
-        if (key && parent && !parent.closest('.content-editor-panel')) {
+        const previous = renderedTextsRef.current.get(node)
+        if (!key && previous?.value === value) { key = previous.key; parameters = previous.parameters }
+        if (key) {
           const replacement = applyTemplate(text(key), parameters)
           if (value !== replacement) node.nodeValue = raw.replace(value, replacement)
-          if (editorMode) parent.dataset.contentKey = key
+          renderedTextsRef.current.set(node, { key, value: replacement, parameters })
+          if (editorMode && replacement.trim()) editableTexts.push({ node, key })
         }
         node = walker.nextNode() as Text | null
       }
@@ -159,29 +172,35 @@ export function ContentProvider({ children }: { children: ReactNode }) {
           const key = knownValues.get(value)
           if (!key) continue
           element.setAttribute(attribute, text(key))
-          if (editorMode) element.dataset.contentKey = key
+          // Accessibility names/tooltips are translated but are not visible
+          // text. Only placeholders on actual text fields are edit targets.
+          if (editorMode && attribute === 'placeholder' && element.matches('input, textarea')) element.dataset.contentKey = key
         }
       }
+      editableTextsRef.current = editableTexts
+      if (editorMode) clearHighlights = highlightEditableText(editableTexts)
     }
 
     decorate()
     const observer = new MutationObserver(decorate)
     observer.observe(root, { childList: true, subtree: true, characterData: true })
-    return () => observer.disconnect()
+    return () => { observer.disconnect(); clearHighlights(); editableTextsRef.current = [] }
   }, [editorMode, overrides, text])
 
   useEffect(() => {
     if (!editorMode) return
     const selectText = (event: MouseEvent) => {
-      const clickedElement = event.target as HTMLElement | null
-      const target = clickedElement?.closest<HTMLElement>('[data-content-key]')
-      if (!target || target.closest('.content-editor-panel')) return
+      const clickedElement = event.target instanceof Element ? event.target : null
+      if (!clickedElement || !rootRef.current?.contains(clickedElement)) return
+      const placeholder = clickedElement.closest<HTMLInputElement | HTMLTextAreaElement>('input[data-content-key], textarea[data-content-key]')
+      const selectedKey = placeholder && !placeholder.value ? placeholder.dataset.contentKey : editableTextAtPoint(editableTextsRef.current, clickedElement, event.clientX, event.clientY)
+      if (!selectedKey) return
       // Navigation and controls must remain usable while previewing the real
       // Mini App. Their copy is still editable with Alt+Click or from the full
       // content catalog.
       const interactive = clickedElement?.closest('a, button, input, textarea, select, label, summary')
       if (interactive && !event.altKey) return
-      const key = target.dataset.contentKey as ContentKey
+      const key = selectedKey as ContentKey
       if (!contentCatalog[key]) return
       event.preventDefault()
       event.stopPropagation()
@@ -189,8 +208,14 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       setDraft(text(key))
       setSaveError('')
     }
+    // Select before pointerdown moves focus or triggers a control's action.
+    // Keep click interception too so Alt+Click cannot navigate afterward.
+    document.addEventListener('pointerdown', selectText, true)
     document.addEventListener('click', selectText, true)
-    return () => document.removeEventListener('click', selectText, true)
+    return () => {
+      document.removeEventListener('pointerdown', selectText, true)
+      document.removeEventListener('click', selectText, true)
+    }
   }, [editorMode, text])
 
   const save = async () => {
