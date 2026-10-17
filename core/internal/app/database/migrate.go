@@ -139,6 +139,23 @@ var migrations = []string{
 		id UUID PRIMARY KEY DEFAULT gen_random_uuid()
 	)`,
 
+	// Upgrade the original id-only stub. Legacy rows remain unpublished.
+	`ALTER TABLE broadcasts ADD COLUMN IF NOT EXISTS title TEXT NOT NULL DEFAULT ''`,
+	`ALTER TABLE broadcasts ADD COLUMN IF NOT EXISTS message TEXT NOT NULL DEFAULT ''`,
+	`ALTER TABLE broadcasts ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES admins(id) ON DELETE SET NULL`,
+	`ALTER TABLE broadcasts ADD COLUMN IF NOT EXISTS request_id UUID`,
+	`ALTER TABLE broadcasts ADD COLUMN IF NOT EXISTS published_at TIMESTAMPTZ`,
+	`ALTER TABLE broadcasts ADD COLUMN IF NOT EXISTS archived_at TIMESTAMPTZ`,
+	`CREATE UNIQUE INDEX IF NOT EXISTS idx_broadcasts_request_id ON broadcasts(request_id)`,
+	`CREATE INDEX IF NOT EXISTS idx_broadcasts_published ON broadcasts(published_at DESC,id DESC) WHERE archived_at IS NULL AND published_at IS NOT NULL`,
+	`CREATE TABLE IF NOT EXISTS broadcast_reads (
+		broadcast_id UUID NOT NULL REFERENCES broadcasts(id) ON DELETE CASCADE,
+		user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+		read_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+		PRIMARY KEY (broadcast_id,user_id)
+	)`,
+	`CREATE INDEX IF NOT EXISTS idx_broadcast_reads_user ON broadcast_reads(user_id,broadcast_id)`,
+
 	`CREATE TABLE IF NOT EXISTS vip_plans (
 		id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 		title      TEXT NOT NULL,
