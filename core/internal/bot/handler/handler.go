@@ -42,6 +42,9 @@ func (h *Handler) StartPolling() error {
 	if err := h.telegram.DeleteWebhook(ctx, false); err != nil {
 		return fmt.Errorf("delete telegram webhook: %w", err)
 	}
+	if h.services.ReferralsService != nil {
+		go h.services.ReferralsService.Run(ctx)
+	}
 	var offset int64
 	for {
 		updates, err := h.telegram.GetUpdates(ctx, offset, 25)
@@ -72,6 +75,11 @@ func (h *Handler) StartWebhook(addr, webhookURL string) error {
 	}
 	if err := h.telegram.SetWebhook(context.Background(), url, h.webhookSecret); err != nil {
 		return fmt.Errorf("set telegram webhook: %w", err)
+	}
+	workerCtx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	if h.services.ReferralsService != nil {
+		go h.services.ReferralsService.Run(workerCtx)
 	}
 
 	mux := http.NewServeMux()
@@ -104,6 +112,12 @@ func (h *Handler) StartWebhook(addr, webhookURL string) error {
 }
 
 func (h *Handler) processUpdate(ctx context.Context, update telegramclient.Update) error {
+	if message := update.Message; message != nil && message.From != nil && message.Chat.Type == "private" && message.Chat.ID == message.From.ID {
+		parts := strings.Fields(message.Text)
+		if len(parts) > 0 && parts[0] == "/start" && (len(message.ForwardOrigin) == 0 || string(message.ForwardOrigin) == "null") {
+			return h.processStart(ctx, message, parts)
+		}
+	}
 	if message := update.Message; message != nil && message.Contact != nil {
 		return h.processContact(ctx, message)
 	}
@@ -165,6 +179,26 @@ func (h *Handler) processUpdate(ctx context.Context, update telegramclient.Updat
 	}
 	if err := h.telegram.SendMessage(ctx, message.Chat.ID, "پرداخت شما با موفقیت انجام شد ✅\nحساب شما در مینی‌اپ به‌روزرسانی شده است."); err != nil {
 		log.Printf("telegram payment confirmation message: %v", err)
+	}
+	return nil
+}
+
+func (h *Handler) processStart(ctx context.Context, message *telegramclient.Message, parts []string) error {
+	if h.services.UsersService == nil || h.services.ReferralsService == nil {
+		return nil
+	}
+	start := ""
+	if len(parts) == 2 {
+		start = parts[1]
+	}
+	u := message.From
+	_, _, err := h.services.UsersService.UpsertWithReferral(ctx, users.CreateUserRequest{TelegramID: u.ID, FirstName: u.FirstName, LastName: u.LastName, Username: u.Username}, start)
+	if err != nil {
+		return err
+	}
+	// Failure to send a welcome must not replay financial side effects.
+	if err = h.telegram.SendMiniAppWelcome(ctx, u.ID); err != nil {
+		log.Printf("bot welcome could not be sent")
 	}
 	return nil
 }

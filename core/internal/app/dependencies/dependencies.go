@@ -30,10 +30,16 @@ import (
 	"telegram-marketplace/internal/core/membership/admins"
 	adminrepo "telegram-marketplace/internal/core/membership/admins/repository"
 	"telegram-marketplace/internal/core/membership/auth"
+	"telegram-marketplace/internal/core/membership/broadcasts"
+	broadcastrepo "telegram-marketplace/internal/core/membership/broadcasts/repository"
+	"telegram-marketplace/internal/core/membership/referrals"
+	referralrepo "telegram-marketplace/internal/core/membership/referrals/repository"
 	ticketcategories "telegram-marketplace/internal/core/membership/ticket-categories"
 	ticketcategoryrepo "telegram-marketplace/internal/core/membership/ticket-categories/repository"
 	"telegram-marketplace/internal/core/membership/tickets"
 	ticketrepo "telegram-marketplace/internal/core/membership/tickets/repository"
+	"telegram-marketplace/internal/core/membership/userphotos"
+	userphotorepo "telegram-marketplace/internal/core/membership/userphotos/repository"
 	"telegram-marketplace/internal/core/membership/users"
 	userrepo "telegram-marketplace/internal/core/membership/users/repository"
 	"telegram-marketplace/internal/core/membership/vip"
@@ -85,6 +91,11 @@ func Wire(ctx context.Context, db *pgxpool.Pool, cfg config.Config) router.Handl
 	}
 
 	// Per-entity bucket-scoped Storage instances.
+	if err := storageClient.EnsureBucket(ctx, cfg.UserProfilePhotosBucket); err != nil {
+		log.Fatalf("storage: %v", err)
+	}
+	photoStore := storageClient.Bucket(cfg.UserProfilePhotosBucket, "").(userphotos.Store)
+	photoService := userphotos.NewService(userphotorepo.New(db), telegramclient.NewClient(cfg.BotToken), photoStore)
 	categoryIconsStore := storageClient.Bucket(cfg.CategoryIconsBucket, cfg.CategoryIconsPublicURL)
 	productFilesStore := storageClient.Bucket(cfg.ProductFilesBucket, cfg.ProductFilesPublicURL)
 	productImagesStore := storageClient.Bucket(cfg.ProductImagesBucket, cfg.ProductImagesPublicURL)
@@ -95,6 +106,9 @@ func Wire(ctx context.Context, db *pgxpool.Pool, cfg config.Config) router.Handl
 	settingsHandler := settings.NewHandler(settingsService)
 	userRepo := userrepo.NewPostgresRepository(db)
 	userService := users.NewService(userRepo)
+	userService.SetPhotoArchive(photoService)
+	referralService := referrals.NewService(referralrepo.NewPostgresRepository(db), telegramclient.NewClient(cfg.BotToken))
+	userService.SetReferralRewards(referralService)
 	userHandler := users.NewHandler(userService, settingsService)
 
 	// --- catalog/categories ---
@@ -159,6 +173,7 @@ func Wire(ctx context.Context, db *pgxpool.Pool, cfg config.Config) router.Handl
 		paymentsRepo, telegramAPI, apiService, productFilesStore,
 	)
 	paymentsHandler := payments.NewHandler(paymentsService)
+	paymentsService.SetReferralRewards(referralService)
 
 	// --- membership/vip ---
 	vipPlanRepo := viprepo.NewPostgresRepository(db)
@@ -176,26 +191,31 @@ func Wire(ctx context.Context, db *pgxpool.Pool, cfg config.Config) router.Handl
 	ticketHandler := tickets.NewHandler(ticketService)
 
 	return router.Handlers{
-		Auth:             authHandler,
-		AuthService:      authService,
-		Users:            userHandler,
-		UsersService:     userService,
-		Categories:       categoryHandler,
-		Files:            fileHandler,
-		Messages:         msgHandler,
-		Inventory:        invHandler,
-		APIs:             apiHandler,
-		Bundles:          bundleHandler,
-		Products:         productHandler,
-		Admins:           adminHandler,
-		Coupons:          couponsHandler,
-		Orders:           ordersHandler,
-		Payments:         paymentsHandler,
-		PaymentsService:  paymentsService,
-		Tickets:          ticketHandler,
-		TicketCategories: ticketCategoryHandler,
-		VIP:              vipHandler,
-		Settings:         settingsHandler,
-		SettingsService:  settingsService,
+		UserPhotos:        userphotos.NewHandler(photoService),
+		UserPhotosService: photoService,
+		Referrals:         referrals.NewHandler(referralService),
+		ReferralsService:  referralService,
+		Broadcasts:        broadcasts.NewHandler(broadcasts.NewService(broadcastrepo.NewPostgresRepository(db))),
+		Auth:              authHandler,
+		AuthService:       authService,
+		Users:             userHandler,
+		UsersService:      userService,
+		Categories:        categoryHandler,
+		Files:             fileHandler,
+		Messages:          msgHandler,
+		Inventory:         invHandler,
+		APIs:              apiHandler,
+		Bundles:           bundleHandler,
+		Products:          productHandler,
+		Admins:            adminHandler,
+		Coupons:           couponsHandler,
+		Orders:            ordersHandler,
+		Payments:          paymentsHandler,
+		PaymentsService:   paymentsService,
+		Tickets:           ticketHandler,
+		TicketCategories:  ticketCategoryHandler,
+		VIP:               vipHandler,
+		Settings:          settingsHandler,
+		SettingsService:   settingsService,
 	}
 }

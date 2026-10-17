@@ -12,7 +12,8 @@ import (
 
 // Start is the application entry point after config is loaded.
 func Start(cfg config.Config) {
-	ctx := context.Background()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	db := database.Connect(ctx, cfg.DatabaseURL)
 	defer database.MustClose(db)
@@ -22,6 +23,7 @@ func Start(cfg config.Config) {
 	database.SeedTicketCategories(ctx, db)
 
 	handlers := dependencies.Wire(ctx, db, cfg)
+	go handlers.UserPhotosService.Run(ctx)
 	r := router.New(cfg.BotToken, cfg.CORSAllowedOrigins, handlers)
 	server.Run(cfg.Addr, r)
 }

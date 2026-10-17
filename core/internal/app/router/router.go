@@ -30,10 +30,16 @@ import (
 	adminrouter "telegram-marketplace/internal/core/membership/admins/router"
 	"telegram-marketplace/internal/core/membership/auth"
 	authrouter "telegram-marketplace/internal/core/membership/auth/router"
+	"telegram-marketplace/internal/core/membership/broadcasts"
+	broadcastrouter "telegram-marketplace/internal/core/membership/broadcasts/router"
+	"telegram-marketplace/internal/core/membership/referrals"
+	referralrouter "telegram-marketplace/internal/core/membership/referrals/router"
 	ticketcategories "telegram-marketplace/internal/core/membership/ticket-categories"
 	ticketcategoryrouter "telegram-marketplace/internal/core/membership/ticket-categories/router"
 	"telegram-marketplace/internal/core/membership/tickets"
 	ticketrouter "telegram-marketplace/internal/core/membership/tickets/router"
+	"telegram-marketplace/internal/core/membership/userphotos"
+	userphotorouter "telegram-marketplace/internal/core/membership/userphotos/router"
 	"telegram-marketplace/internal/core/membership/users"
 	userrouter "telegram-marketplace/internal/core/membership/users/router"
 	"telegram-marketplace/internal/core/membership/vip"
@@ -45,27 +51,32 @@ import (
 // Handlers groups all domain handlers that the router needs.
 // Add a new field here when a new module is introduced.
 type Handlers struct {
-	Auth             *auth.Handler
-	AuthService      *auth.Service
-	Users            *users.Handler
-	UsersService     *users.Service
-	Categories       *categories.Handler
-	Files            *files.Handler
-	Messages         *messages.Handler
-	Inventory        *inventory.Handler
-	APIs             *apis.Handler
-	Bundles          *bundles.Handler
-	Products         *products.Handler
-	Admins           *admins.Handler
-	Coupons          *coupons.Handler
-	Orders           *orders.Handler
-	Payments         *payments.Handler
-	PaymentsService  *payments.Service
-	Tickets          *tickets.Handler
-	TicketCategories *ticketcategories.Handler
-	VIP              *vip.Handler
-	Settings         *settings.Handler
-	SettingsService  *settings.Service
+	UserPhotos        *userphotos.Handler
+	UserPhotosService *userphotos.Service
+	Referrals         *referrals.Handler
+	ReferralsService  *referrals.Service
+	Broadcasts        *broadcasts.Handler
+	Auth              *auth.Handler
+	AuthService       *auth.Service
+	Users             *users.Handler
+	UsersService      *users.Service
+	Categories        *categories.Handler
+	Files             *files.Handler
+	Messages          *messages.Handler
+	Inventory         *inventory.Handler
+	APIs              *apis.Handler
+	Bundles           *bundles.Handler
+	Products          *products.Handler
+	Admins            *admins.Handler
+	Coupons           *coupons.Handler
+	Orders            *orders.Handler
+	Payments          *payments.Handler
+	PaymentsService   *payments.Service
+	Tickets           *tickets.Handler
+	TicketCategories  *ticketcategories.Handler
+	VIP               *vip.Handler
+	Settings          *settings.Handler
+	SettingsService   *settings.Service
 }
 
 // New creates and configures the gin.Engine:
@@ -98,6 +109,9 @@ func New(botToken string, corsAllowedOrigins []string, h Handlers) *gin.Engine {
 		domain := authenticated.Group("", middleware.RequireVerifiedPhone(h.SettingsService, h.UsersService))
 		{
 			userrouter.RegisterRoutes(domain, h.Users)
+			if h.UserPhotos != nil {
+				userphotorouter.RegisterRoutes(domain, h.UserPhotos)
+			}
 			categoryrouter.RegisterRoutes(domain, h.Categories)
 			filerouter.RegisterRoutes(domain, h.Files)
 			msgrouter.RegisterRoutes(domain, h.Messages)
@@ -113,6 +127,8 @@ func New(botToken string, corsAllowedOrigins []string, h Handlers) *gin.Engine {
 			ticketcategoryrouter.RegisterRoutes(domain, h.TicketCategories)
 			viprouter.RegisterRoutes(domain, h.VIP)
 			settingsrouter.RegisterAdminRoutes(domain, h.Settings)
+			broadcastrouter.RegisterRoutes(domain, h.Broadcasts)
+			referralrouter.RegisterRoutes(domain, h.Referrals)
 		}
 	}
 

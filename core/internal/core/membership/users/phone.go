@@ -25,7 +25,11 @@ func (s *Service) VerifyTelegramContact(ctx context.Context, contact TelegramCon
 		return ErrInvalidContact
 	}
 	phone = "+" + strings.TrimPrefix(phone, "+")
-	return s.repo.VerifyPhone(ctx, &model.User{TelegramID: contact.SenderID, FirstName: contact.FirstName, LastName: contact.LastName, Username: contact.Username, PhoneNumber: phone})
+	err := s.repo.VerifyPhone(ctx, &model.User{TelegramID: contact.SenderID, FirstName: contact.FirstName, LastName: contact.LastName, Username: contact.Username, PhoneNumber: phone})
+	if err == nil && s.referrals != nil {
+		s.referrals.Check(ctx, contact.SenderID)
+	}
+	return err
 }
 
 func (s *Service) PhoneVerified(ctx context.Context, telegramID int64) (bool, error) {

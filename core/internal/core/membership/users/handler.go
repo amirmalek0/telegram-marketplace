@@ -49,8 +49,15 @@ func (h *Handler) Save(c *gin.Context) {
 	req.TelegramID = id
 	req.PhoneNumber = ""
 	req.ReferredBy = 0
+	// Mark Mini App visits even when Telegram supplies no photo. The archive
+	// refreshes in the background; only a successful sync may clear its avatar.
+	// Bot updates omit PhotoURL and do not trigger visit refreshes.
+	if req.PhotoURL == nil {
+		emptyPhoto := ""
+		req.PhotoURL = &emptyPhoto
+	}
 
-	user, created, err := h.service.Upsert(c.Request.Context(), req)
+	user, created, err := h.service.UpsertWithReferral(c.Request.Context(), req, middleware.GetInitData(c).Get("start_param"))
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
 		return

@@ -10,8 +10,27 @@ import (
 
 // Service holds the business logic for the users domain.
 type Service struct {
-	repo repository.Repository
+	repo      repository.Repository
+	referrals ReferralRewards
+	photos    interface {
+		Schedule(context.Context, string) error
+		ScheduleVisit(context.Context, string) error
+	}
 }
+
+func (s *Service) SetPhotoArchive(photos interface {
+	Schedule(context.Context, string) error
+	ScheduleVisit(context.Context, string) error
+}) {
+	s.photos = photos
+}
+
+type ReferralRewards interface {
+	Onboard(context.Context, int64, string, string, string, string) (string, bool, error)
+	Check(context.Context, int64)
+}
+
+func (s *Service) SetReferralRewards(referrals ReferralRewards) { s.referrals = referrals }
 
 // NewService constructs a Service with the given Repository (plain DI).
 func NewService(repo repository.Repository) *Service {
@@ -21,6 +40,21 @@ func NewService(repo repository.Repository) *Service {
 // Upsert creates a new user or updates an existing one by Telegram ID.
 // Returns the user and a boolean indicating if it was created (true) or updated (false).
 func (s *Service) Upsert(ctx context.Context, req CreateUserRequest) (*model.User, bool, error) {
+	return s.UpsertWithReferral(ctx, req, "")
+}
+
+func (s *Service) UpsertWithReferral(ctx context.Context, req CreateUserRequest, trustedStart string) (*model.User, bool, error) {
+	if s.referrals != nil {
+		id, created, err := s.referrals.Onboard(ctx, req.TelegramID, req.FirstName, req.LastName, req.Username, trustedStart)
+		if err != nil {
+			return nil, false, err
+		}
+		user, err := s.repo.GetByID(ctx, id)
+		if err == nil {
+			err = s.syncPhoto(ctx, user, req.PhotoURL)
+		}
+		return user, created, err
+	}
 	var referredBy *int64
 	if req.ReferredBy != 0 {
 		referredBy = &req.ReferredBy
@@ -31,6 +65,9 @@ func (s *Service) Upsert(ctx context.Context, req CreateUserRequest) (*model.Use
 		return nil, false, fmt.Errorf("users.service.Upsert: %w", err)
 	}
 	user, err = s.repo.GetByID(ctx, user.ID)
+	if err == nil {
+		err = s.syncPhoto(ctx, user, req.PhotoURL)
+	}
 	return user, created, err
 }
 
