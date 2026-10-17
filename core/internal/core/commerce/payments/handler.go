@@ -223,6 +223,8 @@ func (h *Handler) writeCheckoutError(c *gin.Context, err error) {
 		return
 	}
 	switch {
+	case errors.Is(err, ErrVIPQuoteFailed):
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "محاسبه قیمت اشتراک ناموفق بود؛ دوباره تلاش کنید"})
 	case errors.Is(err, ErrOutOfStock):
 		c.JSON(http.StatusConflict, gin.H{"error": "موجودی این محصول تمام شده است"})
 	case errors.Is(err, ErrAlreadyPurchased):

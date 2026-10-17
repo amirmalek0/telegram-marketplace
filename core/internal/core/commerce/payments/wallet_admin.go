@@ -2,6 +2,8 @@ package payments
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"math"
 	"time"
 
@@ -10,6 +12,7 @@ import (
 )
 
 var ErrWalletWouldBeNegative = paymentsrepo.ErrWalletWouldBeNegative
+var ErrVIPQuoteFailed = errors.New("VIP quote calculation failed")
 
 func topupPackResponse(item paymentsrepo.WalletTopupPack) WalletTopupPackResponse {
 	return WalletTopupPackResponse{ID: item.ID, Title: item.Title, Stars: item.Stars, Status: item.Status, SortOrder: item.SortOrder, CreatedAt: item.CreatedAt, UpdatedAt: item.UpdatedAt}
@@ -95,7 +98,13 @@ func (s *Service) AdjustWallet(ctx context.Context, userID string, amount int64,
 
 func (s *Service) VIPQuote(ctx context.Context, telegramID int64, planID string) (*VIPQuoteResponse, error) {
 	data, err := s.repo.GetVIPQuoteData(ctx, telegramID, planID)
-	if err != nil || data.OriginalStars <= 0 {
+	if errors.Is(err, ErrCheckoutUnavailable) {
+		return nil, ErrCheckoutUnavailable
+	}
+	if err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrVIPQuoteFailed, err)
+	}
+	if data.OriginalStars <= 0 {
 		return nil, ErrCheckoutUnavailable
 	}
 	quote := &VIPQuoteResponse{PlanID: planID, PlanTitle: data.PlanTitle, OriginalStars: data.OriginalStars, PayableStars: data.OriginalStars, TargetTier: data.TargetTier, CurrentPlanID: data.CurrentPlanID, CurrentExpireAt: data.CurrentExpireAt, CurrentPlanTitle: data.CurrentPlanTitle, CurrentTier: data.CurrentTier}

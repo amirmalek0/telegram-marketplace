@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -200,6 +201,9 @@ func (r *postgresRepository) AdjustWallet(ctx context.Context, userID string, am
 func (r *postgresRepository) GetVIPQuoteData(ctx context.Context, telegramID int64, planID string) (*VIPQuoteData, error) {
 	var data VIPQuoteData
 	err := r.db.QueryRow(ctx, queryGetVIPQuoteData, planID, telegramID).Scan(&data.PlanTitle, &data.OriginalStars, &data.TargetTier, &data.CurrentPlanID, &data.CurrentExpireAt, &data.CurrentPlanTitle, &data.CurrentPrice, &data.CurrentDuration, &data.CurrentTier)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, ErrCheckoutUnavailable
+	}
 	if err != nil {
 		return nil, fmt.Errorf("payments.repository.GetVIPQuoteData: %w", err)
 	}

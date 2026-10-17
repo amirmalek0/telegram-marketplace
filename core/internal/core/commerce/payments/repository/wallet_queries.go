@@ -28,7 +28,7 @@ const (
 		SELECT target.title,target.stars_price,target.tier,u.active_plan_id,u.plan_expire_at,
 		       COALESCE(current.title,''),COALESCE(current.stars_price,0),COALESCE(current.duration,0),COALESCE(current.tier,0)
 		FROM vip_plans target JOIN users u ON u.telegram_id=$2
-		LEFT JOIN vip_plans current ON current.id=u.active_plan_id
+		LEFT JOIN vip_plans current ON current.id::text=u.active_plan_id
 		WHERE target.id=$1 AND target.status='active'`
 	queryGetActiveVIPPlanDuration     = `SELECT duration FROM vip_plans WHERE id=$1 AND status='active'`
 	queryGetWalletByTelegramID        = `SELECT id,wallet_balance FROM users WHERE telegram_id=$1`
