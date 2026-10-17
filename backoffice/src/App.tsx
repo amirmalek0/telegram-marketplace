@@ -28,6 +28,7 @@ import UserTicketsPage from '@/pages/tickets/UserTicketsPage';
 import SettingsPage from '@/pages/settings/SettingsPage';
 import MiniappContentPage from '@/pages/miniapp-content/MiniappContentPage';
 import WalletsPage from '@/pages/wallets/WalletsPage';
+import BroadcastsPage from '@/pages/broadcasts/BroadcastsPage';
 
 void PageLoader;
 
@@ -87,6 +88,7 @@ function App() {
             <Route path="wallets" element={<WalletsPage />} />
             <Route path="messages" element={<MessagesPage />} />
             <Route path="tickets" element={<TicketsPage />} />
+            <Route path="broadcasts" element={<BroadcastsPage />} />
             <Route path="tickets/:ticketId" element={<TicketDetailPage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="miniapp-content" element={<MiniappContentPage />} />

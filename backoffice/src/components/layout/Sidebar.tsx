@@ -5,6 +5,7 @@ import {
   Settings, ShieldCheck, ShoppingBag, Ticket, Users, X,
   Smartphone,
   WalletCards,
+  Megaphone,
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { useUIStore } from '@/stores/uiStore';
@@ -36,6 +37,7 @@ const groups: { label: string; items: SidebarItem[] }[] = [
   ]},
   { label: 'پشتیبانی و سیستم', items: [
     { label: 'تیکت‌ها', to: '/tickets', icon: Ticket },
+    { label: 'اعلان‌های همگانی', to: '/broadcasts', icon: Megaphone },
     { label: 'ویرایش مینی‌اپ', to: '/miniapp-content', icon: Smartphone },
     { label: 'مدیران', to: '/admins', icon: ShieldCheck },
     { label: 'تنظیمات عمومی', to: '/settings', icon: Settings },
