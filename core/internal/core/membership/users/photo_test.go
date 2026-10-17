@@ -9,11 +9,13 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"sort"
+	"strconv"
 	"strings"
 	"telegram-marketplace/internal/app/middleware"
 	"telegram-marketplace/internal/core/membership/users/model"
 	"telegram-marketplace/internal/core/membership/users/repository"
 	"testing"
+	"time"
 )
 
 type photoRepo struct {
@@ -110,6 +112,7 @@ func TestPhotoOnlyUsesSignedTelegramData(t *testing.T) {
 	router.POST("/user", middleware.Auth("test-token", nil), middleware.RequireTelegram(), NewHandler(service, nil).Save)
 	params := url.Values{"user": {`{"id":42,"first_name":"Signed","photo_url":"https://t.me/trusted.svg"}`}}
 	var lines []string
+	params.Set("auth_date", strconv.FormatInt(time.Now().Unix(), 10))
 	for key := range params {
 		lines = append(lines, key+"="+params.Get(key))
 	}

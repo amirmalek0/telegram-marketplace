@@ -11,7 +11,7 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       accessToken: null,
       refreshToken: null,
       isAuthenticated: false,
@@ -25,6 +25,13 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: () => {
+        const token = get().refreshToken;
+        if (token) {
+          void fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1'}/auth/logout`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refresh_token: token }), keepalive: true,
+          }).catch(() => {});
+        }
         set({
           accessToken: null,
           refreshToken: null,

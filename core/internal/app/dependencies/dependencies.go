@@ -30,6 +30,7 @@ import (
 	"telegram-marketplace/internal/core/membership/admins"
 	adminrepo "telegram-marketplace/internal/core/membership/admins/repository"
 	"telegram-marketplace/internal/core/membership/auth"
+	authrepo "telegram-marketplace/internal/core/membership/auth/repository"
 	"telegram-marketplace/internal/core/membership/broadcasts"
 	broadcastrepo "telegram-marketplace/internal/core/membership/broadcasts/repository"
 	"telegram-marketplace/internal/core/membership/referrals"
@@ -64,7 +65,7 @@ func Wire(ctx context.Context, db *pgxpool.Pool, cfg config.Config) router.Handl
 	adminHandler := admins.NewHandler(adminService)
 
 	// --- membership/auth ---
-	authService := auth.NewService(adminRepo, cfg.JWTSecret)
+	authService := auth.NewService(adminRepo, cfg.JWTSecret, authrepo.NewSessions(db))
 	authHandler := auth.NewHandler(authService)
 
 	// --- Infrastructure: storage client (connection-level factory) ---

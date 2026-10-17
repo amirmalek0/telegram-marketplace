@@ -8,8 +8,10 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"telegram-marketplace/internal/app/middleware"
@@ -39,6 +41,7 @@ func TestReferralOnlyUsesSignedStartParameter(t *testing.T) {
 	r.POST("/user", middleware.Auth("test-token", nil), middleware.RequireTelegram(), NewHandler(service, nil).Save)
 	params := url.Values{"user": {`{"id":42,"first_name":"Signed"}`}, "start_param": {"ref_0123456789abcdef0123456789abcdef"}}
 	var lines []string
+	params.Set("auth_date", strconv.FormatInt(time.Now().Unix(), 10))
 	for key := range params {
 		lines = append(lines, key+"="+params.Get(key))
 	}

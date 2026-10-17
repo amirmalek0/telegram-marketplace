@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http/httptest"
 	"net/url"
+	"strconv"
 	"strings"
 	"telegram-marketplace/internal/core/membership/users"
 	usermodel "telegram-marketplace/internal/core/membership/users/model"
@@ -15,6 +16,7 @@ import (
 	"telegram-marketplace/internal/core/settings"
 	settingsrepo "telegram-marketplace/internal/core/settings/repository"
 	"testing"
+	"time"
 )
 
 type gateSettingsRepo struct {
@@ -50,8 +52,9 @@ func signedHeader() string {
 	secret := hmac.New(sha256.New, []byte("WebAppData"))
 	secret.Write([]byte("test-token"))
 	hash := hmac.New(sha256.New, secret.Sum(nil))
-	hash.Write([]byte("user=" + user))
-	return "tma " + url.Values{"user": {user}, "hash": {hex.EncodeToString(hash.Sum(nil))}}.Encode()
+	date := strconv.FormatInt(time.Now().Unix(), 10)
+	hash.Write([]byte("auth_date=" + date + "\nuser=" + user))
+	return "tma " + url.Values{"auth_date": {date}, "user": {user}, "hash": {hex.EncodeToString(hash.Sum(nil))}}.Encode()
 }
 
 func TestAllDomainRoutesBlockedAndBootstrapRemainsAvailable(t *testing.T) {

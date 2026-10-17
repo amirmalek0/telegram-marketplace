@@ -7,7 +7,9 @@ import (
 	"net/http"
 	"net/url"
 	"sort"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
@@ -78,7 +80,7 @@ func Auth(botToken string, authService *auth.Service) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader(authorizationHeader)
-		if authHeader == "" {
+		if authHeader == "" || len(authHeader) > 16384 {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{errorKey: errAuthenticationRequired})
 			return
 		}
@@ -122,6 +124,9 @@ func TelegramAuth(c *gin.Context, rawInitData string, secretKey []byte) {
 	// Build the data-check string: sorted key=value pairs (excluding hash), joined by \n.
 	var parts []string
 	for key, values := range params {
+		if len(values) != 1 {
+			return
+		}
 		if key == tmaHashParam {
 			continue
 		}
@@ -139,13 +144,27 @@ func TelegramAuth(c *gin.Context, rawInitData string, secretKey []byte) {
 		return
 	}
 
+	// Telegram signs auth_date, but signature validity alone does not expire it.
+	seconds, err := strconv.ParseInt(params.Get("auth_date"), 10, 64)
+	if err != nil || seconds <= 0 {
+		return
+	}
+	issued := time.Unix(seconds, 0)
+	now := time.Now()
+	if issued.After(now.Add(time.Minute)) || issued.Before(now.Add(-time.Hour)) {
+		return
+	}
+
 	c.Set(InitDataKey, params)
 }
 
 // AdminAuth validates a JWT token and stores the claims in the context
 // under AdminClaimsKey on success. Returns without setting context on failure.
 func AdminAuth(c *gin.Context, tokenString string, authService *auth.Service) {
-	claims, err := authService.ValidateToken(tokenString)
+	if authService == nil {
+		return
+	}
+	claims, err := authService.ValidateAccessToken(c.Request.Context(), tokenString)
 	if err != nil {
 		return
 	}

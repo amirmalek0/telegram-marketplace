@@ -2,8 +2,8 @@ package auth
 
 // LoginRequest represents the login payload.
 type LoginRequest struct {
-	Username string `json:"username" binding:"required"`
-	Password string `json:"password" binding:"required"`
+	Username string `json:"username" binding:"required,max=128"`
+	Password string `json:"password" binding:"required,max=72"`
 }
 
 // LoginResponse contains the JWT tokens after successful login.
