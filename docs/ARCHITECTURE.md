@@ -36,11 +36,24 @@ start date
 end date
 
 **Referrals**
-id
-referrer user id
-referred user id
-reward amount
-created at
+
+- Rewards credit the inviter and invitee's store wallets once, using the amounts
+  and eligibility trigger captured when the referral was created.
+- Admin settings (`/settings/referrals`) include separate `inviter_message` and
+  `invitee_message` plain-text templates. Supported placeholders: `{amount}`,
+  `{inviter_name}`, `{invitee_name}`. Each message must include the recipient's
+  credit amount and the other person's name. Names are bounded and sanitized.
+- The reward transaction also creates one `referral_notifications` outbox row
+  per positive credit. Text/names are snapshotted at payout. No notices are
+  backfilled for historical payouts; zero credits do not send notices.
+- The bot worker drains the outbox every 30 seconds, even when new referrals
+  have since been disabled. Exclusive leases prevent concurrent sends, and
+  temporary failures back off from one minute up to one hour. Permanent Telegram
+  400/403 failures stop retrying without reversing wallet credits.
+- Delivery is at-least-once: Telegram does not provide a sendMessage idempotency
+  key, so a crash/lost response after Telegram accepts a message can produce a
+  duplicate notice. Wallet rewards remain exactly-once. Users must have started
+  the bot and not blocked it to receive a direct message.
 
 **BOT Settings**
 key(TEXT)
@@ -71,6 +84,13 @@ service business logic, repository contract/implementation, then model. Services
 must not depend on the database pool or execute SQL directly. Repository SQL is
 kept in an adjacent `queries.go` or `*_queries.go` file; repository methods own
 transactions and reference those named query constants.
+
+Customer avatars are persisted in `users.photo_url` from verified Telegram Mini
+App profile data, never from the request body or an admin-editable photo field.
+Only HTTPS image URLs are accepted. A signed Mini App profile without a photo
+clears an older avatar, while ordinary bot updates preserve it. Admin user and
+wallet responses include this URL and the saved phone number; unavailable images
+use a UI fallback. Existing users receive photos when they next open the Mini App.
 
 Stars checkout flow:
 
@@ -104,6 +124,45 @@ mode at creation time, so production payments can never enter the simulator.
 The simulator still requires the authenticated user to own the pending payment
 and invokes the same settlement, fulfillment, and inventory-release paths.
 
+The admin-only `GET /api/v1/payment/stars` list adds payer identity, the product,
+VIP plan or wallet-pack title, and product order/coupon details to each attempt.
+Purchased titles prefer delivery/checkout snapshots over current catalog names.
+Its `summary` covers all Stars attempts, not just the requested page; counts
+include test attempts, while `paid_stars` sums only successful non-test payments
+and excludes refunds. Raw provider and checkout JSON are never returned. This
+admin DTO is separate from customer-facing payment responses. The backoffice
+detail view exposes copy controls for every available identifier. Quick search
+and status filters apply to the loaded records and are labeled accordingly.
+
+User profile photos:
+
+- `membership/userphotos` owns the private `user-profile-photos` bucket
+  (`USER_PROFILE_PHOTOS_BUCKET`), gallery metadata, and durable import queue.
+  Its SQL lives alongside the repository in `queries.go`.
+- The API worker seeds existing users and queues newly onboarded users, imports
+  all photos available through `getUserProfilePhotos` in batches of 100, and
+  refreshes daily. Only the largest size is stored, deduplicated by Telegram's
+  file-unique ID. Telegram privacy rules can limit the available history.
+- Mini App onboarding (`POST /api/v1/user`) also queues a background refresh
+  when the last successful sync and last attempt are at least 15 minutes old.
+  Repeated visits are coalesced atomically in PostgreSQL, including across API
+  replicas/restarts. Visits never reset pending pages, active leases, or failed
+  retries. Profile/Wallet/VIP reloads use the same endpoint and cooldown; bot
+  `/start` only ensures the initial photo job exists. No Telegram request is
+  made in the onboarding HTTP request itself.
+- Sync leases survive restarts; failures retry after 15 minutes. Admin refresh
+  is rate-limited to once per minute per user. Imports never fetch supplied
+  `photo_url` addresses or expose bot tokens/file IDs/storage keys to clients.
+- Admins use `GET /api/v1/user/:id/photos?offset=0` (30 photos per page) and
+  `POST /api/v1/user/:id/photos/sync`. Images are streamed through
+  `GET /api/v1/user/:id/photos/:photoID/content`, authorized for admins or the
+  owning Telegram user only. Clients fetch authenticated blobs, not public URLs.
+- `users.photo_url` points at the stored current avatar after a successful
+  import. Older saved photos remain in the gallery even if Telegram no longer
+  lists them. Deleting a user cascades metadata and durably queues storage
+  cleanup; the API worker removes those objects. Saved dates are archive dates,
+  not dates the photos were originally uploaded to Telegram.
+
 Mini App content:
 
 - User-interface copy has stable keys and frontend fallbacks. The public
@@ -124,10 +183,20 @@ Mini App content:
   must point to the public Mini App origin in deployed environments.
 
 **Broadcasts**
-id
-title
-message
-status
-sent count
-failed count
-created at
+
+- Admin: `/broadcasts` in the backoffice publishes plain-text announcements to
+  every user's miniapp inbox. This does not send Telegram chat messages or push notifications.
+- Miniapp: the header bell opens `/notifications`; unread counts and inbox content
+  refresh every 30 seconds while visible and when the app becomes visible again.
+- Admin API: `GET /broadcast`, `POST /broadcast` (title, message, UUID request_id),
+  `DELETE /broadcast/:id` (archive). Publishing retries reuse the request ID.
+- User API: `GET /notification`, `GET /notification/unread-count`,
+  `POST /notification/:id/read`, `POST /notification/read-all`.
+- `broadcast_reads` tracks each user's first read independently. Archived items
+  leave all user inboxes but retain admin history/read counts. New users can see
+  all currently published, non-archived announcements.
+- Uses the existing authenticated, role-guarded and phone-verification-protected
+  routes; SQL remains alongside the repository. No per-user fan-out is needed.
+- Database regression test (disposable schema, no real announcements): set
+  `BROADCAST_TEST_DATABASE_URL` and run
+  `go test ./internal/core/membership/broadcasts/... -count=1` from `core`.
