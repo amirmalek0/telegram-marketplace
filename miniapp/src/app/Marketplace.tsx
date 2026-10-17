@@ -1,4 +1,6 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { useNotifications } from '../features/notifications/useNotifications'
+import { NotificationsPage } from '../pages/NotificationsPage'
 import { TelegramRequired } from '../components/feedback/TelegramRequired'
 import { AppHeader } from '../components/layout/AppHeader'
 import { BottomNavigation } from '../components/layout/BottomNavigation'
@@ -32,14 +34,17 @@ export function Marketplace() {
 
 function MarketplaceContent({ auth }: { auth: UseTelegramAuthResult }) {
   const content = useContent()
+  const location = useLocation()
+  const notifications = useNotifications(auth.initDataRaw, location.pathname === '/notifications', content.editorMode)
   const catalog = useCatalog(auth.user, auth.initDataRaw, content.adminToken)
 
   return (
     <div className="app-shell">
       <ScrollToTop />
-      <AppHeader categories={catalog.categories} products={catalog.products} preview={content.editorMode} scenario={content.editorScenario} />
+      <AppHeader categories={catalog.categories} products={catalog.products} preview={content.editorMode} scenario={content.editorScenario} unread={notifications.unread} />
       <main className="app-content">
         <Routes>
+          <Route path="/notifications" element={<NotificationsPage notifications={notifications} preview={content.editorMode} scenario={content.editorScenario} />} />
           <Route path="/" element={<ShopPage {...catalog} preview={content.editorMode} scenario={content.editorScenario} />} />
           <Route path="/categories/:categoryId" element={<CategoryPage {...catalog} preview={content.editorMode} scenario={content.editorScenario} />} />
           <Route path="/products/:productId" element={<ProductPage {...catalog} initDataRaw={auth.initDataRaw} preview={content.editorMode} scenario={content.editorScenario} />} />

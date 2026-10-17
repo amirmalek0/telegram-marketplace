@@ -3,12 +3,14 @@ import type { Category, Product } from '../../features/catalog/types'
 import { ProductSearch } from '../catalog/ProductSearch'
 import { Icon, type IconName } from '../ui/Icon'
 import { ThemeToggle } from './ThemeToggle'
+import { NotificationBell } from '../notifications/NotificationBell'
 
 interface AppHeaderProps {
   categories: Category[]
   products: Product[]
   preview?: boolean
   scenario?: string
+  unread?: number
 }
 
 function resolveHeader(pathname: string, categories: Category[], products: Product[]) {
@@ -20,8 +22,9 @@ function resolveHeader(pathname: string, categories: Category[], products: Produ
   const category = categories.find((item) => item.id === categoryId)
   const product = products.find((item) => item.id === productId)
 
-  const accountDetail = pathname.startsWith('/orders') || pathname.startsWith('/downloads')
-  const header = pathname.startsWith('/orders') ? { title: 'سفارش‌ها', icon: 'orders' as IconName }
+  const accountDetail = pathname.startsWith('/orders') || pathname.startsWith('/downloads') || pathname.startsWith('/notifications')
+  const header = pathname.startsWith('/notifications') ? { title: 'اعلان‌ها', icon: 'bell' as IconName }
+    : pathname.startsWith('/orders') ? { title: 'سفارش‌ها', icon: 'orders' as IconName }
     : pathname.startsWith('/downloads') ? { title: 'دانلودها', icon: 'download' as IconName }
       : pathname.startsWith('/wallet') ? { title: 'کیف پول', icon: 'wallet' as IconName }
       : pathname.startsWith('/vip') ? { title: 'پلن‌های VIP', icon: 'crown' as IconName }
@@ -41,7 +44,7 @@ function resolveHeader(pathname: string, categories: Category[], products: Produ
   }
 }
 
-export function AppHeader({ categories, products, preview = false, scenario = 'content' }: AppHeaderProps) {
+export function AppHeader({ categories, products, preview = false, scenario = 'content', unread = 0 }: AppHeaderProps) {
   const navigate = useNavigate()
   const location = useLocation()
   const simulateMissing = preview && scenario === 'not-found'
@@ -56,12 +59,13 @@ export function AppHeader({ categories, products, preview = false, scenario = 'c
         </div>
         <div className="header-actions">
           {header.isDetail ? (
-            <button className="header-back" onClick={() => header.isTicketDetail ? navigate('/tickets') : navigate(-1)} aria-label="بازگشت">
+            <button className="header-back" onClick={() => header.isTicketDetail ? navigate('/tickets') : location.pathname === '/notifications' ? navigate('/') : navigate(-1)} aria-label="بازگشت">
               <span>بازگشت</span><Icon name="back" size={18} />
             </button>
           ) : (
             <>
               <ThemeToggle />
+              <NotificationBell unread={preview ? 1 : unread} />
               {header.showSearch && <ProductSearch products={products} />}
             </>
           )}
