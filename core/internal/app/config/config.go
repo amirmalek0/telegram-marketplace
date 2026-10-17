@@ -37,9 +37,9 @@ type Config struct {
 	ProductFilesBucket    string // e.g. "product-files"
 	ProductFilesPublicURL string // e.g. "/storage/product-files"
 
-	ProductImagesBucket    string // e.g. "product-images"
-	ProductImagesPublicURL string // e.g. "/storage/product-images"
-
+	ProductImagesBucket     string // e.g. "product-images"
+	ProductImagesPublicURL  string // e.g. "/storage/product-images"
+	UserProfilePhotosBucket string // Private: served only by authenticated API endpoints.
 }
 
 // Load reads configuration from environment variables and returns a Config.
@@ -75,8 +75,9 @@ func Load() Config {
 		ProductFilesBucket:    getEnv("PRODUCT_FILES_BUCKET", "product-files"),
 		ProductFilesPublicURL: mustEnv("PRODUCT_FILES_PUBLIC_URL"),
 
-		ProductImagesBucket:    getEnv("PRODUCT_IMAGES_BUCKET", "product-images"),
-		ProductImagesPublicURL: mustEnv("PRODUCT_IMAGES_PUBLIC_URL"),
+		ProductImagesBucket:     getEnv("PRODUCT_IMAGES_BUCKET", "product-images"),
+		UserProfilePhotosBucket: getEnv("USER_PROFILE_PHOTOS_BUCKET", "user-profile-photos"),
+		ProductImagesPublicURL:  mustEnv("PRODUCT_IMAGES_PUBLIC_URL"),
 	}
 }
 

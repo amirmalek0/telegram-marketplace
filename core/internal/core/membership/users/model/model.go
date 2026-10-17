@@ -9,6 +9,7 @@ type User struct {
 	Username        string     `db:"username"`
 	TelegramID      int64      `db:"telegram_id"`
 	PhoneNumber     string     `db:"phone_number"`
+	PhotoURL        string     `db:"photo_url"`
 	PhoneVerifiedAt *time.Time `db:"phone_verified_at"`
 	HasActivePlan   bool       `db:"has_active_plan"`
 	ActivePlanID    *string    `db:"active_plan_id"`

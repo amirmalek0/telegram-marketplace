@@ -20,6 +20,7 @@ var ErrNotFound = fmt.Errorf("user not found")
 //   - Single  : GetByID, GetByTelegramID
 //   - Many    : List
 type Repository interface {
+	UpdatePhotoURL(ctx context.Context, id, photoURL string) error
 	UpsertProfile(ctx context.Context, u *model.User) (bool, error)
 	PhoneVerified(ctx context.Context, telegramID int64) (bool, error)
 	VerifyPhone(ctx context.Context, u *model.User) error

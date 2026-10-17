@@ -81,6 +81,7 @@ services:
       PRODUCT_FILES_BUCKET: ${PRODUCT_FILES_BUCKET:-product-files}
       PRODUCT_FILES_PUBLIC_URL: ${PRODUCT_FILES_PUBLIC_URL:-/storage/product-files}
       PRODUCT_IMAGES_BUCKET: ${PRODUCT_IMAGES_BUCKET:-product-images}
+      USER_PROFILE_PHOTOS_BUCKET: ${USER_PROFILE_PHOTOS_BUCKET:-user-profile-photos}
       PRODUCT_IMAGES_PUBLIC_URL: ${PRODUCT_IMAGES_PUBLIC_URL:-/storage/product-images}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001}
       ADDR: ":8080"
@@ -119,6 +120,7 @@ services:
       PRODUCT_FILES_BUCKET: ${PRODUCT_FILES_BUCKET:-product-files}
       PRODUCT_FILES_PUBLIC_URL: ${PRODUCT_FILES_PUBLIC_URL:-/storage/product-files}
       PRODUCT_IMAGES_BUCKET: ${PRODUCT_IMAGES_BUCKET:-product-images}
+      USER_PROFILE_PHOTOS_BUCKET: ${USER_PROFILE_PHOTOS_BUCKET:-user-profile-photos}
       PRODUCT_IMAGES_PUBLIC_URL: ${PRODUCT_IMAGES_PUBLIC_URL:-/storage/product-images}
       ADDR: ":8081"
     ports:

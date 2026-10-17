@@ -35,21 +35,21 @@ const (
 
 	// queryGetUserByID retrieves a user by their UUID.
 	queryGetUserByID = `
-		SELECT id, first_name, last_name, username, telegram_id, phone_number, phone_verified_at,
+		SELECT id, first_name, last_name, username, telegram_id, phone_number, phone_verified_at, photo_url,
 		       has_active_plan, active_plan_id, wallet_balance, plan_expire_at,
 		       referred_by, is_banned, created_at
 		FROM users WHERE id = $1`
 
 	// queryGetUserByTelegramID retrieves a user by their Telegram ID.
 	queryGetUserByTelegramID = `
-		SELECT id, first_name, last_name, username, telegram_id, phone_number, phone_verified_at,
+		SELECT id, first_name, last_name, username, telegram_id, phone_number, phone_verified_at, photo_url,
 		       has_active_plan, active_plan_id, wallet_balance, plan_expire_at,
 		       referred_by, is_banned, created_at
 		FROM users WHERE telegram_id = $1`
 
 	// queryListUsers retrieves a paginated list of users ordered by creation date.
 	queryListUsers = `
-		SELECT id, first_name, last_name, username, telegram_id, phone_number, phone_verified_at,
+		SELECT id, first_name, last_name, username, telegram_id, phone_number, phone_verified_at, photo_url,
 		       has_active_plan, active_plan_id, wallet_balance, plan_expire_at,
 		       referred_by, is_banned, created_at
 		FROM users

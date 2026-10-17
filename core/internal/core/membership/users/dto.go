@@ -9,12 +9,13 @@ import (
 // --- Request DTOs ---
 
 type CreateUserRequest struct {
-	FirstName   string `json:"first_name" binding:"required"`
-	LastName    string `json:"last_name"`
-	Username    string `json:"username"`
-	TelegramID  int64  `json:"telegram_id" binding:"required"`
-	PhoneNumber string `json:"phone_number"`
-	ReferredBy  int64  `json:"referred_by"`
+	PhotoURL    *string `json:"photo_url"`
+	FirstName   string  `json:"first_name" binding:"required"`
+	LastName    string  `json:"last_name"`
+	Username    string  `json:"username"`
+	TelegramID  int64   `json:"telegram_id" binding:"required"`
+	PhoneNumber string  `json:"phone_number"`
+	ReferredBy  int64   `json:"referred_by"`
 }
 
 type UpdateUserRequest struct {
@@ -34,6 +35,7 @@ type BanUserRequest struct {
 type PaginatedResponse = pagination.Response[Response]
 
 type Response struct {
+	PhotoURL        string     `json:"photo_url"`
 	ID              string     `json:"id"`
 	FirstName       string     `json:"first_name"`
 	LastName        string     `json:"last_name"`
@@ -53,6 +55,7 @@ type Response struct {
 func toResponse(user *model.User) Response {
 	hasActivePlan := user.HasActivePlan && user.PlanExpireAt != nil && user.PlanExpireAt.After(time.Now())
 	return Response{
+		PhotoURL:        user.PhotoURL,
 		ID:              user.ID,
 		FirstName:       user.FirstName,
 		LastName:        user.LastName,

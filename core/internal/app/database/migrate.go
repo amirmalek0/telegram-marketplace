@@ -29,7 +29,7 @@ func Migrate(ctx context.Context, db *pgxpool.Pool) {
 		}
 	}()
 
-	for i, stmt := range append(migrations, referralMigrations...) {
+	for i, stmt := range append(append(migrations, referralMigrations...), userPhotoMigrations...) {
 		if _, err := conn.Exec(ctx, stmt); err != nil {
 			log.Fatalf("migration %d failed: %v", i+1, err)
 		}
@@ -56,6 +56,7 @@ var migrations = []string{
 		created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 	)`,
 	`ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_verified_at TIMESTAMPTZ`,
+	`ALTER TABLE users ADD COLUMN IF NOT EXISTS photo_url TEXT NOT NULL DEFAULT ''`,
 	`ALTER TABLE users ALTER COLUMN wallet_balance TYPE BIGINT USING GREATEST(0, ROUND(wallet_balance))::BIGINT`,
 	`ALTER TABLE users ALTER COLUMN wallet_balance SET DEFAULT 0`,
 	`ALTER TABLE users DROP CONSTRAINT IF EXISTS users_wallet_balance_check`,
