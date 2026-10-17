@@ -1,0 +1,26 @@
+.product-coupon { min-width: 0; padding: 0 14px 10px; text-align: end; }
+.coupon-trigger, .coupon-dismiss, .coupon-clear { border: 0; background: transparent; color: var(--secondary); padding: 8px 0; font-size: var(--font-caption); line-height: 1.8; }
+.coupon-trigger { text-decoration: underline; text-decoration-color: var(--line); text-underline-offset: 4px; }
+.coupon-trigger:hover, .coupon-dismiss:hover { color: var(--accent); }
+.coupon-panel { text-align: start; padding-top: 10px; border-top: 1px solid var(--line); }
+.coupon-panel[hidden] { display: none; }
+.coupon-panel-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 6px; }
+.coupon-panel-heading > span { font-size: var(--font-caption); color: var(--secondary); }
+.coupon-dismiss { padding: 4px 0; }
+.coupon-input-row { display: flex; gap: 8px; min-width: 0; }
+.coupon-input-row input { flex: 1; min-width: 0; width: 0; height: 42px; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; background: var(--surface-soft); color: var(--text); font-size: 16px; }
+.coupon-input-row button { flex-shrink: 0; min-height: 42px; border: 1px solid var(--line); border-radius: 10px; padding: 8px 14px; color: var(--accent); background: var(--accent-soft); font-size: var(--font-support); font-weight: 600; }
+.product-coupon button:disabled { opacity: .5; }
+.coupon-error, .coupon-success { font-size: var(--font-caption); line-height: 1.8; margin: 8px 0 0; }
+.coupon-error { color: #b42318; }
+:root[data-theme='dark'] .coupon-error { color: #ffb4ac; }
+.coupon-success { display: flex; gap: 6px; align-items: flex-start; color: var(--accent); }
+.coupon-success svg { flex-shrink: 0; margin-top: 3px; }
+.coupon-success bdi { overflow-wrap: anywhere; }
+.coupon-breakdown { display: grid; gap: 5px; margin: 10px 0 2px; }
+.coupon-breakdown > div { display: flex; justify-content: space-between; gap: 12px; font-size: var(--font-caption); }
+.coupon-breakdown dd { margin: 0; white-space: nowrap; font-weight: 600; }
+.coupon-breakdown dt { color: var(--secondary); }
+.coupon-breakdown .coupon-discount dd { color: var(--accent); }
+.coupon-total { border-top: 1px solid var(--line); padding-top: 6px; margin-top: 2px; }
+.coupon-clear { text-decoration: underline; }

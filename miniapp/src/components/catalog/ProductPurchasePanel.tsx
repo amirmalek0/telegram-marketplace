@@ -1,4 +1,5 @@
 import { Icon } from '../ui/Icon'
+import type { ReactNode } from 'react'
 
 interface ProductPurchasePanelProps {
   stars: number
@@ -6,11 +7,14 @@ interface ProductPurchasePanelProps {
   vipFree: boolean
   purchaseLocked: boolean
   purchasing: boolean
+  coupon?: ReactNode
+  couponFree?: boolean
+  checkoutBlocked?: boolean
   onPurchase: (method: 'telegram_stars' | 'wallet') => void
   onOpenAccess?: () => void
 }
 
-export function ProductPurchasePanel({ stars, walletBalance, vipFree, purchaseLocked, purchasing, onPurchase, onOpenAccess }: ProductPurchasePanelProps) {
+export function ProductPurchasePanel({ stars, walletBalance, vipFree, purchaseLocked, purchasing, coupon, couponFree = false, checkoutBlocked = false, onPurchase, onOpenAccess }: ProductPurchasePanelProps) {
   const walletReady = walletBalance !== undefined && walletBalance >= stars
 
   return <section className={`product-purchase-panel ${vipFree ? 'is-vip' : ''}`}>
@@ -27,12 +31,12 @@ export function ProductPurchasePanel({ stars, walletBalance, vipFree, purchaseLo
         <span className="checkout-option-copy"><b>دسترسی‌های شما</b></span>
         <Icon name="arrow" size={18} />
       </a> : <>
-        <button className="stars-payment-button" type="button" aria-busy={purchasing} disabled={purchasing || (!vipFree && stars <= 0)} onClick={() => onPurchase('telegram_stars')}>
+        <button className="stars-payment-button" type="button" aria-busy={purchasing} disabled={purchasing || checkoutBlocked || (!vipFree && !couponFree && stars <= 0)} onClick={() => onPurchase('telegram_stars')}>
           <span className="checkout-option-icon"><Icon name={vipFree ? 'crown' : 'star'} size={20} /></span>
-          <span className="checkout-option-copy"><b>{purchasing ? 'در حال اتصال…' : vipFree ? 'دریافت با VIP' : 'پرداخت با Stars'}</b></span>
+          <span className="checkout-option-copy"><b>{purchasing ? 'در حال اتصال…' : vipFree ? 'دریافت با VIP' : couponFree ? 'دریافت رایگان با کد تخفیف' : 'پرداخت با Stars'}</b></span>
           <Icon name={purchasing ? 'clock' : 'arrow'} size={18} />
         </button>
-        {!vipFree && <button className="wallet-payment-button" type="button" disabled={purchasing || !walletReady} onClick={() => onPurchase('wallet')}>
+        {!vipFree && !couponFree && <button className="wallet-payment-button" type="button" disabled={purchasing || checkoutBlocked || !walletReady} onClick={() => onPurchase('wallet')}>
           <span className="checkout-option-icon"><Icon name="wallet" size={20} /></span>
           <span className="checkout-option-copy">
             <b>خرید از کیف پول</b>
@@ -43,5 +47,6 @@ export function ProductPurchasePanel({ stars, walletBalance, vipFree, purchaseLo
         </button>}
       </>}
     </div>
+    {coupon}
   </section>
 }

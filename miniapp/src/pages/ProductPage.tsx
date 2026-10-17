@@ -3,6 +3,8 @@ import { useParams } from 'react-router-dom'
 import { openInvoice } from '@telegram-apps/sdk'
 import { ApiClient } from '../api/client'
 import { ProductPurchasePanel } from '../components/catalog/ProductPurchasePanel'
+import { ProductCoupon } from '../components/commerce/ProductCoupon'
+import { useProductCoupon, type CouponQuote } from '../features/commerce/useProductCoupon'
 import { ProductArtwork } from '../components/catalog/ProductArtwork'
 import { RelatedProducts } from '../components/catalog/RelatedProducts'
 import { ProductAccessSection } from '../components/commerce/ProductAccessSection'
@@ -54,6 +56,7 @@ export function ProductPage({ products, categoryById, initDataRaw, preview = fal
   const [wallet, setWallet] = useState<Wallet | null>(null)
   const [paymentResult, setPaymentResult] = useState<PaymentResult | null>(null)
   const accessRef = useRef<HTMLDetailsElement>(null)
+  const coupon = useProductCoupon(productId, product?.id === productId ? product.stars_price : 0, initDataRaw, preview)
 
   const fetchProductDeliveries = useCallback(async (): Promise<Delivery[]> => {
     if (!initDataRaw || !productId) return []
@@ -148,16 +151,21 @@ export function ProductPage({ products, categoryById, initDataRaw, preview = fal
     ? 'download'
     : displayProduct.delivery_type === 'message' ? 'tickets' : 'box'
   const purchaseLocked = displayProduct.repurchasable === false && visibleDeliveries.length > 0
+  const vipFree = Boolean(displayProduct.vip_only && visibleAccount?.has_active_plan)
+  const previewDiscount = scenario === 'coupon-free' ? displayProduct.stars_price : Math.max(1, Math.floor(displayProduct.stars_price * .2))
+  const quote: CouponQuote | null = preview && ['coupon-applied', 'coupon-free'].includes(scenario) ? { valid: true, code: 'WELCOME', product_id: productId, original_stars: displayProduct.stars_price, discount_stars: previewDiscount, payable_stars: displayProduct.stars_price - previewDiscount } : coupon.quote
+  const appliedCoupon = !vipFree && !purchaseLocked ? quote : null
+  const couponBlocked = !vipFree && (coupon.checking || coupon.needsApply)
 
   const buyProduct = async (method: 'telegram_stars' | 'wallet') => {
-    if (!initDataRaw || purchasing) return
+    if (preview || !initDataRaw || purchasing || couponBlocked || purchaseLocked || product.id !== productId) return
     setPurchasing(true)
     setPurchaseError(null)
     setPurchaseNotice(null)
     try {
-      const invoice = await new ApiClient({ initDataRaw }).post<StarsInvoice>('/payment/product/checkout', { product_id: product.id, method })
+      const invoice = await new ApiClient({ initDataRaw }).post<StarsInvoice>('/payment/product/checkout', { product_id: product.id, method, ...(appliedCoupon ? { coupon_code: appliedCoupon.code } : {}) })
       if (invoice.completed) {
-        const message = product.vip_only && account?.has_active_plan ? 'این محصول با اشتراک VIP شما رایگان دریافت شد.' : 'خرید با کیف پول با موفقیت انجام شد.'
+        const message = product.vip_only && account?.has_active_plan ? 'این محصول با اشتراک VIP شما رایگان دریافت شد.' : appliedCoupon?.payable_stars === 0 ? 'محصول با کد تخفیف رایگان دریافت شد.' : 'خرید با کیف پول با موفقیت انجام شد.'
         setPurchaseNotice(message)
         setPaymentResult({ kind: 'success', title: 'پرداخت موفق بود', message })
         await Promise.all([refreshProductAccess(invoice.order_id || ''), fetchAccount()])
@@ -192,7 +200,7 @@ export function ProductPage({ products, categoryById, initDataRaw, preview = fal
   }
 
   const simulatePayment = async (outcome: 'succeeded' | 'failed' | 'cancelled') => {
-    if (!initDataRaw || !testInvoice || simulating) return
+    if (preview || !initDataRaw || !testInvoice || simulating) return
     setSimulating(outcome)
     setPurchaseError(null)
     try {
@@ -215,8 +223,6 @@ export function ProductPage({ products, categoryById, initDataRaw, preview = fal
     } finally { setSimulating(null) }
   }
 
-  const vipFree = Boolean(displayProduct.vip_only && visibleAccount?.has_active_plan)
-
   return (
     <div className="page detail-page product-detail">
       <section className="product-overview-card">
@@ -235,7 +241,10 @@ export function ProductPage({ products, categoryById, initDataRaw, preview = fal
       </section>
 
       <ProductPurchasePanel
-        stars={displayProduct.stars_price}
+        stars={appliedCoupon?.payable_stars ?? displayProduct.stars_price}
+        couponFree={appliedCoupon?.payable_stars === 0}
+        checkoutBlocked={couponBlocked || Boolean(simulating) || Boolean(testInvoice)}
+        coupon={!vipFree && !purchaseLocked ? <ProductCoupon key={productId + (preview ? scenario : '')} code={preview && scenario.startsWith('coupon-') && scenario !== 'coupon-empty' ? 'WELCOME' : coupon.code} quote={appliedCoupon} checking={coupon.checking || (preview && scenario === 'coupon-checking')} error={preview && scenario === 'coupon-error' ? 'کد تخفیف معتبر نیست.' : coupon.error} disabled={purchasing || Boolean(simulating) || Boolean(testInvoice)} onChange={coupon.change} onApply={() => void coupon.apply()} onClear={coupon.clear} /> : undefined}
         walletBalance={visibleWallet?.balance}
         vipFree={vipFree}
         purchaseLocked={purchaseLocked}

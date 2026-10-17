@@ -21,13 +21,13 @@
 .product-purchase-panel.is-vip .product-checkout-heading { background: color-mix(in srgb, #d79b39 8%, var(--surface-solid)); }
 .product-purchase-panel.is-vip .product-price-copy strong { font-size: var(--font-heading); }
 .product-checkout-options { display: grid; gap: 8px; padding: 12px; }
-.product-purchase-panel button, .product-owned-link { display: flex; align-items: center; justify-content: flex-start; gap: 12px; width: 100%; min-height: 58px; padding: 12px; border: 1px solid color-mix(in srgb, var(--accent) 20%, var(--line)); border-radius: 14px; background: var(--accent-soft); color: var(--accent); font-size: var(--font-body); text-align: start; }
+.product-checkout-options > button, .product-owned-link { display: flex; align-items: center; justify-content: flex-start; gap: 12px; width: 100%; min-height: 58px; padding: 12px; border: 1px solid color-mix(in srgb, var(--accent) 20%, var(--line)); border-radius: 14px; background: var(--accent-soft); color: var(--accent); font-size: var(--font-body); text-align: start; }
 .checkout-option-icon { display: grid; place-items: center; flex: 0 0 36px; width: 36px; height: 36px; border-radius: 11px; background: var(--accent); color: #fff; }
 .checkout-option-copy { min-width: 0; flex: 1; display: grid; justify-items: start; gap: 4px; overflow-wrap: anywhere; }
 .checkout-option-copy b { font-size: var(--font-body); font-weight: 650; line-height: 1.7; }
 .checkout-option-copy > span { font-size: var(--font-caption); color: var(--secondary); line-height: 1.8; }
-.product-purchase-panel button > .icon, .product-owned-link > .icon { flex: 0 0 auto; transform: rotate(180deg); }
-.product-purchase-panel button:disabled { opacity: .65; }
+.product-checkout-options > button > .icon, .product-owned-link > .icon { flex: 0 0 auto; transform: rotate(180deg); }
+.product-checkout-options > button:disabled { opacity: .65; }
 .product-purchase-panel .wallet-payment-button { border-color: var(--line); background: var(--surface-solid); color: var(--text); min-height: 58px; box-shadow: none; }
 .wallet-payment-button .checkout-option-icon { background: var(--surface-soft); color: var(--secondary); }
 .checkout-insufficient { padding: 2px 6px; border-radius: 5px; background: var(--surface-soft); color: var(--secondary); font-size: var(--font-caption); line-height: 1.7; }
