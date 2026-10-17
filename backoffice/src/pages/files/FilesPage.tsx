@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { Plus, Trash2, Download } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,13 +7,17 @@ import toast from 'react-hot-toast';
 
 import { filesApi } from '@/api/files';
 import { FileResponse } from '@/types/files';
-import { DataTable, Column } from '@/components/ui/DataTable';
+import { Column } from '@/components/ui/DataTable';
 import { Button } from '@/components/ui/Button';
-import { Modal } from '@/components/ui/Modal';
+import { CatalogModal as Modal } from '@/components/catalog/CatalogModal';
+import { CatalogHeader } from '@/components/catalog/CatalogHeader';
+import { CatalogTable } from '@/components/catalog/CatalogTable';
+import { CatalogIdentity } from '@/components/catalog/CatalogIdentity';
+import { CatalogFormSection } from '@/components/catalog/CatalogFormSection';
+import { FileArchive, UploadCloud, Type } from 'lucide-react';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { Input } from '@/components/ui/Input';
 import { FileUpload } from '@/components/ui/FileUpload';
-import { PageLoader } from '@/components/ui/LoadingSpinner';
 
 // --- Helpers ---
 const formatFileSize = (bytes: number): string => {
@@ -33,6 +36,7 @@ type UploadForm = z.infer<typeof uploadSchema>;
 export default function FilesPage() {
   const [files, setFiles] = useState<FileResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const PER_PAGE = 20;
@@ -62,11 +66,13 @@ export default function FilesPage() {
   useEffect(() => {
     const fetchFiles = async () => {
       setLoading(true);
+      setLoadError(false);
       try {
         const res = await filesApi.list({ page, per_page: PER_PAGE });
         setFiles(res.data);
         setTotal(res.total);
       } catch {
+        setLoadError(true);
         toast.error('خطا در دریافت فایل‌ها');
       } finally {
         setLoading(false);
@@ -118,7 +124,7 @@ export default function FilesPage() {
   };
 
   const handleDownload = (file: FileResponse) => {
-    window.open(file.url, '_blank');
+    window.open(file.url, '_blank', 'noopener,noreferrer');
   };
 
   // --- Table Columns ---
@@ -126,15 +132,13 @@ export default function FilesPage() {
     {
       key: 'name',
       title: 'نام',
-      render: (value) => (
-        <span className="font-medium text-[rgb(var(--color-text))]">{value as string}</span>
-      ),
+      render: (_, row) => <CatalogIdentity title={row.name} icon={FileArchive}  />,
     },
     {
       key: 'size',
       title: 'حجم فایل',
       render: (value) => (
-        <span className="text-[rgb(var(--color-text-secondary))]">
+        <span dir="ltr" className="text-[rgb(var(--color-text-secondary))] whitespace-nowrap">
           {formatFileSize(value as number)}
         </span>
       ),
@@ -143,7 +147,7 @@ export default function FilesPage() {
       key: 'mime_type',
       title: 'نوع فایل',
       render: (value) => (
-        <span className="text-[rgb(var(--color-text-secondary))] text-xs font-mono">
+        <span dir="ltr" className="catalog-code">
           {value as string}
         </span>
       ),
@@ -184,25 +188,10 @@ export default function FilesPage() {
     },
   ];
 
-  if (loading && files.length === 0) {
-    return <PageLoader />;
-  }
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between"
-      >
-        <div>
-          <h1 className="text-2xl font-bold text-[rgb(var(--color-text))]">فایل</h1>
-          <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">
-            مدیریت فایل‌های آپلود شده
-          </p>
-        </div>
-        <Button
+    <div className="catalog-page">
+      <CatalogHeader title="فایل" icon={FileArchive} total={total} loading={loading} actions={<><Button
           variant="primary"
           icon={<Plus size={16} />}
           onClick={() => {
@@ -212,17 +201,14 @@ export default function FilesPage() {
           }}
         >
           آپلود فایل
-        </Button>
-      </motion.div>
+        </Button></>} />
 
       {/* Table */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="glass-card rounded-2xl p-6"
-      >
-        <DataTable
+      <CatalogTable
+          emptyAction={<Button icon={<Plus size={16} />} onClick={() => { uploadForm.reset(); setUploadFile(null); setUploadOpen(true); }}>آپلود فایل</Button>}
+          error={loadError}
+          onRefresh={() => setRefreshKey(k => k + 1)}
+          searchText={row => `${row.name} ${row.mime_type}`}
           columns={columns}
           data={files}
           loading={loading}
@@ -235,10 +221,10 @@ export default function FilesPage() {
           }}
           emptyMessage="هیچ فایلی یافت نشد"
         />
-      </motion.div>
 
       {/* ===== UPLOAD MODAL ===== */}
       <Modal
+        icon={<FileArchive size={19} />}
         isOpen={uploadOpen}
         onClose={() => setUploadOpen(false)}
         title="آپلود فایل جدید"
@@ -258,15 +244,12 @@ export default function FilesPage() {
           </>
         }
       >
-        <div className="space-y-4">
+        <div>
+          <CatalogFormSection title="فایل تحویل" icon={UploadCloud}>
           <div>
-            <label className="text-sm font-medium text-[rgb(var(--color-text))] block mb-1.5">
-              فایل (حداکثر ۵۰ مگابایت)
-            </label>
             <FileUpload
               onFileSelect={setUploadFile}
               maxSize={50}
-              label="انتخاب فایل"
             />
             {uploadFile && (
               <p className="text-xs text-[rgb(var(--color-text-secondary))] mt-1">
@@ -274,11 +257,14 @@ export default function FilesPage() {
               </p>
             )}
           </div>
+          </CatalogFormSection>
+          <CatalogFormSection title="اطلاعات فایل" icon={Type}>
           <Input
             label="نام فایل (اختیاری)"
             placeholder="نام دلخواه برای فایل"
             {...uploadForm.register('name')}
           />
+          </CatalogFormSection>
         </div>
       </Modal>
 

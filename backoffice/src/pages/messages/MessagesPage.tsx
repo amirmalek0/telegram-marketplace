@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,13 +7,17 @@ import toast from 'react-hot-toast';
 
 import { messagesApi } from '@/api/messages';
 import { MessageResponse } from '@/types/messages';
-import { DataTable, Column } from '@/components/ui/DataTable';
+import { Column } from '@/components/ui/DataTable';
 import { Button } from '@/components/ui/Button';
-import { Modal } from '@/components/ui/Modal';
+import { CatalogModal as Modal } from '@/components/catalog/CatalogModal';
+import { CatalogHeader } from '@/components/catalog/CatalogHeader';
+import { CatalogTable } from '@/components/catalog/CatalogTable';
+import { CatalogIdentity } from '@/components/catalog/CatalogIdentity';
+import { CatalogFormSection } from '@/components/catalog/CatalogFormSection';
+import { MessageSquareText, Type } from 'lucide-react';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { Textarea } from '@/components/ui/Textarea';
 import { Input } from '@/components/ui/Input';
-import { PageLoader } from '@/components/ui/LoadingSpinner';
 
 // --- Zod Schemas ---
 const messageSchema = z.object({
@@ -28,6 +31,7 @@ type MessageForm = z.infer<typeof messageSchema>;
 export default function MessagesPage() {
   const [messages, setMessages] = useState<MessageResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const PER_PAGE = 20;
@@ -61,11 +65,13 @@ export default function MessagesPage() {
   useEffect(() => {
     const fetchMessages = async () => {
       setLoading(true);
+      setLoadError(false);
       try {
         const res = await messagesApi.list({ page, per_page: PER_PAGE });
         setMessages(res.data);
         setTotal(res.total);
       } catch {
+        setLoadError(true);
         toast.error('خطا در دریافت پیام‌ها');
       } finally {
         setLoading(false);
@@ -137,16 +143,14 @@ export default function MessagesPage() {
     {
       key: 'name',
       title: 'نام پیام',
-      render: value => <span className="font-semibold text-[rgb(var(--color-text))]">{value as string}</span>,
+      render: (_, row) => <CatalogIdentity title={row.name} icon={MessageSquareText} onClick={() => handleOpenEdit(row)} />,
     },
     {
       key: 'content',
       title: 'محتوا',
       render: (value) => (
-        <span className="text-[rgb(var(--color-text))]">
-          {(value as string).length > 80
-            ? `${(value as string).substring(0, 80)}...`
-            : (value as string)}
+        <span className="catalog-preview" title={value as string}>
+          {value as string}
         </span>
       ),
     },
@@ -186,25 +190,10 @@ export default function MessagesPage() {
     },
   ];
 
-  if (loading && messages.length === 0) {
-    return <PageLoader />;
-  }
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between"
-      >
-        <div>
-          <h1 className="text-2xl font-bold text-[rgb(var(--color-text))]">پیام تحویل</h1>
-          <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">
-            مدیریت پیام‌های از پیش تعریف شده
-          </p>
-        </div>
-        <Button
+    <div className="catalog-page">
+      <CatalogHeader title="پیام تحویل" icon={MessageSquareText} total={total} loading={loading} actions={<><Button
           variant="primary"
           icon={<Plus size={16} />}
           onClick={() => {
@@ -213,17 +202,14 @@ export default function MessagesPage() {
           }}
         >
           پیام جدید
-        </Button>
-      </motion.div>
+        </Button></>} />
 
       {/* Table */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="glass-card rounded-2xl p-6"
-      >
-        <DataTable
+      <CatalogTable
+          emptyAction={<Button icon={<Plus size={16} />} onClick={() => { createForm.reset(); setCreateOpen(true); }}>پیام جدید</Button>}
+          error={loadError}
+          onRefresh={() => setRefreshKey(k => k + 1)}
+          searchText={row => `${row.name} ${row.content}`}
           columns={columns}
           data={messages}
           loading={loading}
@@ -236,10 +222,10 @@ export default function MessagesPage() {
           }}
           emptyMessage="هیچ پیامی یافت نشد"
         />
-      </motion.div>
 
       {/* ===== CREATE MODAL ===== */}
       <Modal
+        icon={<MessageSquareText size={19} />}
         isOpen={createOpen}
         onClose={() => setCreateOpen(false)}
         title="ایجاد پیام جدید"
@@ -259,20 +245,25 @@ export default function MessagesPage() {
           </>
         }
       >
-        <div className="space-y-4">
+        <div>
+          <CatalogFormSection title="اطلاعات پیام" icon={Type}>
           <Input label="نام پیام" placeholder="مثلاً راهنمای فعال‌سازی محصول" maxLength={120} error={createForm.formState.errors.name?.message} {...createForm.register('name')} />
+          </CatalogFormSection>
+          <CatalogFormSection title="پیام ارسالی به خریدار" icon={MessageSquareText}>
           <Textarea
             label="محتوای پیام"
             placeholder="متن پیام را وارد کنید..."
-            rows={6}
+            rows={8}
             error={createForm.formState.errors.content?.message}
             {...createForm.register('content')}
           />
+          </CatalogFormSection>
         </div>
       </Modal>
 
       {/* ===== EDIT MODAL ===== */}
       <Modal
+        icon={<MessageSquareText size={19} />}
         isOpen={editOpen}
         onClose={() => setEditOpen(false)}
         title="ویرایش پیام"
@@ -292,15 +283,19 @@ export default function MessagesPage() {
           </>
         }
       >
-        <div className="space-y-4">
+        <div>
+          <CatalogFormSection title="اطلاعات پیام" icon={Type}>
           <Input label="نام پیام" placeholder="مثلاً راهنمای فعال‌سازی محصول" maxLength={120} error={editForm.formState.errors.name?.message} {...editForm.register('name')} />
+          </CatalogFormSection>
+          <CatalogFormSection title="پیام ارسالی به خریدار" icon={MessageSquareText}>
           <Textarea
             label="محتوای پیام"
             placeholder="متن پیام را وارد کنید..."
-            rows={6}
+            rows={8}
             error={editForm.formState.errors.content?.message}
             {...editForm.register('content')}
           />
+          </CatalogFormSection>
         </div>
       </Modal>
 

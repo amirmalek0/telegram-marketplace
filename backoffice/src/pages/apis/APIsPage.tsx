@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Plus, Pencil, Trash2, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Braces, Settings2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -8,15 +7,20 @@ import toast from 'react-hot-toast';
 
 import { apisApi } from '@/api/apis';
 import { ApiResponse, HttpMethod } from '@/types/apis';
-import { DataTable, Column } from '@/components/ui/DataTable';
+import { Column } from '@/components/ui/DataTable';
 import { Button } from '@/components/ui/Button';
-import { Modal } from '@/components/ui/Modal';
+import { CatalogModal as Modal } from '@/components/catalog/CatalogModal';
+import { CatalogHeader } from '@/components/catalog/CatalogHeader';
+import { CatalogTable } from '@/components/catalog/CatalogTable';
+import { CatalogIdentity } from '@/components/catalog/CatalogIdentity';
+import { HeadersSection } from './HeadersSection';
+import { CatalogFormSection } from '@/components/catalog/CatalogFormSection';
+import { Webhook } from 'lucide-react';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Select } from '@/components/ui/Select';
 import { Badge } from '@/components/ui/Badge';
-import { PageLoader } from '@/components/ui/LoadingSpinner';
 
 // --- Zod Schema ---
 const apiSchema = z.object({
@@ -35,6 +39,7 @@ type HeaderRow = { key: string; value: string };
 export default function APIsPage() {
   const [apis, setApis] = useState<ApiResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const PER_PAGE = 20;
@@ -72,11 +77,13 @@ export default function APIsPage() {
   useEffect(() => {
     const fetchApis = async () => {
       setLoading(true);
+      setLoadError(false);
       try {
         const res = await apisApi.list({ page, per_page: PER_PAGE });
         setApis(res.data);
         setTotal(res.total);
       } catch {
+        setLoadError(true);
         toast.error('خطا در دریافت API‌ها');
       } finally {
         setLoading(false);
@@ -191,9 +198,7 @@ export default function APIsPage() {
     {
       key: 'name',
       title: 'نام',
-      render: (value) => (
-        <span className="font-medium text-[rgb(var(--color-text))]">{value as string}</span>
-      ),
+      render: (_, row) => <CatalogIdentity title={row.name} icon={Webhook} onClick={() => handleOpenEdit(row)} />,
     },
     {
       key: 'method',
@@ -208,10 +213,8 @@ export default function APIsPage() {
       key: 'url',
       title: 'آدرس',
       render: (value) => (
-        <span className="text-[rgb(var(--color-text-secondary))] text-xs font-mono">
-          {(value as string).length > 50
-            ? `${(value as string).substring(0, 50)}...`
-            : (value as string)}
+        <span dir="ltr" className="catalog-code" title={value as string}>
+          {value as string}
         </span>
       ),
     },
@@ -251,96 +254,25 @@ export default function APIsPage() {
     },
   ];
 
-  if (loading && apis.length === 0) {
-    return <PageLoader />;
-  }
 
-  // --- Reusable Headers Section ---
-  const HeadersSection = ({
-    headers,
-    onAdd,
-    onRemove,
-    onUpdate,
-  }: {
-    headers: HeaderRow[];
-    onAdd: () => void;
-    onRemove: (i: number) => void;
-    onUpdate: (i: number, field: 'key' | 'value', val: string) => void;
-  }) => (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <label className="text-sm font-medium text-[rgb(var(--color-text))]">هدرها</label>
-        <Button variant="secondary" size="sm" icon={<Plus size={14} />} onClick={onAdd}>
-          افزودن هدر
-        </Button>
-      </div>
-      {headers.length === 0 ? (
-        <p className="text-xs text-[rgb(var(--color-text-secondary))] py-2">
-          هیچ هدری تعریف نشده است
-        </p>
-      ) : (
-        <div className="space-y-2">
-          {headers.map((header, index) => (
-            <div key={index} className="flex items-center gap-2">
-              <input
-                type="text"
-                placeholder="کلید"
-                value={header.key}
-                onChange={(e) => onUpdate(index, 'key', e.target.value)}
-                className="flex-1 px-3 py-2 text-sm rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg))] text-[rgb(var(--color-text))] focus:outline-none focus:ring-2 focus:ring-[#0088cc]/50"
-              />
-              <input
-                type="text"
-                placeholder="مقدار"
-                value={header.value}
-                onChange={(e) => onUpdate(index, 'value', e.target.value)}
-                className="flex-1 px-3 py-2 text-sm rounded-lg border border-[rgb(var(--color-border))] bg-[rgb(var(--color-bg))] text-[rgb(var(--color-text))] focus:outline-none focus:ring-2 focus:ring-[#0088cc]/50"
-              />
-              <button
-                type="button"
-                onClick={() => onRemove(index)}
-                className="p-2 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-              >
-                <X size={14} />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between"
-      >
-        <div>
-          <h1 className="text-2xl font-bold text-[rgb(var(--color-text))]">اتصال API</h1>
-          <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">
-            مدیریت سرویس‌های API خارجی
-          </p>
-        </div>
-        <Button
+    <div className="catalog-page">
+      <CatalogHeader title="اتصال API" icon={Webhook} total={total} loading={loading} actions={<><Button
           variant="primary"
           icon={<Plus size={16} />}
           onClick={handleOpenCreate}
         >
           API جدید
-        </Button>
-      </motion.div>
+        </Button></>} />
 
       {/* Table */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="glass-card rounded-2xl p-6"
-      >
-        <DataTable
+      <CatalogTable
+          emptyAction={<Button icon={<Plus size={16} />} onClick={() => { handleOpenCreate(); }}>API جدید</Button>}
+          error={loadError}
+          onRefresh={() => setRefreshKey(k => k + 1)}
+          searchText={row => `${row.name} ${row.url} ${row.method}`}
+          filter={{ label: 'همه متدها', options: [{ value: 'GET', label: 'GET' }, { value: 'POST', label: 'POST' }], value: row => row.method }}
           columns={columns}
           data={apis}
           loading={loading}
@@ -353,10 +285,10 @@ export default function APIsPage() {
           }}
           emptyMessage="هیچ API‌ای یافت نشد"
         />
-      </motion.div>
 
       {/* ===== CREATE MODAL ===== */}
       <Modal
+        icon={<Webhook size={19} />}
         isOpen={createOpen}
         onClose={() => setCreateOpen(false)}
         title="ایجاد API جدید"
@@ -376,7 +308,8 @@ export default function APIsPage() {
           </>
         }
       >
-        <div className="space-y-4">
+        <div>
+          <CatalogFormSection title="اطلاعات اتصال" icon={Webhook}>
           <Input
             label="نام"
             placeholder="نام API را وارد کنید"
@@ -386,6 +319,7 @@ export default function APIsPage() {
           <Input
             label="آدرس"
             placeholder="https://api.example.com/endpoint"
+            dir="ltr"
             error={createForm.formState.errors.url?.message}
             {...createForm.register('url')}
           />
@@ -398,9 +332,12 @@ export default function APIsPage() {
               { value: 'POST', label: 'POST' },
             ]}
           />
+          </CatalogFormSection>
+          <CatalogFormSection title="درخواست و پاسخ" icon={Braces}>
           <Textarea
             label="بدنه درخواست (اختیاری)"
             placeholder='{"key": "value"}'
+            dir="ltr"
             rows={4}
             hint="فرمت JSON"
             {...createForm.register('body')}
@@ -408,20 +345,25 @@ export default function APIsPage() {
           <Input
             label="مسیر پاسخ (اختیاری)"
             placeholder="data.result.value"
+            dir="ltr"
             hint="مثال: data.result.value"
             {...createForm.register('response_path')}
           />
+          </CatalogFormSection>
+          <CatalogFormSection title="تنظیمات هدر" icon={Settings2}>
           <HeadersSection
             headers={createHeaders}
             onAdd={addCreateHeader}
             onRemove={removeCreateHeader}
             onUpdate={updateCreateHeader}
           />
+          </CatalogFormSection>
         </div>
       </Modal>
 
       {/* ===== EDIT MODAL ===== */}
       <Modal
+        icon={<Webhook size={19} />}
         isOpen={editOpen}
         onClose={() => setEditOpen(false)}
         title="ویرایش API"
@@ -441,7 +383,8 @@ export default function APIsPage() {
           </>
         }
       >
-        <div className="space-y-4">
+        <div>
+          <CatalogFormSection title="اطلاعات اتصال" icon={Webhook}>
           <Input
             label="نام"
             placeholder="نام API را وارد کنید"
@@ -451,6 +394,7 @@ export default function APIsPage() {
           <Input
             label="آدرس"
             placeholder="https://api.example.com/endpoint"
+            dir="ltr"
             error={editForm.formState.errors.url?.message}
             {...editForm.register('url')}
           />
@@ -463,9 +407,12 @@ export default function APIsPage() {
               { value: 'POST', label: 'POST' },
             ]}
           />
+          </CatalogFormSection>
+          <CatalogFormSection title="درخواست و پاسخ" icon={Braces}>
           <Textarea
             label="بدنه درخواست (اختیاری)"
             placeholder='{"key": "value"}'
+            dir="ltr"
             rows={4}
             hint="فرمت JSON"
             {...editForm.register('body')}
@@ -473,15 +420,19 @@ export default function APIsPage() {
           <Input
             label="مسیر پاسخ (اختیاری)"
             placeholder="data.result.value"
+            dir="ltr"
             hint="مثال: data.result.value"
             {...editForm.register('response_path')}
           />
+          </CatalogFormSection>
+          <CatalogFormSection title="تنظیمات هدر" icon={Settings2}>
           <HeadersSection
             headers={editHeaders}
             onAdd={addEditHeader}
             onRemove={removeEditHeader}
             onUpdate={updateEditHeader}
           />
+          </CatalogFormSection>
         </div>
       </Modal>
 

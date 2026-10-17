@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
 import { Plus, Pencil, Trash2, Package } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,12 +9,15 @@ import { inventoryApi } from '@/api/inventory';
 import { InventoryResponse, InventoryItemResponse } from '@/types/inventory';
 import { DataTable, Column } from '@/components/ui/DataTable';
 import { Button } from '@/components/ui/Button';
-import { Modal } from '@/components/ui/Modal';
+import { CatalogModal as Modal } from '@/components/catalog/CatalogModal';
+import { CatalogHeader } from '@/components/catalog/CatalogHeader';
+import { CatalogTable } from '@/components/catalog/CatalogTable';
+import { CatalogIdentity } from '@/components/catalog/CatalogIdentity';
+import { Warehouse } from 'lucide-react';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { Badge } from '@/components/ui/Badge';
-import { PageLoader } from '@/components/ui/LoadingSpinner';
 
 // --- Zod Schemas ---
 const inventorySchema = z.object({
@@ -47,6 +49,7 @@ const statusVariant = (status: string): 'success' | 'warning' | 'info' | 'defaul
 export default function InventoryPage() {
   const [inventories, setInventories] = useState<InventoryResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const PER_PAGE = 20;
@@ -88,11 +91,13 @@ export default function InventoryPage() {
   useEffect(() => {
     const fetchInventories = async () => {
       setLoading(true);
+      setLoadError(false);
       try {
         const res = await inventoryApi.list({ page, per_page: PER_PAGE });
         setInventories(res.data);
         setTotal(res.total);
       } catch {
+        setLoadError(true);
         toast.error('خطا در دریافت مخزن‌ها');
       } finally {
         setLoading(false);
@@ -224,9 +229,7 @@ export default function InventoryPage() {
     {
       key: 'name',
       title: 'نام',
-      render: (value) => (
-        <span className="font-medium text-[rgb(var(--color-text))]">{value as string}</span>
-      ),
+      render: (_, row) => <CatalogIdentity title={row.name} icon={Warehouse} onClick={() => handleOpenEdit(row)} />,
     },
     {
       key: 'created_at',
@@ -308,25 +311,10 @@ export default function InventoryPage() {
     },
   ];
 
-  if (loading && inventories.length === 0) {
-    return <PageLoader />;
-  }
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between"
-      >
-        <div>
-          <h1 className="text-2xl font-bold text-[rgb(var(--color-text))]">مخزن</h1>
-          <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">
-            مدیریت مخزن‌ها و آیتم‌های قابل فروش
-          </p>
-        </div>
-        <Button
+    <div className="catalog-page">
+      <CatalogHeader title="مخزن" icon={Warehouse} total={total} loading={loading} actions={<><Button
           variant="primary"
           icon={<Plus size={16} />}
           onClick={() => {
@@ -335,17 +323,14 @@ export default function InventoryPage() {
           }}
         >
           مخزن جدید
-        </Button>
-      </motion.div>
+        </Button></>} />
 
       {/* Table */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="glass-card rounded-2xl p-6"
-      >
-        <DataTable
+      <CatalogTable
+          emptyAction={<Button icon={<Plus size={16} />} onClick={() => { createForm.reset(); setCreateOpen(true); }}>مخزن جدید</Button>}
+          error={loadError}
+          onRefresh={() => setRefreshKey(k => k + 1)}
+          searchText={row => row.name}
           columns={columns}
           data={inventories}
           loading={loading}
@@ -358,10 +343,10 @@ export default function InventoryPage() {
           }}
           emptyMessage="هیچ مخزنی یافت نشد"
         />
-      </motion.div>
 
       {/* ===== CREATE MODAL ===== */}
       <Modal
+        icon={<Warehouse size={19} />}
         isOpen={createOpen}
         onClose={() => setCreateOpen(false)}
         title="ایجاد مخزن جدید"
@@ -393,6 +378,7 @@ export default function InventoryPage() {
 
       {/* ===== EDIT MODAL ===== */}
       <Modal
+        icon={<Warehouse size={19} />}
         isOpen={editOpen}
         onClose={() => setEditOpen(false)}
         title="ویرایش مخزن"
@@ -434,6 +420,7 @@ export default function InventoryPage() {
 
       {/* ===== ITEMS MANAGEMENT MODAL ===== */}
       <Modal
+        icon={<Warehouse size={19} />}
         isOpen={itemsOpen}
         onClose={() => setItemsOpen(false)}
         title={`مدیریت آیتم‌های: ${selected?.name ?? ''}`}
@@ -445,17 +432,8 @@ export default function InventoryPage() {
         }
       >
         <div className="space-y-6">
-          {/* Items Table */}
-          <DataTable
-            columns={itemColumns}
-            data={items}
-            loading={itemsLoading}
-            keyExtractor={(row) => row.id}
-            emptyMessage="هیچ آیتمی یافت نشد"
-          />
-
           {/* Add Items Section */}
-          <div className="border-t border-[rgb(var(--color-border))] pt-4 space-y-3">
+          <div className="border-b border-[rgb(var(--color-border))] pb-4 space-y-3">
             <h3 className="text-sm font-semibold text-[rgb(var(--color-text))]">
               افزودن آیتم‌های جدید
             </h3>
@@ -463,6 +441,7 @@ export default function InventoryPage() {
               هر آیتم را در یک خط جداگانه وارد کنید
             </p>
             <Textarea
+              aria-label="آیتم‌های جدید مخزن"
               placeholder="مقدار اول&#10;مقدار دوم&#10;مقدار سوم..."
               rows={5}
               value={newItemsText}
@@ -473,9 +452,18 @@ export default function InventoryPage() {
               loading={addingItems}
               onClick={handleAddItems}
             >
-              افزودن آیتم‌ها
+              افزودن آیتم‌ها {newItemsText.trim() && `(${newItemsText.split('\n').filter(value => value.trim()).length.toLocaleString('fa-IR')})`}
             </Button>
           </div>
+          <div className="catalog-stock-summary">{(['available', 'reserved', 'sold'] as const).map(status => <div key={status}><span>{statusLabel(status)}</span><b>{itemsLoading ? '…' : items.filter(item => item.status === status).length.toLocaleString('fa-IR')}</b></div>)}</div>
+          {/* Items Table */}
+          <DataTable
+            columns={itemColumns}
+            data={items}
+            loading={itemsLoading}
+            keyExtractor={(row) => row.id}
+            emptyMessage="هیچ آیتمی یافت نشد"
+          />
         </div>
       </Modal>
     </div>

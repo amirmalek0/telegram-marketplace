@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import {
   Plus, Pencil, Trash2, ArrowUpDown, Image as ImageIcon
 } from 'lucide-react';
@@ -25,16 +24,19 @@ import toast from 'react-hot-toast';
 
 import { categoriesApi } from '@/api/categories';
 import { CategoryResponse } from '@/types/categories';
-import { DataTable, Column } from '@/components/ui/DataTable';
+import { Column } from '@/components/ui/DataTable';
 import { Button } from '@/components/ui/Button';
-import { Modal } from '@/components/ui/Modal';
+import { CatalogModal as Modal } from '@/components/catalog/CatalogModal';
+import { CatalogHeader } from '@/components/catalog/CatalogHeader';
+import { CatalogTable } from '@/components/catalog/CatalogTable';
+import { CatalogIdentity } from '@/components/catalog/CatalogIdentity';
+import { Tags } from 'lucide-react';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { Input } from '@/components/ui/Input';
 import { Toggle } from '@/components/ui/Toggle';
 import { Badge } from '@/components/ui/Badge';
 import { FileUpload } from '@/components/ui/FileUpload';
 import { SortableItem } from '@/components/ui/SortableItem';
-import { PageLoader } from '@/components/ui/LoadingSpinner';
 import { publicAssetURL } from '@/utils/assets';
 
 // --- Zod Schemas ---
@@ -54,6 +56,7 @@ type EditForm = z.infer<typeof editSchema>;
 export default function CategoriesPage() {
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const PER_PAGE = 20;
@@ -104,11 +107,13 @@ export default function CategoriesPage() {
   useEffect(() => {
     const fetchCategories = async () => {
       setLoading(true);
+      setLoadError(false);
       try {
         const res = await categoriesApi.list({ page, per_page: PER_PAGE });
         setCategories(res.data);
         setTotal(res.total);
       } catch {
+        setLoadError(true);
         toast.error('خطا در دریافت دسته‌بندی‌ها');
       } finally {
         setLoading(false);
@@ -217,7 +222,7 @@ export default function CategoriesPage() {
       // Persist the visible top-to-bottom order using one-based ascending positions.
       const items = sortableItems.map((item, index) => ({
         id: item.id,
-        sort_order: index + 1,
+        sort_order: (page - 1) * PER_PAGE + index + 1,
       }));
       await categoriesApi.reorder({ items });
       toast.success('ترتیب دسته‌بندی‌ها با موفقیت ذخیره شد');
@@ -232,26 +237,7 @@ export default function CategoriesPage() {
 
   // --- Table Columns ---
   const columns: Column<CategoryResponse>[] = [
-    {
-      key: 'icon_url',
-      title: 'تصویر',
-      render: (value) => (
-        <div className="w-10 h-10 rounded-xl overflow-hidden bg-[rgb(var(--color-border))] flex items-center justify-center">
-          {value ? (
-            <img src={publicAssetURL(value as string)} alt="" className="w-full h-full object-cover" />
-          ) : (
-            <ImageIcon size={18} className="text-[rgb(var(--color-text-secondary))]" />
-          )}
-        </div>
-      ),
-    },
-    {
-      key: 'title',
-      title: 'نام',
-      render: (value) => (
-        <span className="font-medium text-[rgb(var(--color-text))]">{value as string}</span>
-      ),
-    },
+    { key: 'title', title: 'دسته‌بندی', render: (_, row) => <CatalogIdentity title={row.title} image={row.icon_url} icon={Tags} onClick={() => handleOpenEdit(row)} /> },
     {
       key: 'sort_order',
       title: 'ترتیب',
@@ -295,29 +281,15 @@ export default function CategoriesPage() {
     },
   ];
 
-  if (loading && categories.length === 0) {
-    return <PageLoader />;
-  }
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between"
-      >
-        <div>
-          <h1 className="text-2xl font-bold text-[rgb(var(--color-text))]">دسته‌بندی‌ها</h1>
-          <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">
-            مدیریت دسته‌بندی‌های محصولات
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
+    <div className="catalog-page">
+      <CatalogHeader title="دسته‌بندی‌ها" icon={Tags} total={total} loading={loading} actions={<>
           <Button
             variant="secondary"
             icon={<ArrowUpDown size={16} />}
             onClick={handleOpenSort}
+            disabled={loading || loadError || categories.length === 0}
           >
             مرتب‌سازی
           </Button>
@@ -332,17 +304,15 @@ export default function CategoriesPage() {
           >
             دسته‌بندی جدید
           </Button>
-        </div>
-      </motion.div>
+        </>} />
 
       {/* Table */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="glass-card rounded-2xl p-6"
-      >
-        <DataTable
+      <CatalogTable
+          emptyAction={<Button icon={<Plus size={16} />} onClick={() => { createForm.reset(); setCreateIconFile(null); setCreateOpen(true); }}>دسته‌بندی جدید</Button>}
+          error={loadError}
+          onRefresh={() => setRefreshKey(k => k + 1)}
+          searchText={row => row.title}
+          filter={{ label: 'همه وضعیت‌ها', options: [{ value: 'true', label: 'فعال' }, { value: 'false', label: 'غیرفعال' }], value: row => String(row.active) }}
           columns={columns}
           data={categories}
           loading={loading}
@@ -355,10 +325,10 @@ export default function CategoriesPage() {
           }}
           emptyMessage="هیچ دسته‌بندی‌ای یافت نشد"
         />
-      </motion.div>
 
       {/* ===== CREATE MODAL ===== */}
       <Modal
+        icon={<Tags size={19} />}
         isOpen={createOpen}
         onClose={() => setCreateOpen(false)}
         title="ایجاد دسته‌بندی جدید"
@@ -406,6 +376,7 @@ export default function CategoriesPage() {
 
       {/* ===== EDIT MODAL ===== */}
       <Modal
+        icon={<Tags size={19} />}
         isOpen={editOpen}
         onClose={() => setEditOpen(false)}
         title="ویرایش دسته‌بندی"
@@ -442,7 +413,7 @@ export default function CategoriesPage() {
               <img
                 src={publicAssetURL(selected.icon_url)}
                 alt={selected.title}
-                className="w-20 h-20 rounded-xl object-cover border border-[rgb(var(--color-border))]"
+                className="w-24 h-24 p-3 rounded-2xl object-contain border border-[rgb(var(--color-border))]"
               />
             </div>
           )}
@@ -492,6 +463,7 @@ export default function CategoriesPage() {
 
       {/* ===== SORT ORDER MODAL ===== */}
       <Modal
+        icon={<Tags size={19} />}
         isOpen={sortOpen}
         onClose={() => setSortOpen(false)}
         title="مرتب‌سازی دسته‌بندی‌ها"
@@ -513,7 +485,7 @@ export default function CategoriesPage() {
       >
         <div className="space-y-3">
           <p className="text-sm text-[rgb(var(--color-text-secondary))]">
-            آیتم‌ها را با کشیدن و رها کردن مرتب کنید. ترتیب از بالا به پایین نمایش داده می‌شود.
+            موارد نمایش‌داده‌شده را با کشیدن یا کلیدهای جهت مرتب کنید. ترتیب از بالا به پایین است.
           </p>
           <DndContext
             sensors={sensors}

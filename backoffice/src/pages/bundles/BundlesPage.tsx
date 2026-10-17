@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { motion } from 'framer-motion';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,14 +13,18 @@ import { BundleResponse } from '@/types/bundles';
 import { FileResponse } from '@/types/files';
 import { MessageResponse } from '@/types/messages';
 import { InventoryResponse } from '@/types/inventory';
-import { DataTable, Column } from '@/components/ui/DataTable';
+import { Column } from '@/components/ui/DataTable';
 import { Button } from '@/components/ui/Button';
-import { Modal } from '@/components/ui/Modal';
+import { CatalogModal as Modal } from '@/components/catalog/CatalogModal';
+import { CatalogHeader } from '@/components/catalog/CatalogHeader';
+import { CatalogTable } from '@/components/catalog/CatalogTable';
+import { CatalogIdentity } from '@/components/catalog/CatalogIdentity';
+import { Layers, FileArchive, MessageSquareText, Warehouse } from 'lucide-react';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { Toggle } from '@/components/ui/Toggle';
-import { PageLoader } from '@/components/ui/LoadingSpinner';
+import { Badge } from '@/components/ui';
+import { BundleSection as SectionCard } from './BundleSection';
 
 // --- Zod Schema ---
 const bundleSchema = z.object({
@@ -34,6 +37,7 @@ type BundleForm = z.infer<typeof bundleSchema>;
 export default function BundlesPage() {
   const [bundles, setBundles] = useState<BundleResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const PER_PAGE = 20;
@@ -88,11 +92,13 @@ export default function BundlesPage() {
   useEffect(() => {
     const fetchBundles = async () => {
       setLoading(true);
+      setLoadError(false);
       try {
         const res = await bundlesApi.list({ page, per_page: PER_PAGE });
         setBundles(res.data);
         setTotal(res.total);
       } catch {
+        setLoadError(true);
         toast.error('خطا در دریافت باندل‌ها');
       } finally {
         setLoading(false);
@@ -119,6 +125,10 @@ export default function BundlesPage() {
 
   // --- Handlers ---
   const handleCreate = async (data: BundleForm) => {
+    if ((createFileEnabled && !createFileId) || (createMessageEnabled && !createMessageId) || (createInventoryEnabled && !createInventoryId)) {
+      toast.error('برای هر بخش فعال، یک مورد انتخاب کنید');
+      return;
+    }
     setCreating(true);
     try {
       await bundlesApi.create({
@@ -141,6 +151,10 @@ export default function BundlesPage() {
 
   const handleEdit = async (data: BundleForm) => {
     if (!selected) return;
+    if ((editFileEnabled && !editFileId) || (editMessageEnabled && !editMessageId) || (editInventoryEnabled && !editInventoryId)) {
+      toast.error('برای هر بخش فعال، یک مورد انتخاب کنید');
+      return;
+    }
     setEditing(true);
     try {
       await bundlesApi.update(selected.id, {
@@ -213,37 +227,15 @@ export default function BundlesPage() {
     {
       key: 'name',
       title: 'نام',
-      render: (value) => (
-        <span className="font-medium text-[rgb(var(--color-text))]">{value as string}</span>
-      ),
+      render: (_, row) => <CatalogIdentity title={row.name} icon={Layers} onClick={() => handleOpenEdit(row)} />,
     },
-    {
-      key: 'file_id',
-      title: 'فایل',
-      render: (value) => (
-        <span className={value ? 'text-green-500' : 'text-[rgb(var(--color-text-secondary))]'}>
-          {value ? '✓' : '—'}
-        </span>
-      ),
-    },
-    {
-      key: 'message_id',
-      title: 'پیام',
-      render: (value) => (
-        <span className={value ? 'text-green-500' : 'text-[rgb(var(--color-text-secondary))]'}>
-          {value ? '✓' : '—'}
-        </span>
-      ),
-    },
-    {
-      key: 'inventory_id',
-      title: 'مخزن',
-      render: (value) => (
-        <span className={value ? 'text-green-500' : 'text-[rgb(var(--color-text-secondary))]'}>
-          {value ? '✓' : '—'}
-        </span>
-      ),
-    },
+    { key: 'contents', title: 'محتوای باندل', render: (_, row) => <div className="catalog-badges">
+      {row.file_id && <Badge variant="info"><FileArchive size={13} />فایل</Badge>}
+      {row.message_id && <Badge variant="purple"><MessageSquareText size={13} />پیام</Badge>}
+      {row.inventory_id && <Badge variant="success"><Warehouse size={13} />مخزن</Badge>}
+      {!row.file_id && !row.message_id && !row.inventory_id && <Badge variant="warning">بدون محتوای تحویل</Badge>}
+    </div> },
+    { key: 'created_at', title: 'تاریخ ایجاد', render: value => <span className="text-[rgb(var(--color-text-secondary))]">{new Date(value as string).toLocaleDateString('fa-IR')}</span> },
     {
       key: 'id',
       title: 'عملیات',
@@ -271,66 +263,24 @@ export default function BundlesPage() {
     },
   ];
 
-  if (loading && bundles.length === 0) {
-    return <PageLoader />;
-  }
 
-  // --- Reusable component section card ---
-  const SectionCard = ({
-    title,
-    enabled,
-    onToggle,
-    children,
-  }: {
-    title: string;
-    enabled: boolean;
-    onToggle: (val: boolean) => void;
-    children: React.ReactNode;
-  }) => (
-    <div className="rounded-xl border border-[rgb(var(--color-border))] overflow-hidden">
-      <div className="flex items-center justify-between p-3 bg-[rgb(var(--color-bg))]">
-        <span className="text-sm font-medium text-[rgb(var(--color-text))]">{title}</span>
-        <Toggle checked={enabled} onChange={onToggle} />
-      </div>
-      {enabled && (
-        <div className="p-3 border-t border-[rgb(var(--color-border))]">
-          {children}
-        </div>
-      )}
-    </div>
-  );
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between"
-      >
-        <div>
-          <h1 className="text-2xl font-bold text-[rgb(var(--color-text))]">باندل</h1>
-          <p className="text-sm text-[rgb(var(--color-text-secondary))] mt-1">
-            مدیریت باندل‌های تحویل محصول
-          </p>
-        </div>
-        <Button
+    <div className="catalog-page">
+      <CatalogHeader title="باندل" icon={Layers} total={total} loading={loading} actions={<><Button
           variant="primary"
           icon={<Plus size={16} />}
           onClick={handleOpenCreate}
         >
           باندل جدید
-        </Button>
-      </motion.div>
+        </Button></>} />
 
       {/* Table */}
-      <motion.div
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="glass-card rounded-2xl p-6"
-      >
-        <DataTable
+      <CatalogTable
+          emptyAction={<Button icon={<Plus size={16} />} onClick={() => { handleOpenCreate(); }}>باندل جدید</Button>}
+          error={loadError}
+          onRefresh={() => setRefreshKey(k => k + 1)}
+          searchText={row => row.name}
           columns={columns}
           data={bundles}
           loading={loading}
@@ -343,10 +293,10 @@ export default function BundlesPage() {
           }}
           emptyMessage="هیچ باندلی یافت نشد"
         />
-      </motion.div>
 
       {/* ===== CREATE MODAL ===== */}
       <Modal
+        icon={<Layers size={19} />}
         isOpen={createOpen}
         onClose={() => setCreateOpen(false)}
         title="ایجاد باندل جدید"
@@ -383,7 +333,7 @@ export default function BundlesPage() {
             }}
           >
             <Select
-              label=""
+              aria-label="انتخاب فایل باندل"
               value={createFileId}
               onChange={(e) => setCreateFileId(e.target.value)}
               options={[
@@ -402,7 +352,7 @@ export default function BundlesPage() {
             }}
           >
             <Select
-              label=""
+              aria-label="انتخاب پیام باندل"
               value={createMessageId}
               onChange={(e) => setCreateMessageId(e.target.value)}
               options={[
@@ -424,7 +374,7 @@ export default function BundlesPage() {
             }}
           >
             <Select
-              label=""
+              aria-label="انتخاب مخزن باندل"
               value={createInventoryId}
               onChange={(e) => setCreateInventoryId(e.target.value)}
               options={[
@@ -438,6 +388,7 @@ export default function BundlesPage() {
 
       {/* ===== EDIT MODAL ===== */}
       <Modal
+        icon={<Layers size={19} />}
         isOpen={editOpen}
         onClose={() => setEditOpen(false)}
         title="ویرایش باندل"
@@ -474,7 +425,7 @@ export default function BundlesPage() {
             }}
           >
             <Select
-              label=""
+              aria-label="انتخاب فایل باندل"
               value={editFileId}
               onChange={(e) => setEditFileId(e.target.value)}
               options={[
@@ -493,7 +444,7 @@ export default function BundlesPage() {
             }}
           >
             <Select
-              label=""
+              aria-label="انتخاب پیام باندل"
               value={editMessageId}
               onChange={(e) => setEditMessageId(e.target.value)}
               options={[
@@ -515,7 +466,7 @@ export default function BundlesPage() {
             }}
           >
             <Select
-              label=""
+              aria-label="انتخاب مخزن باندل"
               value={editInventoryId}
               onChange={(e) => setEditInventoryId(e.target.value)}
               options={[

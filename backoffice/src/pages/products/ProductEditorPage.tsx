@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowRight, BadgeCheck, Box, CircleDollarSign, Crown, ExternalLink, Image as ImageIcon, Package, PackagePlus, RefreshCw, Save, ShoppingBag, Tag, Truck } from 'lucide-react';
+import { ArrowRight, BadgeCheck, Star, Crown, ExternalLink, Image as ImageIcon, Package, PackagePlus, RefreshCw, Save, ShoppingBag, Tag, Truck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { categoriesApi, productsApi } from '@/api';
 import { Button, FileUpload, Input, Select, Textarea, Toggle } from '@/components/ui';
@@ -11,9 +11,10 @@ import type { DeliveryType, ProductResponse } from '@/types/products';
 import { publicAssetURL } from '@/utils/assets';
 import { ProductDeliveryField } from './ProductDeliveryField';
 import { deliveryTypeLabels, productDefaultValues, productPayload, productSchema, statusLabels, type ProductFormValues } from './productForm';
+import '@/components/catalog/catalog.css';
 
-function SectionTitle({ icon, title, description }: { icon: ReactNode; title: string; description: string }) {
-  return <div className="mb-5 flex items-start gap-3"><span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-blue-500/10 text-blue-600">{icon}</span><div><h2 className="text-base font-extrabold text-[rgb(var(--color-text))]">{title}</h2><p className="mt-1 text-xs leading-5 text-[rgb(var(--color-text-secondary))]">{description}</p></div></div>;
+function SectionTitle({ icon, title }: { icon: ReactNode; title: string; description?: string }) {
+  return <div className="catalog-editor-heading"><span>{icon}</span><h2>{title}</h2></div>;
 }
 
 function SettingRow({ icon, title, description, children }: { icon: ReactNode; title: string; description: string; children: ReactNode }) {
@@ -87,9 +88,9 @@ export default function ProductEditorPage() {
 
   if (loading) return <div className="space-y-5"><div className="h-20 animate-pulse rounded-2xl bg-[rgb(var(--color-surface-2))]"/><div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]"><div className="h-[540px] animate-pulse rounded-2xl bg-[rgb(var(--color-surface-2))]"/><div className="h-[420px] animate-pulse rounded-2xl bg-[rgb(var(--color-surface-2))]"/></div></div>;
 
-  return <form onSubmit={form.handleSubmit(submit)} className="space-y-5">
-    <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex items-center gap-3"><button type="button" onClick={() => navigate('/products')} className="icon-button" aria-label="بازگشت"><ArrowRight size={19}/></button><span className="grid h-11 w-11 place-items-center rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-600/20">{isEdit ? <Package size={20}/> : <PackagePlus size={20}/>}</span><h1 className="text-xl font-extrabold">{isEdit ? `ویرایش ${product?.title || 'محصول'}` : 'ساخت محصول جدید'}</h1></div>
+  return <form onSubmit={form.handleSubmit(submit)} className="catalog-editor space-y-5">
+    <header className="catalog-editor-header flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center gap-3"><button type="button" onClick={() => navigate('/products')} className="icon-button" aria-label="بازگشت"><ArrowRight size={19}/></button><span className="catalog-heading-icon">{isEdit ? <Package size={22}/> : <PackagePlus size={22}/>}</span><h1 className="text-xl font-bold">{isEdit ? 'ویرایش محصول' : 'محصول جدید'}</h1></div>
       <div className="flex items-center gap-2"><Button type="button" variant="secondary" onClick={() => navigate('/products')}>انصراف</Button><Button type="submit" loading={saving} icon={isEdit ? <Save size={16}/> : <PackagePlus size={16}/>}>{isEdit ? 'ذخیره تغییرات' : 'ایجاد محصول'}</Button></div>
     </header>
 
@@ -98,11 +99,11 @@ export default function ProductEditorPage() {
         <section className="p-5 sm:p-7">
           <SectionTitle icon={<Package size={19}/>} title="اطلاعات اصلی" description="اطلاعاتی که کاربر در فروشگاه و صفحه محصول می‌بیند." />
           <div className="space-y-5">
-            <Input label="عنوان محصول" placeholder="یک عنوان روشن و کوتاه بنویسید" rightIcon={<Tag size={18}/>} error={form.formState.errors.title?.message} className="py-4 text-lg font-bold" {...form.register('title')} />
-            <Textarea label="توضیحات محصول" placeholder="ویژگی‌ها، کاربرد و جزئیات مهم محصول را توضیح دهید…" rows={9} error={form.formState.errors.description?.message} className="min-h-52 py-4 text-base leading-8" {...form.register('description')} />
+            <Input label="عنوان محصول" placeholder="یک عنوان روشن و کوتاه بنویسید" rightIcon={<Tag size={18}/>} error={form.formState.errors.title?.message} className="py-3.5 text-base font-semibold" {...form.register('title')} />
+            <Textarea label="توضیحات محصول" placeholder="ویژگی‌ها، کاربرد و جزئیات مهم محصول را توضیح دهید…" rows={7} error={form.formState.errors.description?.message} className="min-h-48 py-4 text-sm leading-7" {...form.register('description')} />
             <div className="grid gap-4 md:grid-cols-2">
               <Controller name="category_id" control={form.control} render={({ field }) => <Select label="دسته‌بندی" placeholder="انتخاب دسته‌بندی" options={categoryOptions} error={form.formState.errors.category_id?.message} value={field.value} onChange={field.onChange} className="py-3.5 text-base"/>}/>
-              <Input label="قیمت با Telegram Stars" type="number" min="1" step="1" rightIcon={<CircleDollarSign size={18}/>} hint="مبلغ به استار و بدون اعشار است" error={form.formState.errors.stars_price?.message} className="py-3.5 text-base font-bold" {...form.register('stars_price', { valueAsNumber: true })}/>
+              <Input label="قیمت با Telegram Stars" type="number" min="1" step="1" rightIcon={<Star size={18} fill="currentColor" className="text-amber-500"/>} hint="مبلغ بدون اعشار است" error={form.formState.errors.stars_price?.message} className="py-3.5 text-base font-bold" {...form.register('stars_price', { valueAsNumber: true })}/>
             </div>
           </div>
         </section>

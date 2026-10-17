@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Image as ImageIcon, Pencil, Plus, Trash2 } from 'lucide-react';
+import { Package, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { categoriesApi, productsApi } from '@/api';
-import { Badge, Button, ConfirmationModal, DataTable, PageHeader } from '@/components/ui';
+import { Badge, Button, ConfirmationModal } from '@/components/ui';
+import { CatalogHeader } from '@/components/catalog/CatalogHeader';
+import { CatalogIdentity } from '@/components/catalog/CatalogIdentity';
+import { CatalogTable } from '@/components/catalog/CatalogTable';
+import { StarsAmount } from '@/components/ui/StarsAmount';
 import type { Column } from '@/components/ui';
 import type { CategoryResponse } from '@/types/categories';
 import type { ProductResponse, ProductStatus } from '@/types/products';
-import { publicAssetURL } from '@/utils/assets';
 import { deliveryTypeLabels, statusLabels } from './productForm';
 
 const PER_PAGE = 20;
@@ -18,6 +21,7 @@ export default function ProductsPage() {
   const [products, setProducts] = useState<ProductResponse[]>([]);
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [selected, setSelected] = useState<ProductResponse | null>(null);
@@ -25,6 +29,7 @@ export default function ProductsPage() {
 
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadError(false);
     try {
       const [productPage, categoryPage] = await Promise.all([
         productsApi.list({ page, per_page: PER_PAGE }),
@@ -33,7 +38,7 @@ export default function ProductsPage() {
       setProducts(productPage.data);
       setTotal(productPage.total);
       setCategories(categoryPage.data);
-    } catch { toast.error('خطا در بارگذاری محصولات'); }
+    } catch { setLoadError(true); toast.error('خطا در بارگذاری محصولات'); }
     finally { setLoading(false); }
   }, [page]);
   useEffect(() => { void load(); }, [load]);
@@ -48,20 +53,17 @@ export default function ProductsPage() {
   };
 
   const columns: Column<ProductResponse>[] = [
-    { key: 'image_url', title: 'تصویر', render: (value, row) => <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-xl bg-[rgb(var(--color-border))]">{value ? <img src={publicAssetURL(String(value))} alt={row.title} className="h-full w-full object-cover"/> : <ImageIcon size={18} className="text-[rgb(var(--color-text-secondary))]"/>}</div> },
-    { key: 'title', title: 'نام', render: (_, row) => <span className="font-semibold">{row.title}</span> },
-    { key: 'category_id', title: 'دسته‌بندی', render: (_, row) => <span className="text-[rgb(var(--color-text-secondary))]">{categoryNames.get(row.category_id) || '—'}</span> },
-    { key: 'stars_price', title: 'قیمت', render: (_, row) => <b>{row.stars_price.toLocaleString('fa-IR')} ⭐</b> },
+    { key: 'title', title: 'محصول', render: (_, row) => <CatalogIdentity title={row.title} subtitle={categoryNames.get(row.category_id) || 'دسته‌بندی نامشخص'} image={row.image_url} icon={Package} onClick={() => navigate(`/products/${row.id}/edit`)} /> },
+    { key: 'stars_price', title: 'قیمت', render: (_, row) => <StarsAmount value={row.stars_price} className="catalog-price" /> },
     { key: 'delivery_type', title: 'تحویل', render: (_, row) => <Badge variant="purple">{deliveryTypeLabels[row.delivery_type]}</Badge> },
-    { key: 'vip_only', title: 'دسترسی', render: (_, row) => row.vip_only ? <Badge variant="amber">VIP</Badge> : <span>عمومی</span> },
-    { key: 'repurchasable', title: 'دفعات خرید', render: (_, row) => <Badge variant={row.repurchasable ? 'info' : 'default'}>{row.repurchasable ? 'نامحدود' : 'یک‌بار'}</Badge> },
+    { key: 'vip_only', title: 'قوانین خرید', render: (_, row) => <div className="catalog-badges"><Badge variant={row.vip_only ? 'amber' : 'default'}>{row.vip_only ? 'VIP' : 'عمومی'}</Badge><Badge variant="default">{row.repurchasable ? 'خرید مجدد' : 'یک‌بار خرید'}</Badge></div> },
     { key: 'status', title: 'وضعیت', render: (_, row) => <Badge variant={statusVariants[row.status]} dot>{statusLabels[row.status]}</Badge> },
     { key: 'id', title: 'عملیات', render: (_, row) => <div className="flex items-center gap-1"><button onClick={() => navigate(`/products/${row.id}/edit`)} className="icon-button" title="ویرایش محصول"><Pencil size={15}/></button><button onClick={() => setSelected(row)} className="icon-button text-rose-500 hover:!bg-rose-500/10" title="حذف محصول"><Trash2 size={15}/></button></div> },
   ];
 
-  return <div>
-    <PageHeader title="محصولات" action={<Button icon={<Plus size={16}/>} onClick={() => navigate('/products/new')}>محصول جدید</Button>}/>
-    <div className="surface-card overflow-hidden"><DataTable columns={columns} data={products} loading={loading} keyExtractor={row => row.id} emptyMessage="هیچ محصولی یافت نشد" pagination={{ page, perPage: PER_PAGE, total, onPageChange: setPage }}/></div>
+  return <div className="catalog-page">
+    <CatalogHeader title="محصولات" icon={Package} total={total} loading={loading} actions={<Button icon={<Plus size={16}/>} onClick={() => navigate('/products/new')}>محصول جدید</Button>}/>
+    <CatalogTable columns={columns} data={products} loading={loading} error={loadError} onRefresh={() => void load()} searchText={row => `${row.title} ${categoryNames.get(row.category_id) || ''} ${deliveryTypeLabels[row.delivery_type]}`} filter={{ label: 'همه وضعیت‌ها', options: Object.entries(statusLabels).map(([value, label]) => ({ value, label })), value: row => row.status }} keyExtractor={row => row.id} emptyMessage="هنوز محصولی ثبت نشده است" emptyAction={<Button icon={<Plus size={16} />} onClick={() => navigate('/products/new')}>محصول جدید</Button>} pagination={{ page, perPage: PER_PAGE, total, onPageChange: setPage }}/>
     <ConfirmationModal isOpen={Boolean(selected)} onClose={() => !deleting && setSelected(null)} onConfirm={() => void remove()} title="حذف محصول" message={selected ? `محصول «${selected.title}» حذف شود؟ این عملیات قابل بازگشت نیست.` : ''} confirmText="حذف محصول" cancelText="انصراف" loading={deleting}/>
   </div>;
 }
