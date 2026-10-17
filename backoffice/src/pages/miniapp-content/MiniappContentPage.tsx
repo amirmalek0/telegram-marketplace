@@ -4,6 +4,8 @@ import toast from 'react-hot-toast';
 import { Button, Select } from '@/components/ui';
 import { SystemHeader } from '@/components/system/SystemHeader';
 import { useAuthStore } from '@/stores/authStore';
+import { ColorPaletteEditor } from './ColorPaletteEditor';
+import type { Palette, PaletteMode } from './palette';
 
 function editorURL() {
   const configured = import.meta.env.VITE_MINIAPP_URL || 'http://localhost:3000';
@@ -27,6 +29,7 @@ interface PreviewPageState {
 export default function MiniappContentPage() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const editorWindowRef = useRef<Window | null>(null);
+  const palettePreviewRef = useRef<{ type: string; palette: Palette | null; mode: PaletteMode } | null>(null);
   const accessToken = useAuthStore((state) => state.accessToken);
   const [frameKey, setFrameKey] = useState(0);
   const [connected, setConnected] = useState(false);
@@ -49,7 +52,15 @@ export default function MiniappContentPage() {
     const receiver = target || iframeRef.current?.contentWindow;
     if (!receiver || !accessToken) return;
     receiver.postMessage({ type: 'miniapp-editor-auth', token: accessToken }, previewURL.origin);
+    if (palettePreviewRef.current) receiver.postMessage(palettePreviewRef.current, previewURL.origin);
   }, [accessToken, previewURL.origin]);
+
+  const previewPalette = useCallback((palette: Palette | null, mode: PaletteMode) => {
+    const message = { type: 'miniapp-editor-palette', palette, mode };
+    palettePreviewRef.current = message;
+    iframeRef.current?.contentWindow?.postMessage(message, previewURL.origin);
+    if (editorWindowRef.current && !editorWindowRef.current.closed) editorWindowRef.current.postMessage(message, previewURL.origin);
+  }, [previewURL.origin]);
 
   useEffect(() => {
     const receive = (event: MessageEvent) => {
@@ -145,6 +156,8 @@ export default function MiniappContentPage() {
             {!connected && <div className="system-note" role="status"><p>{connectionSlow ? 'پیش‌نمایش آماده نشد. اتصال مینی‌اپ را بررسی کنید یا بارگذاری مجدد را بزنید.' : 'در حال بارگذاری پیش‌نمایش…'}</p></div>}
           </div>
 
+          <ColorPaletteEditor onPreview={previewPalette} />
+
           <details className="surface-card group overflow-hidden">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3.5 [&::-webkit-details-marker]:hidden">
               <div className="flex items-center gap-3">
@@ -161,6 +174,7 @@ export default function MiniappContentPage() {
                 <p><b className="text-[rgb(var(--color-text))]">۴. حالت صفحه:</b> حالت‌های پر، خالی، خطا و سایر وضعیت‌ها را از انتخاب‌گر بالا ببینید.</p>
                 <p><b className="text-[rgb(var(--color-text))]">۵. همه متن‌ها:</b> متن‌های پنهان یا مربوط به حالت‌های دیگر را جست‌وجو و ویرایش کنید.</p>
                 <p><b className="text-[rgb(var(--color-text))]">۶. بازیابی و نمایش:</b> «متن پیش‌فرض» تغییر را حذف می‌کند؛ «بارگذاری مجدد» پیش‌نمایش را تازه و «باز کردن» آن را در تب جدا نمایش می‌دهد.</p>
+                <p><b className="text-[rgb(var(--color-text))]">۷. پالت رنگ:</b> رنگ‌های روشن و تیره را جدا تنظیم کنید. تغییرات تا زدن «ذخیره رنگ‌ها» فقط در پیش‌نمایش هستند. «لغو تغییرات» رنگ‌های ذخیره‌شده را برمی‌گرداند؛ بازگشت به پیش‌فرض هم نیاز به ذخیره دارد.</p>
               </div>
               <div className="border-t border-[rgb(var(--color-border))] bg-slate-500/[0.035] p-4">
                 <div className="mb-3 flex items-center gap-2 text-xs font-extrabold"><Keyboard size={16} className="text-violet-500" /> میانبرها</div>

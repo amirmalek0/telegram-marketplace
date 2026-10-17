@@ -5,6 +5,9 @@ export type ThemeMode = 'light' | 'dark'
 const themeStorageKey = 'telegram-marketplace-theme'
 
 function readStoredTheme(): ThemeMode {
+  if (new URLSearchParams(window.location.search).get('content-editor') === '1' && document.documentElement.dataset.theme) {
+    return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light'
+  }
   try {
     return localStorage.getItem(themeStorageKey) === 'dark' ? 'dark' : 'light'
   } catch {
@@ -16,12 +19,22 @@ export function useTheme() {
   const [theme, setTheme] = useState<ThemeMode>(readStoredTheme)
 
   useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('content-editor') !== '1') return
+    const preview = (event: Event) => {
+      const mode = (event as CustomEvent).detail
+      if (mode === 'light' || mode === 'dark') setTheme(mode)
+    }
+    window.addEventListener('miniapp-preview-theme', preview)
+    return () => window.removeEventListener('miniapp-preview-theme', preview)
+  }, [])
+
+  useEffect(() => {
     document.documentElement.dataset.theme = theme
     document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')
-      ?.setAttribute('content', theme === 'dark' ? '#0d0d0f' : '#f5f5f7')
+      ?.setAttribute('content', getComputedStyle(document.documentElement).getPropertyValue('--bg').trim())
 
     try {
-      localStorage.setItem(themeStorageKey, theme)
+      if (new URLSearchParams(window.location.search).get('content-editor') !== '1') localStorage.setItem(themeStorageKey, theme)
     } catch {
       // The selected theme still applies for this session when storage is unavailable.
     }

@@ -3,6 +3,8 @@ import { useLocation } from 'react-router-dom'
 import { ApiClient } from '../../api/client'
 import { contentCatalog, type ContentKey } from './contentCatalog'
 import { editorScenariosForPath } from './editorScenarios'
+import { paletteKey } from '../theme/palette'
+import { usePalette } from '../theme/usePalette'
 
 interface ContentResponse { data: Record<string, string> }
 interface ContentEntry { key: string; value: string }
@@ -55,6 +57,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
   const location = useLocation()
   const editorMode = useMemo(() => new URLSearchParams(window.location.search).get('content-editor') === '1', [])
   const [overrides, setOverrides] = useState<Record<string, string>>({})
+  const previewPalette = usePalette(overrides[paletteKey], editorMode)
   const [adminToken, setAdminToken] = useState<string | null>(null)
   const [activeKey, setActiveKey] = useState<ContentKey | null>(null)
   const [catalogOpen, setCatalogOpen] = useState(false)
@@ -93,11 +96,12 @@ export function ContentProvider({ children }: { children: ReactNode }) {
         if (scenarioOptions.some((option) => option.value === nextScenario)) setEditorScenario(nextScenario)
       }
       if (event.data?.type === 'miniapp-editor-open-catalog') setCatalogOpen(true)
+      if (event.data?.type === 'miniapp-editor-palette') previewPalette(event.data.palette, event.data.mode)
     }
     window.addEventListener('message', receiveToken)
     hostWindow.postMessage({ type: 'miniapp-editor-ready' }, trustedOrigin || '*')
     return () => window.removeEventListener('message', receiveToken)
-  }, [editorMode, scenarioOptions])
+  }, [editorMode, scenarioOptions, previewPalette])
 
   useEffect(() => {
     if (!editorMode) return

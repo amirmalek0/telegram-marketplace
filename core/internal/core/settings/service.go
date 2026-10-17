@@ -38,6 +38,11 @@ func (s *Service) UpdateContent(ctx context.Context, key, value, adminID string)
 	if len([]rune(value)) > 4000 {
 		return nil, fmt.Errorf("content value is too long")
 	}
+	if key == "appearance.palette" {
+		if err := validatePalette(value); err != nil {
+			return nil, err
+		}
+	}
 	entry, err := s.repo.UpsertContent(ctx, key, value, adminID)
 	if err != nil {
 		return nil, fmt.Errorf("settings.service.UpdateContent: %w", err)

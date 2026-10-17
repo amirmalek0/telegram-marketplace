@@ -1,0 +1,40 @@
+/* Only opt in once the administrator publishes a palette. Semantic status,
+   Stars/VIP gold, and category artwork colors intentionally retain their meaning. */
+:root[data-custom-palette] { color: var(--text); }
+:root[data-custom-palette] .header-navigation,
+:root[data-custom-palette] .glass-control,
+:root[data-custom-palette] .search-popover,
+:root[data-custom-palette] .bottom-nav {
+  background: color-mix(in srgb, var(--surface-solid) 90%, transparent);
+  border-color: var(--line);
+}
+:root[data-custom-palette] .search-toggle,
+:root[data-custom-palette] .theme-toggle,
+:root[data-custom-palette] .search-control {
+  background: var(--surface-soft);
+  border-color: var(--line);
+  color: var(--accent);
+}
+:root[data-custom-palette] .header-title-icon,
+:root[data-custom-palette] .header-search.is-open .search-toggle {
+  background: linear-gradient(145deg, var(--accent), color-mix(in srgb, var(--accent) 85%, var(--text)));
+  color: var(--on-accent);
+  box-shadow: inset 0 1px #ffffff30;
+}
+:root[data-custom-palette] .nav-item { color: var(--secondary); }
+:root[data-custom-palette] .nav-item.active { background: var(--nav-active); color: var(--on-nav-active); }
+:root[data-custom-palette] .new-ticket-button,
+:root[data-custom-palette] .phone-share-button,
+:root[data-custom-palette] .ticket-submit-button,
+:root[data-custom-palette] .ticket-reply-button,
+:root[data-custom-palette] .ticket-error button,
+:root[data-custom-palette] .account-primary,
+:root[data-custom-palette] .profile-topup-link,
+:root[data-custom-palette] .commerce-empty button,
+:root[data-custom-palette] .commerce-empty > a,
+:root[data-custom-palette] .delivery-item a,
+:root[data-custom-palette] .vip-quote-actions button:not(.quote-cancel),
+:root[data-custom-palette] .payment-result-modal button,
+:root[data-custom-palette] .round-arrow,
+:root[data-custom-palette] .checkout-option-icon { color: var(--on-accent); }
+:root[data-custom-palette] .wallet-payment-button .checkout-option-icon { color: var(--secondary); }
