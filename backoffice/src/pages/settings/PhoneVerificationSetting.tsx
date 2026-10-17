@@ -24,17 +24,15 @@ export function PhoneVerificationSetting() {
     } catch { toast.error('ذخیره تنظیمات ناموفق بود'); }
     finally { setSaving(false); }
   };
-  return <section className="surface-card mt-4 flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:justify-between">
-    <div className="flex items-start gap-3">
-      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-sky-500/10 text-sky-500"><Phone size={20} /></span>
-      <div><h3 className="text-sm font-bold">الزام تأیید شماره تلفن</h3>
-        <p className="mt-1 max-w-2xl text-xs leading-6 text-[rgb(var(--color-text-secondary))]">کاربران باید شماره حساب خود را از طریق تلگرام به اشتراک بگذارند. تا زمان تأیید، مینی‌اپ و APIهای آن در دسترس نیستند. این تنظیم بلافاصله برای کاربران فعلی و جدید اعمال می‌شود.</p>
-        <p className="mt-1 text-xs leading-6 text-[rgb(var(--color-text-muted))]">شماره‌ای که دستی ثبت شده باشد تأییدشده محسوب نمی‌شود. ربات باید روشن باشد تا اشتراک‌گذاری شماره را دریافت کند.</p>
-      </div>
-    </div>
+  return <section className="surface-card system-setting">
+    <div className="system-setting-top">
+      <span className="system-setting-icon"><Phone size={21} /></span>
+      <div className="system-setting-title"><h2>تأیید شماره تلفن</h2><span className="text-xs text-[rgb(var(--color-text-secondary))]">دسترسی به مینی‌اپ و API</span></div>
     <div className="shrink-0">
       {!loading && !settings ? <Button variant="secondary" size="sm" onClick={() => void load()}>تلاش دوباره</Button> :
-        <Toggle label={loading ? 'در حال دریافت…' : saving ? 'در حال ذخیره…' : settings?.require_phone_verification ? 'الزامی' : 'اختیاری'} checked={settings?.require_phone_verification ?? false} disabled={loading || saving || !settings} onChange={(required) => void save(required)} />}
+        <Toggle ariaLabel="الزام تأیید شماره تلفن" label={loading ? 'در حال دریافت…' : saving ? 'در حال ذخیره…' : settings?.require_phone_verification ? 'الزامی' : 'اختیاری'} checked={settings?.require_phone_verification ?? false} disabled={loading || saving || !settings} onChange={(required) => void save(required)} />}
     </div>
+    </div>
+    <div className="system-setting-body"><p>در حالت الزامی، دسترسی کاربران تا اشتراک‌گذاری شماره حساب تلگرام متوقف می‌شود.</p><details><summary>نکات تأیید شماره</summary><p>این تنظیم بلافاصله برای کاربران فعلی و جدید اعمال می‌شود. شماره واردشده توسط مدیر تأییدشده محسوب نمی‌شود. ربات باید روشن باشد تا شماره اشتراک‌گذاری‌شده را دریافت کند.</p></details></div>
   </section>;
 }
