@@ -1,5 +1,5 @@
-import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { FormEvent, Fragment, useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useParams } from 'react-router-dom'
 import { TicketMessageBubble } from '../components/tickets/TicketMessageBubble'
 import { TicketStatusBadge } from '../components/tickets/TicketStatusBadge'
 import { Icon } from '../components/ui/Icon'
@@ -8,7 +8,7 @@ import { TicketApi } from '../features/tickets/ticketApi'
 import { startTicketPolling } from '../features/tickets/ticketPolling'
 import type { TicketWithMessages } from '../features/tickets/types'
 import { editorTicketThread } from '../features/content/editorFixtures'
-import { formatDateTime } from '../utils/format'
+import { formatDate, formatDateTime } from '../utils/format'
 
 interface TicketPageProps {
   initDataRaw: string | null
@@ -139,12 +139,13 @@ export function TicketPage({ initDataRaw, ready, preview = false, scenario = 'op
   return (
     <div className={`page ticket-thread-page ${isClosed ? 'is-closed' : 'has-fixed-reply'}`}>
       <section className="ticket-thread-summary">
-        <div className="ticket-thread-overline"><span>{ticketCategoryLabel(ticket.category)}</span><time dateTime={ticket.created_at}>{formatDateTime(ticket.created_at)}</time></div>
+        <div className="ticket-thread-overline"><span><Icon name="tickets" size={16} />گفت‌وگوی پشتیبانی</span><TicketStatusBadge status={ticket.status} /></div>
         <h2>{ticket.subject}</h2>
         <div className="ticket-thread-heading">
-          <TicketStatusBadge status={ticket.status} />
-          <span className={`ticket-priority priority-${ticket.priority}`}>{ticketPriorityLabels[ticket.priority]}</span>
+          <span><small>موضوع</small><b>{ticketCategoryLabel(ticket.category)}</b></span>
+          <span><small>اولویت</small><b className={`priority-${ticket.priority}`}>{ticketPriorityLabels[ticket.priority]}</b></span>
         </div>
+        <details className="ticket-thread-details"><summary>جزئیات درخواست<Icon name="back" size={14} /></summary><span>تاریخ ایجاد<time dateTime={ticket.created_at}>{formatDateTime(ticket.created_at)}</time></span></details>
       </section>
 
       <div className="conversation-heading">
@@ -153,7 +154,7 @@ export function TicketPage({ initDataRaw, ready, preview = false, scenario = 'op
       </div>
 
       <section className="ticket-conversation" aria-label="پیام‌های تیکت">
-        {messages.map((message) => <TicketMessageBubble key={message.id} message={message} />)}
+        {messages.map((message, index) => <Fragment key={message.id}>{(index === 0 || formatDate(messages[index - 1].created_at) !== formatDate(message.created_at)) && <div className="ticket-day-divider"><time dateTime={message.created_at}>{formatDate(message.created_at)}</time></div>}<TicketMessageBubble message={message} /></Fragment>)}
         <div ref={messageEndRef} />
       </section>
 
@@ -161,6 +162,7 @@ export function TicketPage({ initDataRaw, ready, preview = false, scenario = 'op
         <section className="ticket-closed-note">
           <Icon name="check" size={20} />
           <div><strong>این گفت‌وگو بسته شده است</strong><span>برای موضوع جدید، یک تیکت تازه ثبت کنید.</span></div>
+          <Link to="/tickets/new" aria-label="تیکت جدید"><Icon name="plus" size={20} /></Link>
         </section>
       ) : (
         <form className="ticket-reply" onSubmit={handleReply}>
@@ -173,6 +175,7 @@ export function TicketPage({ initDataRaw, ready, preview = false, scenario = 'op
               rows={2}
               placeholder="پیام خود را بنویسید..."
               required
+              disabled={sending}
             />
             <button type="submit" className="ticket-reply-button pressable" disabled={sending || !reply.trim()} aria-label="ارسال پاسخ">
               {sending ? <span className="button-spinner" /> : <Icon name="send" size={18} />}

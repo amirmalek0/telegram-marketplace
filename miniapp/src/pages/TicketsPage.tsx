@@ -33,12 +33,12 @@ export function TicketsPage({ initDataRaw, ready, preview = false, scenario = 'c
   const visibleTickets = preview && (scenario === 'empty' || scenario === 'filtered-empty') ? [] : filteredTickets
   const visibleLoading = preview ? scenario === 'loading' : loading
   const visibleError = preview && scenario === 'error' ? 'دریافت تیکت‌ها ناموفق بود' : error
-  const hasTickets = scenario === 'filtered-empty' ? true : tickets.length > 0
+  const hasTickets = preview && scenario === 'empty' ? false : scenario === 'filtered-empty' ? true : tickets.length > 0
   return (
     <div className="page tickets-page">
       <section className="ticket-overview">
         <div className="ticket-overview-copy">
-          <span className="ticket-overview-kicker"><Icon name="sparkles" size={13} />مرکز پشتیبانی</span>
+          <span className="ticket-overview-kicker"><Icon name="tickets" size={16} />مرکز پشتیبانی</span>
           <h2>گفت‌وگوهای شما</h2>
         </div>
         <Link to="/tickets/new" className="new-ticket-button pressable">
@@ -47,13 +47,12 @@ export function TicketsPage({ initDataRaw, ready, preview = false, scenario = 'c
         </Link>
       </section>
 
-      <div className="ticket-filters" role="tablist" aria-label="فیلتر وضعیت تیکت‌ها">
+      <div className="ticket-filters" role="group" aria-label="فیلتر وضعیت تیکت‌ها">
         {filters.map((item) => (
           <button
             key={item.value}
             type="button"
-            role="tab"
-            aria-selected={filter === item.value}
+            aria-pressed={filter === item.value}
             className={filter === item.value ? 'active' : ''}
             onClick={() => setFilter(item.value)}
           >

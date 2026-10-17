@@ -26,6 +26,7 @@ export function NewTicketPage({ initDataRaw, ready, preview = false, scenario = 
   const [loadingCategories, setLoadingCategories] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [categoryRevision, setCategoryRevision] = useState(0)
 
   useEffect(() => {
     if (preview) {
@@ -56,13 +57,13 @@ export function NewTicketPage({ initDataRaw, ready, preview = false, scenario = 
 
     void loadCategories()
     return () => { active = false }
-  }, [api, preview, ready])
+  }, [api, preview, ready, categoryRevision])
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const cleanSubject = subject.trim()
     const cleanMessage = message.trim()
-    if (!category || cleanSubject.length < 3 || !cleanMessage) return
+    if (submitting || !category || cleanSubject.length < 3 || !cleanMessage) return
 
     if (preview) {
       navigate('/tickets/preview-ticket-open', { replace: true })
@@ -99,7 +100,7 @@ export function NewTicketPage({ initDataRaw, ready, preview = false, scenario = 
         </div>
       </section>
 
-      <form className="ticket-form" onSubmit={handleSubmit}>
+      <form className="ticket-form" onSubmit={handleSubmit} aria-busy={visibleSubmitting}>
         <section className="ticket-form-section">
           <div className="ticket-form-section-title"><span>جزئیات درخواست</span><small>ضروری</small></div>
           <div className="ticket-fields-group">
@@ -112,6 +113,7 @@ export function NewTicketPage({ initDataRaw, ready, preview = false, scenario = 
                 maxLength={200}
                 placeholder="مثلاً مشکل در دریافت فایل"
                 required
+                disabled={visibleSubmitting}
               />
               <small>{subject.length.toLocaleString('fa-IR')} / ۲۰۰</small>
             </label>
@@ -121,7 +123,7 @@ export function NewTicketPage({ initDataRaw, ready, preview = false, scenario = 
               <select
                 value={visibleCategory}
                 onChange={(event) => setCategory(event.target.value)}
-                disabled={visibleLoadingCategories || visibleCategories.length === 0}
+                disabled={visibleSubmitting || visibleLoadingCategories || visibleCategories.length === 0}
                 required
               >
                 {visibleLoadingCategories && <option value="">در حال دریافت...</option>}
@@ -136,7 +138,7 @@ export function NewTicketPage({ initDataRaw, ready, preview = false, scenario = 
 
         <section className="ticket-form-section">
           <div className="ticket-form-section-title"><span>میزان اهمیت</span><small>اولویت پاسخ</small></div>
-          <fieldset className="ticket-priority-field">
+          <fieldset className="ticket-priority-field" aria-label="میزان اهمیت" disabled={visibleSubmitting}>
             <div className="priority-options">
               {priorities.map((item) => (
                 <label key={item} className={`priority-option priority-${item} ${priority === item ? 'active' : ''}`}>
@@ -162,6 +164,8 @@ export function NewTicketPage({ initDataRaw, ready, preview = false, scenario = 
                 value={message}
                 onChange={(event) => setMessage(event.target.value)}
                 rows={6}
+                aria-label="پیام شما"
+                disabled={visibleSubmitting}
                 placeholder="جزئیات درخواست یا مشکلتان را بنویسید..."
                 required
               />
@@ -169,7 +173,7 @@ export function NewTicketPage({ initDataRaw, ready, preview = false, scenario = 
           </div>
         </section>
 
-        {visibleError && <div className="ticket-form-error" role="alert">{visibleError}</div>}
+        {visibleError && <div className="ticket-form-error" role="alert">{visibleError}{!visibleLoadingCategories && categories.length === 0 && <button type="button" onClick={() => setCategoryRevision(value => value + 1)}>تلاش دوباره</button>}</div>}
 
         <button
           className="ticket-submit-button pressable"
