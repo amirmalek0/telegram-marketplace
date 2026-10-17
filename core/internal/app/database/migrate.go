@@ -139,7 +139,6 @@ var migrations = []string{
 	`CREATE TABLE IF NOT EXISTS broadcasts (
 		id UUID PRIMARY KEY DEFAULT gen_random_uuid()
 	)`,
-
 	// Upgrade the original id-only stub. Legacy rows remain unpublished.
 	`ALTER TABLE broadcasts ADD COLUMN IF NOT EXISTS title TEXT NOT NULL DEFAULT ''`,
 	`ALTER TABLE broadcasts ADD COLUMN IF NOT EXISTS message TEXT NOT NULL DEFAULT ''`,
@@ -353,6 +352,7 @@ var migrations = []string{
 		updated_at     TIMESTAMPTZ NOT NULL DEFAULT now()
 	)`,
 	`CREATE INDEX IF NOT EXISTS idx_coupons_code ON coupons(code)`,
+	`ALTER TABLE coupons ADD COLUMN IF NOT EXISTS user_ids JSONB NOT NULL DEFAULT '[]'::jsonb`,
 	`CREATE INDEX IF NOT EXISTS idx_coupons_is_active ON coupons(is_active)`,
 	`CREATE INDEX IF NOT EXISTS idx_coupons_expires_at ON coupons(expires_at)`,
 
@@ -376,6 +376,8 @@ var migrations = []string{
 	`CREATE INDEX IF NOT EXISTS idx_orders_user_product_status ON orders(user_id, product_id, status)`,
 	`CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status)`,
 	`CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at DESC)`,
+	`ALTER TABLE orders ADD COLUMN IF NOT EXISTS coupon_code TEXT NOT NULL DEFAULT ''`,
+	`CREATE INDEX IF NOT EXISTS idx_orders_coupon_status ON orders(coupon_id,status) WHERE coupon_id IS NOT NULL`,
 
 	`CREATE TABLE IF NOT EXISTS payments (
 		id                      UUID PRIMARY KEY DEFAULT gen_random_uuid(),

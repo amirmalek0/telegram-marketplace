@@ -27,7 +27,7 @@ func (h *Handler) CreateStarsInvoice(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	result, err := h.service.CreateProductCheckout(c.Request.Context(), telegramID, req.ProductID, "telegram_stars")
+	result, err := h.service.CreateProductCheckout(c.Request.Context(), telegramID, req.ProductID, "telegram_stars", req.CouponCode)
 	if err != nil {
 		h.writeCheckoutError(c, err)
 		return
@@ -47,7 +47,7 @@ func (h *Handler) CreateProductCheckout(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	result, err := h.service.CreateProductCheckout(c.Request.Context(), telegramID, req.ProductID, req.Method)
+	result, err := h.service.CreateProductCheckout(c.Request.Context(), telegramID, req.ProductID, req.Method, req.CouponCode)
 	if err != nil {
 		h.writeCheckoutError(c, err)
 		return
@@ -217,6 +217,11 @@ func (h *Handler) GetWallet(c *gin.Context) {
 }
 
 func (h *Handler) writeCheckoutError(c *gin.Context, err error) {
+	var couponError *CouponError
+	if errors.As(err, &couponError) {
+		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": couponError.Error(), "code": "COUPON_UNAVAILABLE"})
+		return
+	}
 	switch {
 	case errors.Is(err, ErrOutOfStock):
 		c.JSON(http.StatusConflict, gin.H{"error": "موجودی این محصول تمام شده است"})

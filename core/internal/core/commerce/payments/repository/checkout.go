@@ -18,6 +18,7 @@ type CheckoutProduct struct {
 }
 
 type CheckoutRecord struct {
+	Completed                                         bool
 	OrderID, PaymentID, CheckoutReference, DeliveryID string
 	ProductTitle, ProductDescription                  string
 	Stars, WalletBalance                              int64
@@ -246,7 +247,7 @@ func (r *postgresRepository) ReleaseExpiredReservations(ctx context.Context) err
 	return tx.Commit(ctx)
 }
 
-func (r *postgresRepository) CreateProductStarsCheckout(ctx context.Context, telegramID int64, productID, reference string, testMode bool) (*CheckoutRecord, error) {
+func (r *postgresRepository) CreateProductStarsCheckout(ctx context.Context, telegramID int64, productID, reference string, testMode bool, couponCode string) (*CheckoutRecord, error) {
 	tx, err := r.db.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return nil, err
@@ -268,25 +269,42 @@ func (r *postgresRepository) CreateProductStarsCheckout(ctx context.Context, tel
 	if err := verifyPurchaseLimit(ctx, tx, userID, product); err != nil {
 		return nil, err
 	}
+	price, err := priceProduct(ctx, tx, product, couponCode, userID)
+	if err != nil {
+		return nil, err
+	}
+	method := "telegram_stars"
+	if price.Payable == 0 {
+		method = "coupon"
+	}
 	var orderID string
-	if err := tx.QueryRow(ctx, queryCreatePendingOrder, userID, product.ID, float64(product.StarsPrice), "telegram_stars").Scan(&orderID); err != nil {
+	if err := tx.QueryRow(ctx, queryCreatePendingOrder, userID, product.ID, price.Original, method, price.Discount, price.CouponID, price.Code).Scan(&orderID); err != nil {
 		return nil, err
 	}
 	var paymentID string
-	if err := tx.QueryRow(ctx, queryCreateProductStarsPayment, orderID, userID, product.ID, product.StarsPrice, reference, testMode).Scan(&paymentID); err != nil {
-		return nil, err
+	if price.Payable > 0 {
+		if err := tx.QueryRow(ctx, queryCreateProductStarsPayment, orderID, userID, product.ID, price.Payable, reference, testMode).Scan(&paymentID); err != nil {
+			return nil, err
+		}
 	}
 	deliveryID, err := createDeliverySnapshot(ctx, tx, orderID, userID, product)
 	if err != nil {
 		return nil, err
 	}
+	if price.Payable == 0 {
+		for _, step := range []struct{ query, id string }{{queryPayOrder, orderID}, {queryMarkInventorySold, orderID}, {queryMarkDeliveryReady, deliveryID}, {queryConsumeOrderCoupon, orderID}} {
+			if _, err := tx.Exec(ctx, step.query, step.id); err != nil {
+				return nil, err
+			}
+		}
+	}
 	if err := tx.Commit(ctx); err != nil {
 		return nil, err
 	}
-	return &CheckoutRecord{OrderID: orderID, PaymentID: paymentID, CheckoutReference: reference, DeliveryID: deliveryID, ProductTitle: product.Title, ProductDescription: product.Description, Stars: product.StarsPrice}, nil
+	return &CheckoutRecord{OrderID: orderID, PaymentID: paymentID, CheckoutReference: reference, DeliveryID: deliveryID, ProductTitle: product.Title, ProductDescription: product.Description, Stars: price.Payable, Completed: price.Payable == 0, WalletBalance: balance}, nil
 }
 
-func (r *postgresRepository) CreateImmediateProductCheckout(ctx context.Context, telegramID int64, productID, reference string, vipAccess bool) (*CheckoutRecord, error) {
+func (r *postgresRepository) CreateImmediateProductCheckout(ctx context.Context, telegramID int64, productID, reference string, vipAccess bool, couponCode string) (*CheckoutRecord, error) {
 	tx, err := r.db.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return nil, err
@@ -305,14 +323,24 @@ func (r *postgresRepository) CreateImmediateProductCheckout(ctx context.Context,
 	if err := verifyPurchaseLimit(ctx, tx, userID, product); err != nil {
 		return nil, err
 	}
-	charge, method := product.StarsPrice, "wallet"
+	price := productPrice{}
+	if !vipAccess {
+		price, err = priceProduct(ctx, tx, product, couponCode, userID)
+		if err != nil {
+			return nil, err
+		}
+	}
+	charge, method := price.Payable, "wallet"
 	if vipAccess {
 		charge, method = 0, "vip_access"
 	} else if balance < charge {
 		return nil, ErrInsufficientBalance
 	}
 	var orderID string
-	if err := tx.QueryRow(ctx, queryCreatePaidOrder, userID, product.ID, float64(charge), method).Scan(&orderID); err != nil {
+	if !vipAccess && charge == 0 {
+		method = "coupon"
+	}
+	if err := tx.QueryRow(ctx, queryCreatePaidOrder, userID, product.ID, price.Original, method, price.Discount, price.CouponID, price.Code).Scan(&orderID); err != nil {
 		return nil, err
 	}
 	deliveryID, err := createDeliverySnapshot(ctx, tx, orderID, userID, product)
@@ -320,7 +348,7 @@ func (r *postgresRepository) CreateImmediateProductCheckout(ctx context.Context,
 		return nil, err
 	}
 	paymentID := ""
-	if !vipAccess {
+	if !vipAccess && charge > 0 {
 		if err := tx.QueryRow(ctx, queryCreateProductWalletPayment, orderID, userID, product.ID, charge, reference).Scan(&paymentID); err != nil {
 			return nil, err
 		}
@@ -333,6 +361,9 @@ func (r *postgresRepository) CreateImmediateProductCheckout(ctx context.Context,
 		return nil, err
 	}
 	if _, err := tx.Exec(ctx, queryMarkDeliveryReady, deliveryID); err != nil {
+		return nil, err
+	}
+	if _, err := tx.Exec(ctx, queryConsumeOrderCoupon, orderID); err != nil {
 		return nil, err
 	}
 	if err := tx.Commit(ctx); err != nil {
@@ -420,11 +451,18 @@ func (r *postgresRepository) FailCheckout(ctx context.Context, orderID, paymentI
 		return err
 	}
 	defer tx.Rollback(ctx)
+	tag, err := tx.Exec(ctx, queryFailPayment, paymentID, jsonError(reason))
+	if err != nil {
+		return err
+	}
+	// Do not corrupt a settled delivery when a cancellation races settlement.
+	if tag.RowsAffected() != 1 {
+		return ErrInvalidCheckout
+	}
 	steps := []struct {
 		query string
 		args  []any
 	}{
-		{queryFailPayment, []any{paymentID, jsonError(reason)}},
 		{queryFailOrder, []any{orderID}},
 		{queryFailDeliveryByOrder, []any{orderID, reason}},
 		{queryReleaseInventoryByOrder, []any{orderID}},
@@ -497,6 +535,9 @@ func (r *postgresRepository) SettleStarsPayment(ctx context.Context, input Settl
 				return nil, ErrInvalidCheckout
 			}
 			if _, err := tx.Exec(ctx, queryPayOrder, *orderID); err != nil {
+				return nil, err
+			}
+			if _, err := tx.Exec(ctx, queryConsumeOrderCoupon, *orderID); err != nil {
 				return nil, err
 			}
 			if _, err := tx.Exec(ctx, queryMarkInventorySold, *orderID); err != nil {

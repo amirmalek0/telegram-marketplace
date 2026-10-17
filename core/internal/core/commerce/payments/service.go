@@ -25,10 +25,20 @@ type APIExecutor interface {
 // Service owns provider-neutral payment persistence. Telegram Stars invoice
 // creation and update processing will be added on top of this layer.
 type Service struct {
+	referrals   interface{ Check(context.Context, int64) }
 	repo        paymentsrepo.Repository
 	invoices    InvoiceCreator
 	apiExecutor APIExecutor
 	fileStorage storage.Storage
+}
+
+func (s *Service) SetReferralRewards(rewards interface{ Check(context.Context, int64) }) {
+	s.referrals = rewards
+}
+func (s *Service) checkReferral(ctx context.Context, tg int64) {
+	if s.referrals != nil {
+		s.referrals.Check(ctx, tg)
+	}
 }
 
 // NewService constructs the payment service.
@@ -63,22 +73,23 @@ func (s *Service) ListByOrderID(ctx context.Context, orderID string) ([]*model.P
 // ListStars returns only the currently enabled Telegram Stars payments. The
 // repository remains method-aware so future processors can expose dedicated
 // administration endpoints without mixing provider semantics.
-func (s *Service) ListStars(ctx context.Context, params pagination.Params) (*PaginatedResponse, error) {
-	payments, err := s.repo.ListByMethod(ctx, model.MethodTelegramStars, params.PerPage, params.Offset())
+func (s *Service) ListStars(ctx context.Context, params pagination.Params) (*AdminPaginatedResponse, error) {
+	payments, err := s.repo.ListAdminByMethod(ctx, model.MethodTelegramStars, params.PerPage, params.Offset())
 	if err != nil {
 		return nil, fmt.Errorf("payments.service.ListStars: %w", err)
 	}
 
-	total, err := s.repo.CountByMethod(ctx, model.MethodTelegramStars)
+	summary, err := s.repo.AdminSummary(ctx, model.MethodTelegramStars)
 	if err != nil {
 		return nil, fmt.Errorf("payments.service.ListStars count: %w", err)
 	}
 
-	data := make([]Response, 0, len(payments))
+	data := make([]AdminResponse, 0, len(payments))
 	for _, payment := range payments {
-		data = append(data, toResponse(payment))
+		data = append(data, AdminResponse{Response: toResponse(&payment.Payment), User: payment.User,
+			TargetTitle: payment.TargetTitle, ProductID: payment.ProductID, Quantity: payment.Quantity,
+			CouponCode: payment.CouponCode, DiscountStars: payment.DiscountStars})
 	}
 
-	result := pagination.NewResponse(data, total, params)
-	return &result, nil
+	return &AdminPaginatedResponse{Response: pagination.NewResponse(data, summary.Total, params), Summary: summary}, nil
 }

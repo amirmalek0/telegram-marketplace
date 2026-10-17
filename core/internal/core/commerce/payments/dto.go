@@ -7,12 +7,14 @@ import (
 )
 
 type CreateStarsInvoiceRequest struct {
-	ProductID string `json:"product_id" binding:"required,uuid"`
+	ProductID  string `json:"product_id" binding:"required,uuid"`
+	CouponCode string `json:"coupon_code" binding:"max=64"`
 }
 
 type CreateProductCheckoutRequest struct {
-	ProductID string `json:"product_id" binding:"required,uuid"`
-	Method    string `json:"method" binding:"required,oneof=telegram_stars wallet"`
+	ProductID  string `json:"product_id" binding:"required,uuid"`
+	CouponCode string `json:"coupon_code" binding:"max=64"`
+	Method     string `json:"method" binding:"required,oneof=telegram_stars wallet"`
 }
 
 type CreateVIPCheckoutRequest struct {
@@ -113,6 +115,8 @@ type CreateWalletTopupPackRequest struct {
 type UpdateWalletTopupPackRequest = CreateWalletTopupPackRequest
 
 type AdminWalletResponse struct {
+	PhotoURL         string     `json:"photo_url"`
+	PhoneNumber      string     `json:"phone_number"`
 	UserID           string     `json:"user_id"`
 	FirstName        string     `json:"first_name"`
 	LastName         string     `json:"last_name"`
@@ -184,6 +188,21 @@ type Response struct {
 
 // PaginatedResponse is a paginated list of payment responses.
 type PaginatedResponse = pagination.Response[Response]
+
+type AdminResponse struct {
+	Response
+	User          *model.Payer `json:"user"`
+	TargetTitle   string       `json:"target_title"`
+	ProductID     *string      `json:"product_id,omitempty"`
+	Quantity      int          `json:"quantity"`
+	CouponCode    string       `json:"coupon_code,omitempty"`
+	DiscountStars int64        `json:"discount_stars"`
+}
+
+type AdminPaginatedResponse struct {
+	pagination.Response[AdminResponse]
+	Summary *model.Summary `json:"summary"`
+}
 
 // toResponse converts a model.Payment to a Response.
 func toResponse(p *model.Payment) Response {

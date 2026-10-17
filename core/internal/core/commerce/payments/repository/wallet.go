@@ -32,6 +32,8 @@ type Wallet struct {
 	Transactions []WalletTransaction
 }
 type AdminWallet struct {
+	PhotoURL         string
+	PhoneNumber      string
 	UserID           string
 	FirstName        string
 	LastName         string
@@ -118,7 +120,7 @@ func (r *postgresRepository) GetActiveWalletTopupPack(ctx context.Context, id st
 }
 
 func scanAdminWallet(row pgx.Row, item *AdminWallet) error {
-	return row.Scan(&item.UserID, &item.FirstName, &item.LastName, &item.Username, &item.TelegramID, &item.Balance, &item.HasActivePlan, &item.PlanExpireAt, &item.TransactionCount)
+	return row.Scan(&item.UserID, &item.FirstName, &item.LastName, &item.Username, &item.TelegramID, &item.Balance, &item.HasActivePlan, &item.PlanExpireAt, &item.TransactionCount, &item.PhotoURL, &item.PhoneNumber)
 }
 func scanWalletTransactions(rows pgx.Rows) ([]WalletTransaction, error) {
 	items := []WalletTransaction{}

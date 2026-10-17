@@ -43,8 +43,16 @@ type Coupon struct {
 	ExpiresAt     *time.Time   `db:"expires_at" json:"expires_at,omitempty"`
 	IsActive      bool         `db:"is_active" json:"is_active"`
 	ProductIDs    []string     `db:"product_ids" json:"product_ids"`
+	UserIDs       []string     `db:"user_ids" json:"user_ids"`
 	CreatedAt     time.Time    `db:"created_at" json:"created_at"`
 	UpdatedAt     time.Time    `db:"updated_at" json:"updated_at"`
+}
+
+// Summary counts coupons across the entire catalog, not just a list page.
+type Summary struct {
+	Active  int64 `json:"active"`
+	Expired int64 `json:"expired"`
+	Total   int64 `json:"total"`
 }
 
 // AppliesToProduct checks if the coupon applies to a specific product.
@@ -62,25 +70,42 @@ func (c *Coupon) AppliesToProduct(productID string) bool {
 }
 
 // ErrCouponInactive is returned when the coupon is not active.
-var ErrCouponInactive = errors.New("coupon is not active")
+var ErrCouponInactive = errors.New("این کد تخفیف غیرفعال است")
 
 // ErrCouponExpired is returned when the coupon has expired.
-var ErrCouponExpired = errors.New("coupon has expired")
+var ErrCouponExpired = errors.New("مهلت این کد تخفیف تمام شده است")
 
 // ErrCouponUsageLimit is returned when the coupon usage limit has been reached.
-var ErrCouponUsageLimit = errors.New("coupon usage limit reached")
+var ErrCouponUsageLimit = errors.New("ظرفیت استفاده از این کد تخفیف تمام شده است")
 
 // ErrCouponProductNotApplicable is returned when the coupon does not apply to the specified product.
-var ErrCouponProductNotApplicable = errors.New("coupon does not apply to this product")
+var ErrCouponProductNotApplicable = errors.New("این کد تخفیف برای این محصول نیست")
+
+var ErrCouponUserNotApplicable = errors.New("این کد تخفیف برای حساب شما قابل استفاده نیست")
+
+func (c *Coupon) AppliesToUser(userID string) bool {
+	if len(c.UserIDs) == 0 {
+		return true
+	}
+	for _, id := range c.UserIDs {
+		if id == userID {
+			return true
+		}
+	}
+	return false
+}
 
 // Validate checks whether the coupon is usable. If productID is non-empty,
 // it also verifies the coupon applies to that product.
 // Returns a descriptive error on failure, or nil if the coupon is valid.
-func (c *Coupon) Validate(productID string) error {
+func (c *Coupon) Validate(productID, userID string) error {
+	if !c.AppliesToUser(userID) {
+		return ErrCouponUserNotApplicable
+	}
 	if !c.IsActive {
 		return ErrCouponInactive
 	}
-	if c.ExpiresAt != nil && c.ExpiresAt.Before(time.Now()) {
+	if c.ExpiresAt != nil && !c.ExpiresAt.After(time.Now()) {
 		return ErrCouponExpired
 	}
 	if c.UsageLimit > 0 && c.UsageCount >= c.UsageLimit {
@@ -119,6 +144,7 @@ func NewCoupon(code string, discountType DiscountType, discountValue float64, us
 		ExpiresAt:     expiresAt,
 		IsActive:      true,
 		ProductIDs:    productIDs,
+		UserIDs:       []string{},
 		CreatedAt:     now,
 		UpdatedAt:     now,
 	}
@@ -133,6 +159,7 @@ type CouponUpdate struct {
 	ExpiresAt     *time.Time
 	IsActive      *bool
 	ProductIDs    *[]string
+	UserIDs       *[]string
 }
 
 // ApplyUpdates applies non-nil fields from the update to the coupon and sets UpdatedAt.
@@ -157,6 +184,9 @@ func (c *Coupon) ApplyUpdates(u CouponUpdate) {
 	}
 	if u.ProductIDs != nil {
 		c.ProductIDs = *u.ProductIDs
+	}
+	if u.UserIDs != nil {
+		c.UserIDs = *u.UserIDs
 	}
 	c.UpdatedAt = time.Now()
 }

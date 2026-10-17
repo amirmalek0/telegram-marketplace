@@ -91,22 +91,21 @@ func (s *Service) ListByTelegramID(ctx context.Context, telegramID int64, params
 }
 
 // ListAll returns a paginated list of all orders (admin).
-func (s *Service) ListAll(ctx context.Context, params pagination.Params) (*PaginatedResponse, error) {
+func (s *Service) ListAll(ctx context.Context, params pagination.Params) (*AdminPaginatedResponse, error) {
 	orders, err := s.repo.ListAll(ctx, params.PerPage, params.Offset())
 	if err != nil {
 		return nil, fmt.Errorf("orders.service.ListAll: %w", err)
 	}
 
-	total, err := s.repo.CountAll(ctx)
+	summary, err := s.repo.Summary(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("orders.service.ListAll count: %w", err)
 	}
 
-	data := make([]Response, 0, len(orders))
+	data := make([]AdminResponse, 0, len(orders))
 	for _, o := range orders {
-		data = append(data, toResponse(o))
+		data = append(data, AdminResponse{Response: toResponse(&o.Order), User: o.User})
 	}
 
-	result := pagination.NewResponse(data, total, params)
-	return &result, nil
+	return &AdminPaginatedResponse{Response: pagination.NewResponse(data, summary.Total, params), Summary: summary}, nil
 }

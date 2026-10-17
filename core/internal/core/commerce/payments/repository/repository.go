@@ -27,6 +27,8 @@ var ErrInvalidCheckout = errors.New("checkout is no longer valid")
 
 // Repository defines the data-access contract for the payments domain.
 type Repository interface {
+	ListAdminByMethod(ctx context.Context, method model.PaymentMethod, limit, offset int) ([]model.AdminPayment, error)
+	AdminSummary(ctx context.Context, method model.PaymentMethod) (*model.Summary, error)
 	Create(ctx context.Context, p *model.Payment) error
 	GetByID(ctx context.Context, id string) (*model.Payment, error)
 	GetByCheckoutReference(ctx context.Context, reference string) (*model.Payment, error)
@@ -53,8 +55,8 @@ type Repository interface {
 	UpdatePaymentConfig(ctx context.Context, settingsID string, testMode bool) (*PaymentConfig, error)
 	ListDeliveries(ctx context.Context, telegramID int64, productID string) ([]Delivery, error)
 	ProductAccess(ctx context.Context, telegramID int64, productID string) (vipOnly bool, activeVIP bool, err error)
-	CreateProductStarsCheckout(ctx context.Context, telegramID int64, productID, checkoutReference string, testMode bool) (*CheckoutRecord, error)
-	CreateImmediateProductCheckout(ctx context.Context, telegramID int64, productID, checkoutReference string, vipAccess bool) (*CheckoutRecord, error)
+	CreateProductStarsCheckout(ctx context.Context, telegramID int64, productID, checkoutReference string, testMode bool, couponCode string) (*CheckoutRecord, error)
+	CreateImmediateProductCheckout(ctx context.Context, telegramID int64, productID, checkoutReference string, vipAccess bool, couponCode string) (*CheckoutRecord, error)
 	CreateVIPWalletCheckout(ctx context.Context, input VIPWalletCheckoutInput) (*CheckoutRecord, error)
 	CreateStandalonePayment(ctx context.Context, input StandalonePaymentInput) (*CheckoutRecord, error)
 	GetTestPayment(ctx context.Context, telegramID int64, paymentID string) (*TestPayment, error)

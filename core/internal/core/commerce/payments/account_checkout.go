@@ -13,7 +13,7 @@ import (
 
 // CreateProductCheckout selects free VIP access, wallet settlement, or a
 // Telegram Stars invoice while leaving persistence to the repository.
-func (s *Service) CreateProductCheckout(ctx context.Context, telegramID int64, productID, method string) (*CreateStarsInvoiceResponse, error) {
+func (s *Service) CreateProductCheckout(ctx context.Context, telegramID int64, productID, method, couponCode string) (*CreateStarsInvoiceResponse, error) {
 	if method != string(paymentsmodel.MethodTelegramStars) && method != string(paymentsmodel.MethodWallet) {
 		return nil, ErrInvalidCheckout
 	}
@@ -22,25 +22,26 @@ func (s *Service) CreateProductCheckout(ctx context.Context, telegramID int64, p
 		return nil, ErrCheckoutUnavailable
 	}
 	if vipOnly && activeVIP {
-		return s.createImmediateProductCheckout(ctx, telegramID, productID, true)
+		return s.createImmediateProductCheckout(ctx, telegramID, productID, true, "")
 	}
 	if method == string(paymentsmodel.MethodWallet) {
-		return s.createImmediateProductCheckout(ctx, telegramID, productID, false)
+		return s.createImmediateProductCheckout(ctx, telegramID, productID, false, couponCode)
 	}
-	return s.CreateStarsInvoice(ctx, telegramID, productID)
+	return s.CreateStarsInvoice(ctx, telegramID, productID, couponCode)
 }
 
-func (s *Service) createImmediateProductCheckout(ctx context.Context, telegramID int64, productID string, vipAccess bool) (*CreateStarsInvoiceResponse, error) {
+func (s *Service) createImmediateProductCheckout(ctx context.Context, telegramID int64, productID string, vipAccess bool, couponCode string) (*CreateStarsInvoiceResponse, error) {
 	if err := s.repo.ReleaseExpiredReservations(ctx); err != nil {
 		return nil, err
 	}
-	record, err := s.repo.CreateImmediateProductCheckout(ctx, telegramID, productID, "wallet:"+uuid.NewString(), vipAccess)
+	record, err := s.repo.CreateImmediateProductCheckout(ctx, telegramID, productID, "wallet:"+uuid.NewString(), vipAccess, couponCode)
 	if err != nil {
 		return nil, err
 	}
 	// The purchase is already settled. API delivery persists its own failure so
 	// the client must not retry and accidentally create another paid order.
 	_ = s.fulfillAPIDelivery(ctx, record.DeliveryID)
+	s.checkReferral(ctx, telegramID)
 	return &CreateStarsInvoiceResponse{
 		OrderID: record.OrderID, PaymentID: record.PaymentID, Stars: record.Stars,
 		Completed: true, Purpose: "product", WalletBalance: record.WalletBalance,
@@ -78,6 +79,7 @@ func (s *Service) CreateVIPCheckout(ctx context.Context, telegramID int64, planI
 	if err != nil {
 		return nil, err
 	}
+	s.checkReferral(ctx, telegramID)
 	return &CreateStarsInvoiceResponse{
 		PaymentID: record.PaymentID, Stars: record.Stars, Completed: true,
 		Purpose: "vip_plan", WalletBalance: record.WalletBalance,

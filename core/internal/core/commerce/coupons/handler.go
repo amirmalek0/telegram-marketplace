@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"telegram-marketplace/internal/app/middleware"
 	"telegram-marketplace/internal/core/commerce/coupons/repository"
 	"telegram-marketplace/pkg/pagination"
 )
@@ -107,13 +108,18 @@ func (h *Handler) Delete(c *gin.Context) {
 
 // Validate validates a coupon code (telegram users).
 func (h *Handler) Validate(c *gin.Context) {
+	telegramID, ok := middleware.GetTelegramUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "telegram authentication required"})
+		return
+	}
 	var req ValidateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	result, err := h.service.Validate(c.Request.Context(), req)
+	result, err := h.service.Validate(c.Request.Context(), telegramID, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

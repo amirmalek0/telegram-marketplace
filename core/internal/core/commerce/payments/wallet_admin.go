@@ -18,7 +18,7 @@ func walletTransactionResponse(item paymentsrepo.WalletTransaction) WalletTransa
 	return WalletTransactionResponse{ID: item.ID, Type: item.Type, Amount: item.Amount, BalanceBefore: item.BalanceBefore, BalanceAfter: item.BalanceAfter, Description: item.Description, CreatedAt: item.CreatedAt}
 }
 func adminWalletResponse(item paymentsrepo.AdminWallet) AdminWalletResponse {
-	return AdminWalletResponse{UserID: item.UserID, FirstName: item.FirstName, LastName: item.LastName, Username: item.Username, TelegramID: item.TelegramID, Balance: item.Balance, HasActivePlan: item.HasActivePlan, PlanExpireAt: item.PlanExpireAt, TransactionCount: item.TransactionCount}
+	return AdminWalletResponse{PhotoURL: item.PhotoURL, PhoneNumber: item.PhoneNumber, UserID: item.UserID, FirstName: item.FirstName, LastName: item.LastName, Username: item.Username, TelegramID: item.TelegramID, Balance: item.Balance, HasActivePlan: item.HasActivePlan, PlanExpireAt: item.PlanExpireAt, TransactionCount: item.TransactionCount}
 }
 func adminWalletDetailResponse(item *paymentsrepo.AdminWalletDetail) *AdminWalletDetailResponse {
 	result := &AdminWalletDetailResponse{Wallet: adminWalletResponse(item.Wallet), Transactions: make([]WalletTransactionResponse, 0, len(item.Transactions))}

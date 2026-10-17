@@ -15,6 +15,9 @@ type Response struct {
 	ProductID         string     `json:"product_id"`
 	Quantity          int        `json:"quantity"`
 	Stars             int64      `json:"stars"`
+	OriginalStars     int64      `json:"original_stars"`
+	DiscountStars     int64      `json:"discount_stars"`
+	CouponCode        string     `json:"coupon_code,omitempty"`
 	ProductTitle      string     `json:"product_title"`
 	DeliveryStatus    string     `json:"delivery_status,omitempty"`
 	DeliveryItemCount int        `json:"delivery_item_count"`
@@ -27,6 +30,16 @@ type Response struct {
 // PaginatedResponse is a paginated list of order responses.
 type PaginatedResponse = pagination.Response[Response]
 
+type AdminResponse struct {
+	Response
+	User *model.Buyer `json:"user"`
+}
+
+type AdminPaginatedResponse struct {
+	pagination.Response[AdminResponse]
+	Summary model.Summary `json:"summary"`
+}
+
 // toResponse converts a model.Order to a Response.
 func toResponse(o *model.Order) Response {
 	return Response{
@@ -35,6 +48,9 @@ func toResponse(o *model.Order) Response {
 		ProductID:         o.ProductID,
 		Quantity:          o.Quantity,
 		Stars:             o.Stars,
+		OriginalStars:     int64(o.Amount),
+		DiscountStars:     int64(o.DiscountAmount),
+		CouponCode:        o.CouponCode,
 		ProductTitle:      o.ProductTitle,
 		DeliveryStatus:    o.DeliveryStatus,
 		DeliveryItemCount: o.DeliveryItems,

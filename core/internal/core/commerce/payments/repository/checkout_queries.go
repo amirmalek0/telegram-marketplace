@@ -6,8 +6,8 @@ const (
 	queryLockCheckoutUser            = `SELECT id,is_banned,wallet_balance,(has_active_plan AND plan_expire_at>now()) FROM users WHERE telegram_id=$1 FOR UPDATE`
 	queryGetCheckoutProduct          = `SELECT id,title,description,stars_price,delivery_type,file_id,message_id,inventory_id,bundle_id,api_id,vip_only,repurchasable FROM products WHERE id=$1 AND status='active' FOR SHARE`
 	queryAlreadyPurchased            = `SELECT EXISTS(SELECT 1 FROM orders WHERE user_id=$1 AND product_id=$2 AND status IN ('pending','paid'))`
-	queryCreatePendingOrder          = `INSERT INTO orders (user_id,product_id,quantity,amount,discount_amount,payment_method,status,created_at,updated_at) VALUES ($1,$2,1,$3,0,$4,'pending',now(),now()) RETURNING id`
-	queryCreatePaidOrder             = `INSERT INTO orders (user_id,product_id,quantity,amount,discount_amount,payment_method,status,paid_at,created_at,updated_at) VALUES ($1,$2,1,$3,0,$4,'paid',now(),now(),now()) RETURNING id`
+	queryCreatePendingOrder          = `INSERT INTO orders (user_id,product_id,quantity,amount,discount_amount,payment_method,coupon_id,coupon_code,status,created_at,updated_at) VALUES ($1,$2,1,$3,$5,$4,$6,$7,'pending',now(),now()) RETURNING id`
+	queryCreatePaidOrder             = `INSERT INTO orders (user_id,product_id,quantity,amount,discount_amount,payment_method,coupon_id,coupon_code,status,paid_at,created_at,updated_at) VALUES ($1,$2,1,$3,$5,$4,$6,$7,'paid',now(),now(),now()) RETURNING id`
 	queryCreateProductStarsPayment   = `INSERT INTO payments (order_id,user_id,purpose,target_id,method,currency,amount_minor,checkout_reference,is_test,status,created_at,updated_at) VALUES ($1,$2,'product',$3,'telegram_stars','XTR',$4,$5,$6,'pending',now(),now()) RETURNING id`
 	queryCreateProductWalletPayment  = `INSERT INTO payments (order_id,user_id,purpose,target_id,method,currency,amount_minor,checkout_reference,is_test,status,paid_at,created_at,updated_at) VALUES ($1,$2,'product',$3,'wallet','XTR',$4,$5,false,'succeeded',now(),now(),now()) RETURNING id`
 	queryCreateDelivery              = `INSERT INTO order_deliveries (order_id,user_id,product_id,product_title) VALUES ($1,$2,$3,$4) RETURNING id`

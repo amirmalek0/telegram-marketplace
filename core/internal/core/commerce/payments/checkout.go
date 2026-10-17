@@ -20,9 +20,11 @@ var (
 	ErrInvalidCheckout     = paymentsrepo.ErrInvalidCheckout
 )
 
+type CouponError = paymentsrepo.CouponError
+
 // CreateStarsInvoice creates the pending checkout atomically in the repository,
 // then asks Telegram for the invoice URL.
-func (s *Service) CreateStarsInvoice(ctx context.Context, telegramID int64, productID string) (*CreateStarsInvoiceResponse, error) {
+func (s *Service) CreateStarsInvoice(ctx context.Context, telegramID int64, productID, couponCode string) (*CreateStarsInvoiceResponse, error) {
 	if s.invoices == nil {
 		return nil, errors.New("stars checkout is not configured")
 	}
@@ -33,9 +35,13 @@ func (s *Service) CreateStarsInvoice(ctx context.Context, telegramID int64, prod
 	if err != nil {
 		return nil, err
 	}
-	record, err := s.repo.CreateProductStarsCheckout(ctx, telegramID, productID, uuid.NewString(), config.TestMode)
+	record, err := s.repo.CreateProductStarsCheckout(ctx, telegramID, productID, uuid.NewString(), config.TestMode, couponCode)
 	if err != nil {
 		return nil, err
+	}
+	if record.Completed {
+		_ = s.fulfillAPIDelivery(ctx, record.DeliveryID)
+		return &CreateStarsInvoiceResponse{OrderID: record.OrderID, Completed: true, Purpose: "product", WalletBalance: record.WalletBalance}, nil
 	}
 	if config.TestMode {
 		return &CreateStarsInvoiceResponse{
@@ -161,6 +167,7 @@ func (s *Service) SettleStarsPayment(ctx context.Context, input SuccessfulPaymen
 	if err != nil {
 		return "", err
 	}
+	s.checkReferral(ctx, input.TelegramID)
 	if result.DeliveryID != "" {
 		if err := s.fulfillAPIDelivery(ctx, result.DeliveryID); err != nil {
 			return result.ReferenceID, err
