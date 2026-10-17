@@ -17,16 +17,20 @@ import (
 
 // Service holds the business logic for the apis domain.
 type Service struct {
-	repo repository.Repository
+	repo       repository.Repository
+	httpClient *http.Client
 }
 
 // NewService constructs a Service with the given Repository.
 func NewService(repo repository.Repository) *Service {
-	return &Service{repo: repo}
+	return &Service{repo: repo, httpClient: safeHTTPClient()}
 }
 
 // Create stores a new API configuration with headers.
 func (s *Service) Create(ctx context.Context, req CreateRequest) (*model.API, error) {
+	if err := validateEndpoint(req.URL); err != nil {
+		return nil, err
+	}
 	// Convert HeaderInput to model.Header
 	headers := make([]model.Header, 0, len(req.Headers))
 	for _, h := range req.Headers {
@@ -94,6 +98,9 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) (*mo
 		api.Name = *req.Name
 	}
 	if req.URL != nil {
+		if err := validateEndpoint(*req.URL); err != nil {
+			return nil, err
+		}
 		api.URL = *req.URL
 	}
 	if req.Method != nil {
@@ -135,12 +142,21 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 
 // ExecuteAPICall executes the configured API call and extracts the value using JSONPath.
 func (s *Service) ExecuteAPICall(ctx context.Context, apiID string) (string, error) {
+	return s.ExecuteAPICallIdempotent(ctx, apiID, "")
+}
+
+// Providers must honor this stable key to guarantee exactly-once effects
+// across network timeouts or process crashes.
+func (s *Service) ExecuteAPICallIdempotent(ctx context.Context, apiID, key string) (string, error) {
 	// Get API configuration
 	api, err := s.repo.GetByID(ctx, apiID)
 	if err != nil {
 		return "", fmt.Errorf("apis.service.ExecuteAPICall: %w", err)
 	}
 
+	if err := validateEndpoint(api.URL); err != nil {
+		return "", err
+	}
 	// Build HTTP request
 	var bodyReader io.Reader
 	if api.Body != nil && *api.Body != "" {
@@ -156,24 +172,30 @@ func (s *Service) ExecuteAPICall(ctx context.Context, apiID string) (string, err
 	for _, h := range api.Headers {
 		req.Header.Set(h.Key, h.Value)
 	}
+	if key != "" {
+		req.Header.Set("Idempotency-Key", key)
+	}
 
 	// Execute request
-	client := &http.Client{Timeout: 30 * time.Second}
+	client := s.httpClient
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("apis.service.ExecuteAPICall: request failed: %w", err)
+		return "", fmt.Errorf("API delivery request failed")
 	}
 	defer resp.Body.Close()
 
 	// Read response body
-	respBody, err := io.ReadAll(resp.Body)
+	respBody, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseBytes+1))
 	if err != nil {
 		return "", fmt.Errorf("apis.service.ExecuteAPICall: failed to read response: %w", err)
+	}
+	if len(respBody) > maxResponseBytes {
+		return "", fmt.Errorf("API delivery response exceeds size limit")
 	}
 
 	// Check status code
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return "", fmt.Errorf("apis.service.ExecuteAPICall: API returned status %d: %s", resp.StatusCode, string(respBody))
+		return "", fmt.Errorf("API delivery returned status %d", resp.StatusCode)
 	}
 
 	// If no response_path is configured, return the raw response
