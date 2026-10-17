@@ -71,6 +71,9 @@ type Repository interface {
 	FailAPIDeliveryItem(ctx context.Context, deliveryID, itemID, reason string) error
 	CompleteAPIDeliveryItem(ctx context.Context, itemID, content string) error
 	CompleteAPIDelivery(ctx context.Context, deliveryID string) error
+	PendingAPIDeliveries(ctx context.Context) ([]string, error)
+	RecordRefund(context.Context, string, string, int64) error
+	PrepareRefund(context.Context, string, string, int64) error
 }
 
 // postgresRepository is the Postgres implementation of Repository.

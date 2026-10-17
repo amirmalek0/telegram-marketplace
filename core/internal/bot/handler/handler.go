@@ -13,6 +13,7 @@ import (
 
 	"telegram-marketplace/internal/app/config"
 	"telegram-marketplace/internal/app/router"
+	botrepo "telegram-marketplace/internal/bot/repository"
 	"telegram-marketplace/internal/core/commerce/payments"
 	"telegram-marketplace/internal/core/membership/users"
 	telegramclient "telegram-marketplace/internal/platform/telegram"
@@ -25,20 +26,26 @@ type Handler struct {
 	telegram      *telegramclient.Client
 	services      router.Handlers
 	webhookSecret string
+	queue         botrepo.Queue
 }
 
-func New(cfg config.Config, services router.Handlers) *Handler {
-	return &Handler{
+func New(cfg config.Config, services router.Handlers, queues ...botrepo.Queue) *Handler {
+	h := &Handler{
 		telegram:      telegramclient.NewClient(cfg.BotToken),
 		services:      services,
 		webhookSecret: cfg.WebhookSecret,
 	}
+	if len(queues) > 0 {
+		h.queue = queues[0]
+	}
+	return h
 }
 
 // StartPolling consumes Telegram payment updates without advancing the offset
 // until an update is processed successfully.
 func (h *Handler) StartPolling() error {
 	ctx := context.Background()
+	go h.retryFailedUpdates(ctx)
 	if err := h.telegram.DeleteWebhook(ctx, false); err != nil {
 		return fmt.Errorf("delete telegram webhook: %w", err)
 	}
@@ -54,10 +61,10 @@ func (h *Handler) StartPolling() error {
 			continue
 		}
 		for _, update := range updates {
-			if err := h.processUpdate(ctx, update); err != nil {
+			if err := h.handleUpdate(ctx, update); err != nil {
 				log.Printf("telegram update %d: %v", update.UpdateID, err)
 				time.Sleep(2 * time.Second)
-				break
+				break // Never acknowledge an update before it is durable.
 			}
 			offset = update.UpdateID + 1
 		}
@@ -78,6 +85,7 @@ func (h *Handler) StartWebhook(addr, webhookURL string) error {
 	}
 	workerCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+	go h.retryFailedUpdates(workerCtx)
 	if h.services.ReferralsService != nil {
 		go h.services.ReferralsService.Run(workerCtx)
 	}
@@ -96,11 +104,12 @@ func (h *Handler) StartWebhook(addr, webhookURL string) error {
 			}
 		}
 		var update telegramclient.Update
+		r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
 		if err := json.NewDecoder(r.Body).Decode(&update); err != nil {
 			http.Error(w, "invalid update", http.StatusBadRequest)
 			return
 		}
-		if err := h.processUpdate(r.Context(), update); err != nil {
+		if err := h.handleUpdate(r.Context(), update); err != nil {
 			log.Printf("telegram webhook update %d: %v", update.UpdateID, err)
 			http.Error(w, "processing failed", http.StatusInternalServerError)
 			return
@@ -175,6 +184,21 @@ func (h *Handler) processUpdate(ctx context.Context, update telegramclient.Updat
 		Raw:              raw,
 	})
 	if err != nil {
+		if errors.Is(err, payments.ErrInvalidCheckout) {
+			// A verified successful_payment is financial evidence, even when its
+			// old checkout has expired. Refund rather than silently discard it.
+			if prepareErr := h.services.PaymentsService.PrepareRefund(ctx, paid.InvoicePayload, paid.TelegramPaymentChargeID, telegramID); prepareErr != nil {
+				return prepareErr
+			}
+			if refundErr := h.telegram.RefundStarPayment(ctx, telegramID, paid.TelegramPaymentChargeID); refundErr != nil {
+				return refundErr
+			}
+			if recordErr := h.services.PaymentsService.RecordRefund(ctx, paid.InvoicePayload, paid.TelegramPaymentChargeID, telegramID); recordErr != nil {
+				return recordErr
+			}
+			_ = h.telegram.SendMessage(ctx, message.Chat.ID, "این سفارش قابل تکمیل نبود؛ مبلغ پرداخت به حساب تلگرام شما بازگردانده شد.")
+			return nil
+		}
 		return err
 	}
 	if err := h.telegram.SendMessage(ctx, message.Chat.ID, "پرداخت شما با موفقیت انجام شد ✅\nحساب شما در مینی‌اپ به‌روزرسانی شده است."); err != nil {

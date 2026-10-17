@@ -19,7 +19,7 @@ type InvoiceCreator interface {
 
 // APIExecutor performs configured API-based product delivery.
 type APIExecutor interface {
-	ExecuteAPICall(ctx context.Context, apiID string) (string, error)
+	ExecuteAPICallIdempotent(ctx context.Context, apiID, idempotencyKey string) (string, error)
 }
 
 // Service owns provider-neutral payment persistence. Telegram Stars invoice

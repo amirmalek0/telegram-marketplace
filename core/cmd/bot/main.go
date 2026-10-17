@@ -8,6 +8,7 @@ import (
 	"telegram-marketplace/internal/app/database"
 	"telegram-marketplace/internal/app/dependencies"
 	"telegram-marketplace/internal/bot/handler"
+	botrepo "telegram-marketplace/internal/bot/repository"
 )
 
 func main() {
@@ -19,7 +20,7 @@ func main() {
 	database.Migrate(ctx, db)
 
 	services := dependencies.Wire(ctx, db, cfg)
-	botHandler := handler.New(cfg, services)
+	botHandler := handler.New(cfg, services, botrepo.New(db))
 
 	if cfg.WebhookURL != "" {
 		log.Printf("Starting bot with webhook: %s", cfg.WebhookURL)

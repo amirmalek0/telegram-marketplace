@@ -24,6 +24,7 @@ func Start(cfg config.Config) {
 
 	handlers := dependencies.Wire(ctx, db, cfg)
 	go handlers.UserPhotosService.Run(ctx)
+	go handlers.PaymentsService.Run(ctx)
 	r := router.New(cfg.BotToken, cfg.CORSAllowedOrigins, handlers)
 	server.Run(cfg.Addr, r)
 }

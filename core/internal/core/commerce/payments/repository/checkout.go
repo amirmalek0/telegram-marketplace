@@ -213,7 +213,10 @@ func activateVIP(ctx context.Context, tx pgx.Tx, userID, planID, paymentID, meth
 	var duration int
 	var stars int64
 	var upgrade bool
-	if err := tx.QueryRow(ctx, queryGetActivationData, paymentID).Scan(&title, &duration, &stars, &upgrade); err != nil || duration <= 0 {
+	if err := tx.QueryRow(ctx, queryGetActivationData, paymentID).Scan(&title, &duration, &stars, &upgrade); err != nil {
+		return err
+	}
+	if duration <= 0 {
 		return ErrInvalidCheckout
 	}
 	var startsAt, expiresAt time.Time
@@ -239,6 +242,9 @@ func (r *postgresRepository) ReleaseExpiredReservations(ctx context.Context) err
 		return err
 	}
 	defer tx.Rollback(ctx)
+	if _, err = tx.Exec(ctx, queryLockCheckoutLifecycle); err != nil {
+		return err
+	}
 	for _, query := range []string{queryExpireOrders, queryExpireDeliveries, queryExpireInventory, queryExpirePayments} {
 		if _, err = tx.Exec(ctx, query); err != nil {
 			return err
@@ -489,19 +495,30 @@ func (r *postgresRepository) DeliveryOutcome(ctx context.Context, orderID string
 	if message == nil {
 		return status, ""
 	}
-	return status, *message
+	return status, "تحویل موقتاً ناموفق بود؛ دوباره تلاش می‌شود."
 }
 
 func (r *postgresRepository) ValidatePreCheckout(ctx context.Context, telegramID int64, payload, currency string, amount int64) error {
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+	if _, err = tx.Exec(ctx, queryLockCheckoutLifecycle); err != nil {
+		return err
+	}
 	var storedCurrency, status, purpose string
 	var orderStatus *string
 	var storedAmount, owner int64
-	err := r.db.QueryRow(ctx, queryValidatePreCheckout, payload).Scan(&storedCurrency, &storedAmount, &status, &orderStatus, &owner, &purpose)
+	err = tx.QueryRow(ctx, queryValidatePreCheckout, payload).Scan(&storedCurrency, &storedAmount, &status, &orderStatus, &owner, &purpose)
 	invalidProduct := purpose == "product" && (orderStatus == nil || *orderStatus != "pending")
 	if err != nil || status != "pending" || invalidProduct || owner != telegramID || storedCurrency != currency || storedAmount != amount {
 		return ErrInvalidCheckout
 	}
-	return nil
+	if _, err = tx.Exec(ctx, queryAcceptPreCheckout, payload); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
 }
 
 func (r *postgresRepository) SettleStarsPayment(ctx context.Context, input SettlementInput) (*SettlementResult, error) {
@@ -510,18 +527,43 @@ func (r *postgresRepository) SettleStarsPayment(ctx context.Context, input Settl
 		return nil, err
 	}
 	defer tx.Rollback(ctx)
+	if _, err = tx.Exec(ctx, queryLockCheckoutLifecycle); err != nil {
+		return nil, err
+	}
 	var paymentID, userID, purpose, currency, status string
+	var refundIntended bool
+	if !strings.HasPrefix(input.TelegramChargeID, "test:") {
+		if err := tx.QueryRow(ctx, queryRefundIntended, input.TelegramChargeID).Scan(&refundIntended); err != nil {
+			return nil, err
+		}
+		if refundIntended {
+			return nil, ErrInvalidCheckout
+		}
+	}
 	var orderID, targetID, existingCharge *string
 	var orderStatus *string
 	var test bool
 	var amount, owner int64
-	if err := tx.QueryRow(ctx, queryLockPaymentForSettlement, input.InvoicePayload).Scan(&paymentID, &orderID, &userID, &purpose, &targetID, &currency, &amount, &test, &status, &orderStatus, &owner, &existingCharge); err != nil || owner != input.TelegramID || currency != input.Currency || amount != input.TotalAmount {
+	err = tx.QueryRow(ctx, queryLockPaymentForSettlement, input.InvoicePayload).Scan(&paymentID, &orderID, &userID, &purpose, &targetID, &currency, &amount, &test, &status, &orderStatus, &owner, &existingCharge)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return nil, err
+	}
+	if err != nil || owner != input.TelegramID || currency != input.Currency || amount != input.TotalAmount || input.TelegramChargeID == "" {
 		return nil, ErrInvalidCheckout
 	}
 	if test != strings.HasPrefix(input.TelegramChargeID, "test:") {
 		return nil, ErrInvalidCheckout
 	}
 	deliveryID := ""
+	if test {
+		var enabled bool
+		if err := tx.QueryRow(ctx, querySimulationEnabled).Scan(&enabled); err != nil {
+			return nil, err
+		}
+		if !enabled {
+			return nil, ErrInvalidCheckout
+		}
+	}
 	if status == "pending" {
 		if _, err := tx.Exec(ctx, querySucceedPayment, paymentID, input.TelegramChargeID, input.ProviderChargeID, input.Raw); err != nil {
 			return nil, err
@@ -532,6 +574,9 @@ func (r *postgresRepository) SettleStarsPayment(ctx context.Context, input Settl
 				return nil, ErrInvalidCheckout
 			}
 			if err := tx.QueryRow(ctx, queryLockDeliveryByOrder, *orderID).Scan(&deliveryID); err != nil {
+				if !errors.Is(err, pgx.ErrNoRows) {
+					return nil, err
+				}
 				return nil, ErrInvalidCheckout
 			}
 			if _, err := tx.Exec(ctx, queryPayOrder, *orderID); err != nil {
@@ -562,6 +607,12 @@ func (r *postgresRepository) SettleStarsPayment(ctx context.Context, input Settl
 		}
 	} else if status != "succeeded" || existingCharge == nil || *existingCharge != input.TelegramChargeID {
 		return nil, ErrInvalidCheckout
+	}
+	// Replayed successful payments must resume unfinished delivery too.
+	if purpose == "product" && orderID != nil && deliveryID == "" {
+		if err := tx.QueryRow(ctx, queryLockDeliveryByOrder, *orderID).Scan(&deliveryID); err != nil {
+			return nil, err
+		}
 	}
 	if err := tx.Commit(ctx); err != nil {
 		return nil, err

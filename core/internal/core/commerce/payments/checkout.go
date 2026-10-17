@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/google/uuid"
@@ -67,9 +68,16 @@ func (s *Service) CreateStarsInvoice(ctx context.Context, telegramID int64, prod
 	}, nil
 }
 
-// SimulateStarsPayment follows the same settlement paths as Telegram, but only
-// for payments created while the global payment setting was in test mode.
+// SimulateStarsPayment follows the normal settlement and fulfillment paths.
+// Both the payment's test flag and the current test setting must permit it.
 func (s *Service) SimulateStarsPayment(ctx context.Context, telegramID int64, paymentID, outcome string) (*SimulateStarsPaymentResponse, error) {
+	config, err := s.GetPaymentConfig(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !config.TestMode {
+		return nil, ErrInvalidCheckout
+	}
 	payment, err := s.repo.GetTestPayment(ctx, telegramID, paymentID)
 	if err != nil || payment.Status != "pending" {
 		return nil, ErrInvalidCheckout
@@ -170,7 +178,8 @@ func (s *Service) SettleStarsPayment(ctx context.Context, input SuccessfulPaymen
 	s.checkReferral(ctx, input.TelegramID)
 	if result.DeliveryID != "" {
 		if err := s.fulfillAPIDelivery(ctx, result.DeliveryID); err != nil {
-			return result.ReferenceID, err
+			// The durable delivery worker retries independently of payment updates.
+			log.Printf("delivery %s pending retry: %v", result.DeliveryID, err)
 		}
 	}
 	return result.ReferenceID, nil
@@ -186,12 +195,15 @@ func (s *Service) fulfillAPIDelivery(ctx context.Context, deliveryID string) err
 	}
 	for _, item := range items {
 		claimed, err := s.repo.ClaimAPIDeliveryItem(ctx, item.ID)
-		if err != nil || !claimed {
+		if err != nil {
+			return err
+		}
+		if !claimed {
 			continue
 		}
-		content, executeErr := s.apiExecutor.ExecuteAPICall(ctx, item.APIID)
+		content, executeErr := s.apiExecutor.ExecuteAPICallIdempotent(ctx, item.APIID, item.ID)
 		if executeErr != nil {
-			_ = s.repo.FailAPIDeliveryItem(ctx, deliveryID, item.ID, executeErr.Error())
+			_ = s.repo.FailAPIDeliveryItem(ctx, deliveryID, item.ID, "تحویل موقتاً ناموفق بود؛ دوباره تلاش می‌شود.")
 			return fmt.Errorf("payments API delivery: %w", executeErr)
 		}
 		if err := s.repo.CompleteAPIDeliveryItem(ctx, item.ID, content); err != nil {

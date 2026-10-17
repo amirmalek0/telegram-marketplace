@@ -63,6 +63,7 @@ func TestCouponCheckoutPostgres(t *testing.T) {
 		exec("CREATE TABLE " + id + " (LIKE public." + id + " INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES)")
 	}
 	exec(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS coupon_code TEXT NOT NULL DEFAULT ''`)
+	exec(`CREATE TABLE payment_refunds(charge_id TEXT PRIMARY KEY,checkout_reference TEXT NOT NULL,telegram_id BIGINT NOT NULL,completed_at TIMESTAMPTZ)`)
 	exec(`ALTER TABLE users ADD COLUMN IF NOT EXISTS photo_url TEXT NOT NULL DEFAULT ''`)
 	exec(`ALTER TABLE coupons ADD COLUMN IF NOT EXISTS user_ids JSONB NOT NULL DEFAULT '[]'::jsonb`)
 	empty, err := couponrepo.NewPostgresRepository(db).Summary(ctx)
@@ -102,21 +103,21 @@ func TestCouponCheckoutPostgres(t *testing.T) {
 		t.Fatal("free delivery not unlocked", delivered, err)
 	}
 	addCoupon("LAST", 5, 1)
-	pending, err := repo.CreateProductStarsCheckout(ctx, 42, product, uuid.NewString(), true, "LAST")
+	pending, err := repo.CreateProductStarsCheckout(ctx, 42, product, uuid.NewString(), false, "LAST")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err = repo.CreateProductStarsCheckout(ctx, 42, product, uuid.NewString(), true, "LAST"); err == nil {
+	if _, err = repo.CreateProductStarsCheckout(ctx, 42, product, uuid.NewString(), false, "LAST"); err == nil {
 		t.Fatal("pending reservation failed to enforce limit")
 	}
 	if err = repo.FailCheckout(ctx, pending.OrderID, pending.PaymentID, "cancelled", true); err != nil {
 		t.Fatal(err)
 	}
-	pending, err = repo.CreateProductStarsCheckout(ctx, 42, product, uuid.NewString(), true, "LAST")
+	pending, err = repo.CreateProductStarsCheckout(ctx, 42, product, uuid.NewString(), false, "LAST")
 	if err != nil {
 		t.Fatal("cancel did not release coupon", err)
 	}
-	input := SettlementInput{TelegramID: 42, Currency: "XTR", TotalAmount: 15, InvoicePayload: pending.CheckoutReference, TelegramChargeID: "test:" + uuid.NewString(), Raw: []byte(`{}`)}
+	input := SettlementInput{TelegramID: 42, Currency: "XTR", TotalAmount: 15, InvoicePayload: pending.CheckoutReference, TelegramChargeID: "coupon-test:" + uuid.NewString(), Raw: []byte(`{}`)}
 	for i := 0; i < 2; i++ {
 		if _, err = repo.SettleStarsPayment(ctx, input); err != nil {
 			t.Fatal(err)

@@ -17,6 +17,11 @@ func (s *Service) ListDeliveries(ctx context.Context, telegramID int64, productI
 	result := make([]DeliveryResponse, 0, len(records))
 	for _, record := range records {
 		response := DeliveryResponse{OrderID: record.OrderID, ProductID: record.ProductID, ProductTitle: record.ProductTitle, Status: record.Status, Error: record.Error, CreatedAt: record.CreatedAt, DeliveredAt: record.DeliveredAt, Items: []DeliveryItemResponse{}}
+		// Historical errors may contain provider response bodies or credentials.
+		if response.Error != nil {
+			message := "تحویل موقتاً ناموفق بود؛ در صورت ادامه با پشتیبانی تماس بگیرید."
+			response.Error = &message
+		}
 		for _, recordItem := range record.Items {
 			item := DeliveryItemResponse{Kind: recordItem.Kind, Label: recordItem.Label, Content: recordItem.Content, FileName: recordItem.FileName, MimeType: recordItem.MimeType, Size: recordItem.Size}
 			if recordItem.StorageID != "" {

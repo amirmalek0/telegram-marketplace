@@ -95,6 +95,18 @@ type LabeledPrice struct {
 	Amount int64  `json:"amount"`
 }
 
+func (c *Client) RefundStarPayment(ctx context.Context, userID int64, chargeID string) error {
+	if userID <= 0 || chargeID == "" {
+		return errors.New("invalid refund")
+	}
+	_, err := call[bool](ctx, c, "refundStarPayment", map[string]any{"user_id": userID, "telegram_payment_charge_id": chargeID})
+	var apiErr *APIError
+	if errors.As(err, &apiErr) && strings.Contains(strings.ToUpper(apiErr.Description), "CHARGE_ALREADY_REFUNDED") {
+		return nil
+	}
+	return err
+}
+
 type createInvoiceLinkRequest struct {
 	Title         string         `json:"title"`
 	Description   string         `json:"description"`

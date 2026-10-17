@@ -1,6 +1,10 @@
 package repository
 
 const (
+	queryLockCheckoutLifecycle       = `SELECT pg_advisory_xact_lock(741290111)`
+	queryAcceptPreCheckout           = `UPDATE payments SET precheckout_accepted_at=COALESCE(precheckout_accepted_at,now()) WHERE checkout_reference=$1`
+	querySimulationEnabled           = `SELECT payment_test_mode FROM settings WHERE id='00000000-0000-0000-0000-000000000001' FOR SHARE`
+	queryPendingDeliveries           = `SELECT d.id FROM order_deliveries d JOIN orders o ON o.id=d.order_id JOIN order_delivery_items i ON i.delivery_id=d.id WHERE o.status='paid' AND i.kind='api' AND (i.status='pending' OR (i.status='failed' AND i.updated_at<now()-interval '1 minute') OR (i.status='processing' AND i.updated_at<now()-interval '2 minutes')) GROUP BY d.id ORDER BY min(i.updated_at),d.id LIMIT 50`
 	queryCheckoutFiles               = `SELECT file_id::text FROM product_files WHERE product_id=$1 ORDER BY sort_order`
 	queryProductAccess               = `SELECT p.vip_only,(u.has_active_plan AND u.plan_expire_at>now()) FROM products p CROSS JOIN users u WHERE p.id=$1 AND p.status='active' AND u.telegram_id=$2`
 	queryLockCheckoutUser            = `SELECT id,is_banned,wallet_balance,(has_active_plan AND plan_expire_at>now()) FROM users WHERE telegram_id=$1 FOR UPDATE`
@@ -33,17 +37,17 @@ const (
 	queryFailDeliveryByOrder         = `UPDATE order_deliveries SET status='failed',error=$2,updated_at=now() WHERE order_id=$1`
 	queryReleaseInventoryByOrder     = `UPDATE inventory_items SET status='available',reserved_at=NULL,order_id=NULL,user_id=NULL WHERE order_id=$1 AND status='reserved'`
 	queryDeliveryOutcome             = `SELECT status,error FROM order_deliveries WHERE order_id=$1`
-	queryExpireOrders                = `UPDATE orders SET status='cancelled',updated_at=now() WHERE status='pending' AND id IN (SELECT order_id FROM payments WHERE method='telegram_stars' AND status='pending' AND created_at<now()-interval '30 minutes')`
-	queryExpireDeliveries            = `UPDATE order_deliveries SET status='failed',error='checkout expired',updated_at=now() WHERE status='awaiting_payment' AND order_id IN (SELECT order_id FROM payments WHERE method='telegram_stars' AND status='pending' AND created_at<now()-interval '30 minutes')`
-	queryExpireInventory             = `UPDATE inventory_items SET status='available',reserved_at=NULL,order_id=NULL,user_id=NULL WHERE status='reserved' AND order_id IN (SELECT order_id FROM payments WHERE method='telegram_stars' AND status='pending' AND created_at<now()-interval '30 minutes')`
-	queryExpirePayments              = `UPDATE payments SET status='failed',provider_data='{"error":"checkout expired"}'::jsonb,updated_at=now() WHERE method='telegram_stars' AND status='pending' AND created_at<now()-interval '30 minutes'`
-	queryValidatePreCheckout         = `SELECT p.currency,p.amount_minor,p.status,o.status,u.telegram_id,p.purpose FROM payments p JOIN users u ON u.id=p.user_id LEFT JOIN orders o ON o.id=p.order_id WHERE p.checkout_reference=$1 AND p.method='telegram_stars' AND p.is_test=false`
+	queryExpireOrders                = `UPDATE orders SET status='cancelled',updated_at=now() WHERE status='pending' AND id IN (SELECT order_id FROM payments WHERE method='telegram_stars' AND status='pending' AND ((precheckout_accepted_at IS NULL AND created_at<now()-interval '30 minutes') OR precheckout_accepted_at<now()-interval '24 hours'))`
+	queryExpireDeliveries            = `UPDATE order_deliveries SET status='failed',error='checkout expired',updated_at=now() WHERE status='awaiting_payment' AND order_id IN (SELECT order_id FROM payments WHERE method='telegram_stars' AND status='pending' AND ((precheckout_accepted_at IS NULL AND created_at<now()-interval '30 minutes') OR precheckout_accepted_at<now()-interval '24 hours'))`
+	queryExpireInventory             = `UPDATE inventory_items SET status='available',reserved_at=NULL,order_id=NULL,user_id=NULL WHERE status='reserved' AND order_id IN (SELECT order_id FROM payments WHERE method='telegram_stars' AND status='pending' AND ((precheckout_accepted_at IS NULL AND created_at<now()-interval '30 minutes') OR precheckout_accepted_at<now()-interval '24 hours'))`
+	queryExpirePayments              = `UPDATE payments SET status='failed',provider_data='{"error":"checkout expired"}'::jsonb,updated_at=now() WHERE method='telegram_stars' AND status='pending' AND ((precheckout_accepted_at IS NULL AND created_at<now()-interval '30 minutes') OR precheckout_accepted_at<now()-interval '24 hours')`
+	queryValidatePreCheckout         = `SELECT p.currency,p.amount_minor,p.status,o.status,u.telegram_id,p.purpose FROM payments p JOIN users u ON u.id=p.user_id LEFT JOIN orders o ON o.id=p.order_id WHERE p.checkout_reference=$1 AND p.method='telegram_stars' AND p.is_test=false AND NOT u.is_banned AND p.created_at>=now()-interval '30 minutes' FOR UPDATE OF p`
 	queryLockPaymentForSettlement    = `SELECT p.id,p.order_id,p.user_id,p.purpose,p.target_id,p.currency,p.amount_minor,p.is_test,p.status,o.status,u.telegram_id,p.external_transaction_id FROM payments p JOIN users u ON u.id=p.user_id LEFT JOIN orders o ON o.id=p.order_id WHERE p.checkout_reference=$1 AND p.method='telegram_stars' FOR UPDATE OF p,u`
 	querySucceedPayment              = `UPDATE payments SET status='succeeded',external_transaction_id=$2,provider_transaction_id=NULLIF($3,''),provider_data=$4,paid_at=now(),updated_at=now() WHERE id=$1`
 	queryLockDeliveryByOrder         = `SELECT id FROM order_deliveries WHERE order_id=$1 FOR UPDATE`
 	queryPayOrder                    = `UPDATE orders SET status='paid',paid_at=now(),updated_at=now() WHERE id=$1`
-	queryListPendingAPIDeliveryItems = `SELECT id,api_id FROM order_delivery_items WHERE delivery_id=$1 AND kind='api' AND status IN ('pending','failed') ORDER BY sort_order`
-	queryClaimAPIDeliveryItem        = `UPDATE order_delivery_items SET status='processing',error=NULL,updated_at=now() WHERE id=$1 AND status IN ('pending','failed')`
+	queryListPendingAPIDeliveryItems = `SELECT id,api_id FROM order_delivery_items WHERE delivery_id=$1 AND kind='api' AND (status='pending' OR (status='failed' AND updated_at<now()-interval '1 minute') OR (status='processing' AND updated_at<now()-interval '2 minutes')) ORDER BY sort_order`
+	queryClaimAPIDeliveryItem        = `UPDATE order_delivery_items SET status='processing',error=NULL,updated_at=now() WHERE id=$1 AND (status='pending' OR (status='failed' AND updated_at<now()-interval '1 minute') OR (status='processing' AND updated_at<now()-interval '2 minutes'))`
 	queryFailAPIDeliveryItem         = `UPDATE order_delivery_items SET status='failed',error=$2,updated_at=now() WHERE id=$1`
 	queryFailAPIDelivery             = `UPDATE order_deliveries SET status='failed',error=$2,updated_at=now() WHERE id=$1`
 	queryCompleteAPIDeliveryItem     = `UPDATE order_delivery_items SET status='ready',content=$2,error=NULL,updated_at=now() WHERE id=$1`
