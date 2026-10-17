@@ -5,11 +5,12 @@ interface ToggleProps {
   checked: boolean;
   onChange: (checked: boolean) => void;
   label?: string;
+  ariaLabel?: string;
   disabled?: boolean;
   size?: 'sm' | 'md';
 }
 
-export function Toggle({ checked, onChange, label, disabled, size = 'md' }: ToggleProps) {
+export function Toggle({ checked, onChange, label, ariaLabel, disabled, size = 'md' }: ToggleProps) {
   const sizes = {
     sm: { track: 'w-8 h-4', thumb: 'w-3 h-3', translateX: 18 },
     md: { track: 'w-11 h-6', thumb: 'w-5 h-5', translateX: 22 },
@@ -23,6 +24,7 @@ export function Toggle({ checked, onChange, label, disabled, size = 'md' }: Togg
         type="button"
         role="switch"
         aria-checked={checked}
+        aria-label={ariaLabel || label}
         disabled={disabled}
         onClick={() => !disabled && onChange(!checked)}
         className={cn(

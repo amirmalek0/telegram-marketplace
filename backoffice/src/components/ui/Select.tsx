@@ -16,11 +16,11 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
 }
 
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
-  ({ label, error, hint, options, placeholder, className, id, ...props }, ref) => {
+  ({ label, error, hint, options, placeholder, className, id, dir, ...props }, ref) => {
     const inputId = id || label;
 
     return (
-      <div className="flex flex-col gap-1.5">
+      <div dir={dir} className="flex min-w-0 max-w-full flex-col gap-1.5">
         {label && (
           <label htmlFor={inputId} className="text-sm font-medium text-[rgb(var(--color-text))]">
             {label}
@@ -31,7 +31,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             ref={ref}
             id={inputId}
             className={cn(
-              'w-full appearance-none rounded-xl border bg-[rgb(var(--color-surface))] px-4 py-2.5 text-sm',
+              'w-full min-w-0 appearance-none truncate rounded-xl border bg-[rgb(var(--color-surface))] ps-4 pe-10 py-2.5 text-sm',
               'text-[rgb(var(--color-text))]',
               'border-[rgb(var(--color-border))] focus:border-[#0088cc] focus:outline-none focus:ring-2 focus:ring-[#0088cc]/20',
               'transition-all duration-200 cursor-pointer',
@@ -53,7 +53,8 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           </select>
           <ChevronDown
             size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-secondary))] pointer-events-none"
+            aria-hidden="true"
+            className="absolute end-3 top-1/2 -translate-y-1/2 text-[rgb(var(--color-text-secondary))] pointer-events-none"
           />
         </div>
         {error && <p className="text-xs text-red-500">{error}</p>}

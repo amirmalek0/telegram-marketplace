@@ -1,0 +1,17 @@
+.jalali-date-field { display: grid; gap: 6px; min-width: 0; }
+.jalali-date-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.jalali-date-trigger { display: flex; align-items: center; gap: 8px; flex: 1; min-height: 42px; padding: 9px 12px; border: 1px solid rgb(var(--color-border)); border-radius: 12px; background: rgb(var(--color-surface)); color: rgb(var(--color-text)); font-size: 13px; }
+.jalali-date-trigger span { flex: 1; text-align: start; }
+.jalali-date-trigger svg { flex-shrink: 0; color: rgb(var(--color-text-muted)); }
+.jalali-date-controls input { min-height: 42px; max-width: 125px; border: 1px solid rgb(var(--color-border)); border-radius: 12px; padding: 8px; background: rgb(var(--color-surface)); color: rgb(var(--color-text)); font-size: 16px; direction: ltr; }
+.jalali-date-clear { padding: 8px 4px; color: rgb(var(--color-text-secondary)); font-size: 12px; }
+.jalali-calendar-panel { display: grid; justify-items: center; gap: 8px; padding: 10px; border: 1px solid rgb(var(--color-border)); border-radius: 14px; background: rgb(var(--color-surface)); }
+.jalali-calendar.rmdp-wrapper, .jalali-calendar .rmdp-calendar, .jalali-calendar .rmdp-month-picker, .jalali-calendar .rmdp-year-picker { background: rgb(var(--color-surface)); color: rgb(var(--color-text)); font-family: inherit; }
+.jalali-calendar .rmdp-header-values, .jalali-calendar .rmdp-day { color: rgb(var(--color-text)); }
+.jalali-calendar .rmdp-day.rmdp-deactive { color: rgb(var(--color-text-muted)); }
+.jalali-calendar .rmdp-day:not(.rmdp-disabled):not(.rmdp-day-hidden) span:hover { background: #0088cc; color: white; }
+.jalali-calendar .rmdp-day.rmdp-selected span:not(.highlight) { background: #0088cc; box-shadow: none; }
+.jalali-calendar .rmdp-week-day { color: #0088cc; }
+.jalali-calendar .rmdp-arrow { border-color: #0088cc; }
+.jalali-date-done { padding: 7px 16px; background: rgb(0 136 204 / .1); color: #0088cc; border-radius: 9px; font-size: 12px; }
+.jalali-date-field button:disabled { opacity: .5; cursor: default; }

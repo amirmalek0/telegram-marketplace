@@ -1,6 +1,8 @@
 import { PaginatedResponse } from './common';
 
 export interface UserResponse {
+	photo_url?: string;
+	phone_verified_at?: string;
   id: string;
   first_name: string;
   last_name: string;
@@ -130,6 +132,8 @@ export interface WalletTransactionResponse {
   created_at: string;
 }
 export interface AdminWalletResponse {
+	photo_url?: string;
+	phone_number?: string;
   user_id: string;
   first_name: string;
   last_name: string;

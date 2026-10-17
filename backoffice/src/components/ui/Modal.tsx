@@ -1,9 +1,10 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
 interface ModalProps {
+  className?: string;
   isOpen: boolean;
   onClose: () => void;
   title: string;
@@ -30,27 +31,46 @@ export function Modal({
   footer,
   description,
   icon,
+  className,
 }: ModalProps) {
   const contentRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
+    if (!isOpen) return;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    const focusable = () => Array.from(contentRef.current?.querySelectorAll<HTMLElement>('button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), a[href], [tabindex="0"]') || []).filter(element => element.getClientRects().length > 0);
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') onCloseRef.current();
+      if (e.key === 'Tab') {
+        const elements = focusable();
+        const first = elements[0], last = elements[elements.length - 1];
+        if (!first) { e.preventDefault(); contentRef.current?.focus(); return; }
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
     };
-    if (isOpen) {
-      document.addEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'hidden';
-    }
+    const frame = requestAnimationFrame(() => {
+      const input = contentRef.current?.querySelector<HTMLElement>('input:not([disabled]):not([type="file"]), textarea:not([disabled]), select:not([disabled])');
+      (input || focusable()[0] || contentRef.current)?.focus();
+    });
+    document.addEventListener('keydown', handleKeyDown);
+    document.body.style.overflow = 'hidden';
     return () => {
+      cancelAnimationFrame(frame);
       document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = '';
+      document.body.style.overflow = previousOverflow;
+      if (previousFocus?.isConnected) previousFocus.focus();
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -64,6 +84,10 @@ export function Modal({
           {/* Modal panel */}
           <motion.div
             ref={contentRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            tabIndex={-1}
             initial={{ opacity: 0, scale: 0.94, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: 16 }}
@@ -74,7 +98,7 @@ export function Modal({
               'border border-[rgb(var(--color-border))]',
               'shadow-2xl shadow-black/20',
               'max-h-[90vh]',
-              sizes[size]
+              sizes[size], className
             )}
           >
             {/* Top accent line */}
@@ -89,7 +113,7 @@ export function Modal({
                   </div>
                 )}
                 <div>
-                  <h2 className="text-base font-bold text-[rgb(var(--color-text))] leading-tight">
+                  <h2 id={titleId} className="text-base font-bold text-[rgb(var(--color-text))] leading-tight">
                     {title}
                   </h2>
                   {description && (
@@ -101,6 +125,8 @@ export function Modal({
               </div>
 
               <button
+                type="button"
+                aria-label="بستن پنجره"
                 onClick={onClose}
                 className="w-8 h-8 flex items-center justify-center rounded-xl text-[rgb(var(--color-text-muted))] hover:text-[rgb(var(--color-text))] hover:bg-[rgb(var(--color-surface-2))] transition-all flex-shrink-0 mr-2"
               >
