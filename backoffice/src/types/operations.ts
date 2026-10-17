@@ -38,6 +38,7 @@ export interface CouponResponse {
   expires_at?: string;
   is_active: boolean;
   product_ids: string[];
+  user_ids: string[];
   created_at: string;
   updated_at: string;
 }
@@ -48,9 +49,15 @@ export interface CreateCouponRequest {
   usage_limit: number;
   expires_at?: string;
   product_ids: string[];
+  user_ids: string[];
 }
 export type UpdateCouponRequest = Partial<CreateCouponRequest> & { is_active?: boolean };
-export type CouponsPaginatedResponse = PaginatedResponse<CouponResponse>;
+export interface CouponSummary {
+  active: number;
+  expired: number;
+  total: number;
+}
+export type CouponsPaginatedResponse = PaginatedResponse<CouponResponse> & { summary: CouponSummary };
 
 export type OrderStatus = 'pending' | 'paid' | 'failed' | 'refunded' | 'cancelled';
 export interface OrderResponse {
@@ -59,6 +66,10 @@ export interface OrderResponse {
   product_id: string;
   quantity: number;
   stars: number;
+  original_stars: number;
+  discount_stars: number;
+  coupon_code?: string;
+  user?: Pick<UserResponse, 'id' | 'first_name' | 'last_name' | 'username' | 'telegram_id'> | null;
   product_title: string;
   delivery_status?: 'awaiting_payment' | 'processing' | 'delivered' | 'failed';
   delivery_item_count: number;
@@ -67,7 +78,8 @@ export interface OrderResponse {
   created_at: string;
   updated_at: string;
 }
-export type OrdersPaginatedResponse = PaginatedResponse<OrderResponse>;
+export interface OrdersSummary { total: number; pending: number; paid: number; paid_stars: number; }
+export type OrdersPaginatedResponse = PaginatedResponse<OrderResponse> & { summary: OrdersSummary };
 
 export interface TelegramStarsPaymentResponse {
   id: string;
@@ -85,8 +97,15 @@ export interface TelegramStarsPaymentResponse {
   updated_at: string;
   paid_at?: string;
   refunded_at?: string;
+  user?: OrderResponse['user'];
+  target_title: string;
+  product_id?: string;
+  quantity: number;
+  coupon_code?: string;
+  discount_stars: number;
 }
-export type TelegramStarsPaymentsPaginatedResponse = PaginatedResponse<TelegramStarsPaymentResponse>;
+export interface PaymentsSummary { total: number; succeeded: number; pending: number; failed: number; refunded: number; test_total: number; paid_stars: number; }
+export type TelegramStarsPaymentsPaginatedResponse = PaginatedResponse<TelegramStarsPaymentResponse> & { summary: PaymentsSummary };
 
 export interface PaymentConfigResponse {
   test_mode: boolean;

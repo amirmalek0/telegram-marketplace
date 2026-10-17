@@ -1,39 +1,63 @@
-import { useCallback, useEffect, useState } from 'react';
-import { RefreshCw, Star } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ArrowLeft, CheckCheck, Clock3, CreditCard, Star } from 'lucide-react';
 import { paymentsApi } from '@/api';
-import { TelegramStarsPaymentResponse } from '@/types';
-import { Badge, Button, DataTable, PageHeader } from '@/components/ui';
+import type { PaymentsSummary, TelegramStarsPaymentResponse } from '@/types';
+import { Badge, Button } from '@/components/ui';
 import type { Column } from '@/components/ui';
-import { formatDateTime, shortId } from '@/utils/format';
-
-const paymentStatus = (value: string): { label: string; variant: 'success' | 'warning' | 'error' | 'default' } => ({
-  succeeded: { label: 'موفق', variant: 'success' }, pending: { label: 'در انتظار', variant: 'warning' }, failed: { label: 'ناموفق', variant: 'error' }, refunded: { label: 'بازپرداخت‌شده', variant: 'default' },
-}[value] as { label: string; variant: 'success' | 'warning' | 'error' | 'default' } || { label: value, variant: 'default' });
-
-const purposeLabel: Record<string, string> = { product: 'محصول', vip_plan: 'اشتراک VIP', wallet_topup: 'شارژ کیف پول' };
+import { CatalogHeader } from '@/components/catalog/CatalogHeader';
+import { CatalogTable } from '@/components/catalog/CatalogTable';
+import { FinanceSummary } from '@/components/finance/FinanceSummary';
+import { StarsAmount } from '@/components/ui/StarsAmount';
+import { CopyIdentifier } from '@/components/ui/CopyIdentifier';
+import { formatDateTime } from '@/utils/format';
+import { OrderCustomer } from '../orders/OrderCustomer';
+import { PaymentDetails } from './PaymentDetails';
+import { PaymentTarget } from './PaymentTarget';
+import { paymentStatus, paymentStatuses, purposeLabels } from './paymentPresentation';
+import '../orders/orders.css';
 
 export default function PaymentsPage() {
   const [rows, setRows] = useState<TelegramStarsPaymentResponse[]>([]);
+  const [summary, setSummary] = useState<PaymentsSummary | null>(null);
+  const [selected, setSelected] = useState<TelegramStarsPaymentResponse | null>(null);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const load = useCallback(async () => { setLoading(true); try { const r = await paymentsApi.list({ page, per_page: 20 }); setRows(r.data); setTotal(r.total); } catch { toast.error('دریافت تراکنش‌های پرداخت ناموفق بود'); } finally { setLoading(false); } }, [page]);
-  useEffect(() => { void load(); }, [load]);
+  const [error, setError] = useState(false);
+  const request = useRef(0);
+  const load = useCallback(async () => {
+    const current = ++request.current;
+    setLoading(true); setError(false);
+    try {
+      const result = await paymentsApi.list({ page, per_page: 20 });
+      if (current !== request.current) return;
+      setRows(result.data); setTotal(result.total); setSummary(result.summary);
+      setSelected(previous => previous ? result.data.find(row => row.id === previous.id) || null : null);
+    } catch { if (current === request.current) { setError(true); setSummary(null); } }
+    finally { if (current === request.current) setLoading(false); }
+  }, [page]);
+  useEffect(() => { void load(); return () => { request.current++; }; }, [load]);
   const columns: Column<TelegramStarsPaymentResponse>[] = [
-    { key: 'id', title: 'شناسه پرداخت', render: v => <span className="mono-id" title={v as string}>{shortId(v as string)}</span> },
-    { key: 'purpose', title: 'بابت', render: v => <Badge variant={v === 'wallet_topup' ? 'cyan' : v === 'vip_plan' ? 'purple' : 'info'}>{purposeLabel[String(v)] || String(v)}</Badge> },
-    { key: 'order_id', title: 'سفارش', render: v => v ? <span className="mono-id" title={String(v)}>{shortId(String(v))}</span> : <span>—</span> },
-    { key: 'external_transaction_id', title: 'شناسه تراکنش', render: v => <span className="mono-id" title={String(v || '')}>{v ? shortId(String(v)) : '—'}</span> },
-    { key: 'stars', title: 'مبلغ', render: v => <b>{Number(v).toLocaleString('fa-IR')} ستاره</b> },
-    { key: 'is_test', title: 'حالت', render: v => <Badge variant={v ? 'warning' : 'success'}>{v ? 'آزمایشی' : 'واقعی'}</Badge> },
-    { key: 'status', title: 'وضعیت', render: v => { const s = paymentStatus(String(v)); return <Badge variant={s.variant} dot>{s.label}</Badge>; } },
-    { key: 'created_at', title: 'زمان', render: v => <span className="text-xs text-[rgb(var(--color-text-secondary))]">{formatDateTime(v as string)}</span> },
+    { key: 'user', title: 'پرداخت‌کننده', render: (_, row) => <OrderCustomer user={row.user} /> },
+    { key: 'target_title', title: 'بابت پرداخت', render: (_, row) => <PaymentTarget payment={row} /> },
+    { key: 'stars', title: 'مبلغ / حالت', render: (_, row) => <div className="finance-stack"><span className="finance-amount"><StarsAmount value={row.stars} /></span><Badge variant={row.is_test ? 'warning' : 'default'}>{row.is_test ? 'آزمایشی' : 'واقعی'}</Badge></div> },
+    { key: 'status', title: 'وضعیت', render: value => { const status = paymentStatus(String(value)); return <Badge variant={status.variant} dot>{status.label}</Badge>; } },
+    { key: 'id', title: 'شناسه / زمان', render: (_, row) => <div className="finance-stack"><CopyIdentifier value={row.id} label="شناسه پرداخت" /><span className="finance-muted">{formatDateTime(row.created_at)}</span></div> },
+    { key: 'actions', title: 'جزئیات', render: (_, row) => <Button size="sm" variant="ghost" onClick={() => setSelected(row)} aria-label={`جزئیات پرداخت ${row.id}`}>مشاهده <ArrowLeft size={14} /></Button> },
   ];
-  const successTotal = rows.filter(x => !x.is_test && x.status === 'succeeded').reduce((sum, payment) => sum + payment.stars, 0);
-  return <div>
-    <PageHeader title="پرداخت‌ها" action={<Button variant="secondary" icon={<RefreshCw size={16} />} onClick={() => void load()}>به‌روزرسانی</Button>} />
-    <div className="surface-card mb-4 flex items-center justify-between p-5"><div><p className="text-xs text-[rgb(var(--color-text-secondary))]">مجموع پرداخت واقعی موفق در این صفحه</p><p className="mt-1 text-2xl font-extrabold">{successTotal.toLocaleString('fa-IR')} ستاره</p></div><div className="grid h-12 w-12 place-items-center rounded-2xl bg-amber-500/10 text-amber-500"><Star size={22} /></div></div>
-    <DataTable columns={columns} data={rows} loading={loading} keyExtractor={r => r.id} pagination={{ page, perPage: 20, total, onPageChange: setPage }} emptyMessage="تراکنش Stars برای نمایش وجود ندارد" />
+  return <div className="finance-page">
+    <CatalogHeader title="پرداخت‌ها" icon={CreditCard} total={total} loading={loading} actions={<Badge variant="amber"><Star size={13} fill="currentColor" />Telegram Stars</Badge>} />
+    <FinanceSummary label="آمار همه پرداخت‌ها" loading={loading} items={[
+      { label: 'کل تراکنش‌ها', value: summary?.total, icon: CreditCard, tone: 'blue' },
+      { label: 'پرداخت‌های موفق', value: summary?.succeeded, icon: CheckCheck, tone: 'green' },
+      { label: 'در انتظار پرداخت', value: summary?.pending, icon: Clock3, tone: 'amber' },
+      { label: 'مجموع موفقِ واقعی', value: summary?.paid_stars, icon: Star, tone: 'violet', stars: true, hint: 'بدون پرداخت‌های آزمایشی و بازپرداخت‌شده؛ در همه صفحات' },
+    ]} />
+    {!loading && summary && <div className="finance-notes" aria-label="آمار تکمیلی"><span>ناموفق: {summary.failed.toLocaleString('fa-IR')}</span><span>بازپرداخت‌شده: {summary.refunded.toLocaleString('fa-IR')}</span><span>آزمایشی: {summary.test_total.toLocaleString('fa-IR')}</span><small>تعداد تراکنش‌ها شامل واقعی و آزمایشی است.</small></div>}
+    <CatalogTable columns={columns} data={rows} loading={loading} error={error} onRefresh={() => void load()} keyExtractor={row => row.id}
+      searchText={row => [row.id,row.order_id,row.user_id,row.product_id,row.target_id,row.checkout_reference,row.external_transaction_id,row.provider_transaction_id,row.target_title,row.user?.first_name,row.user?.last_name,row.user?.username,row.user?.telegram_id,purposeLabels[row.purpose],row.is_test ? 'آزمایشی' : 'واقعی'].filter(Boolean).join(' ')}
+      filter={{ label: 'همه وضعیت‌ها', options: Object.entries(paymentStatuses).map(([value, status]) => ({ value, label: status.label })), value: row => row.status }}
+      pagination={{ page, perPage: 20, total, onPageChange: setPage }} emptyMessage="هنوز پرداختی ثبت نشده است" />
+    <PaymentDetails payment={selected} onClose={() => setSelected(null)} />
   </div>;
 }
