@@ -228,10 +228,8 @@ func (s *Service) AddMessage(ctx context.Context, ticketID string, adminID strin
 		return nil, fmt.Errorf("tickets.service.AddMessage: %w", err)
 	}
 
-	// Update last_message_at
-	if err := s.repo.UpdateLastMessageAt(ctx, ticketID, now); err != nil {
-		return nil, fmt.Errorf("tickets.service.AddMessage update timestamp: %w", err)
-	}
+	// The repository inserts the message and updates the ticket atomically,
+	// while holding the ticket lock so a concurrent close cannot be bypassed.
 
 	return msg, nil
 }

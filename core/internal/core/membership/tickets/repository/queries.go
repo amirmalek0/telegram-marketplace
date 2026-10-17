@@ -4,6 +4,7 @@ package repository
 // Separating queries from repository logic improves maintainability and readability.
 
 const (
+	queryLockTicketStatus = `SELECT status FROM tickets WHERE id=$1 FOR UPDATE`
 	// queryCreateTicket inserts a new ticket and returns the generated UUID.
 	queryCreateTicket = `
 		INSERT INTO tickets (

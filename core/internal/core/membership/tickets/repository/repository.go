@@ -12,6 +12,7 @@ import (
 
 // ErrNotFound is returned when a requested ticket does not exist.
 var ErrNotFound = fmt.Errorf("ticket not found")
+var ErrTicketClosed = fmt.Errorf("ticket is closed")
 
 // TicketFilters defines optional filters for listing tickets.
 type TicketFilters struct {
@@ -170,13 +171,28 @@ func (r *postgresRepository) UpdateLastMessageAt(ctx context.Context, ticketID s
 // ============================================================
 
 func (r *postgresRepository) CreateMessage(ctx context.Context, m *model.TicketMessage) error {
-	err := r.db.QueryRow(ctx, queryCreateMessage,
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+	var status string
+	if err = tx.QueryRow(ctx, queryLockTicketStatus, m.TicketID).Scan(&status); err != nil {
+		return err
+	}
+	if status == model.StatusClosed {
+		return ErrTicketClosed
+	}
+	err = tx.QueryRow(ctx, queryCreateMessage,
 		m.TicketID, m.SenderType, m.SenderID, m.Message, m.CreatedAt,
 	).Scan(&m.ID)
 	if err != nil {
 		return fmt.Errorf("tickets.repository.CreateMessage: %w", err)
 	}
-	return nil
+	if _, err = tx.Exec(ctx, queryUpdateLastMessageAt, m.CreatedAt, m.CreatedAt, m.TicketID); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
 }
 
 func (r *postgresRepository) ListMessages(ctx context.Context, ticketID string) ([]*model.TicketMessage, error) {
