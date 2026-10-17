@@ -14,12 +14,16 @@ export function usePhoneAccess(initDataRaw: string | null, bypass: boolean) {
     const client = new ApiClient({ initDataRaw })
     let active = true
     let pending = false
+    let onboarded = false
     let generation = 0
     const check = async () => {
       if (pending) return
       pending = true
       const current = generation
       try {
+        // Capture signed start_param before the phone gate/contact can create
+        // the account. A supplied JSON referral code is never trusted.
+        if (!onboarded) { await client.post('/user', {}); onboarded = true }
         const next = await client.get<PhoneStatus>('/user/phone-verification')
         if (active && current === generation) { setStatus(next); setError(null) }
       } catch {

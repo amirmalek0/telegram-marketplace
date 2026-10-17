@@ -21,7 +21,7 @@ const links = [
 export function ProfileQuickLinks() {
   return (
     <section className="profile-purchases" aria-labelledby="profile-purchases-title">
-      <div className="profile-home-heading"><h3 id="profile-purchases-title">خریدهای شما</h3><span><Icon name="box" size={16} /></span></div>
+      <div className="profile-home-heading"><h3 id="profile-purchases-title">خریدهای شما</h3></div>
       <div className="profile-library">
       {links.map((item) => (
         <Link key={item.to} to={item.to} className={`profile-library-tile is-${item.tone}`}>
@@ -33,8 +33,8 @@ export function ProfileQuickLinks() {
           <span className="profile-library-arrow"><Icon name="arrow" size={17} /></span>
         </Link>
       ))}
-      </div>
       <Link to="/tickets" className="profile-support-link"><span className="profile-support-icon"><Icon name="tickets" size={18} /></span><span><strong>کنار شما هستیم</strong><small>گفت‌وگو با پشتیبانی</small></span><span className="profile-link-arrow"><Icon name="arrow" size={16} /></span></Link>
+      </div>
     </section>
   )
 }

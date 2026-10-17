@@ -7,9 +7,13 @@ import { ProfileQuickLinks } from '../components/profile/ProfileQuickLinks'
 import { ProfileAccountCard } from '../components/profile/ProfileAccountCard'
 import { ProfileActivity } from '../components/profile/ProfileActivity'
 import { ProfileSkeleton } from '../components/profile/ProfileSkeleton'
+import { AccountPageSkeleton } from '../components/profile/AccountPageSkeleton'
+import { ProfileReferrals } from '../components/profile/ProfileReferrals'
 import { WalletSections } from '../components/profile/WalletSections'
 import { VipPlans } from '../components/profile/VipPlans'
+import { VipCheckoutModal, type VipCheckout } from '../components/profile/VipCheckoutModal'
 import { Icon } from '../components/ui/Icon'
+import { useContent } from '../features/content/ContentProvider'
 import type { PaginatedResponse } from '../features/catalog/types'
 import type { SimulatedPayment, StarsInvoice, UserAccount, VipPlan, VipQuote, Wallet, WalletTopupPack } from '../features/commerce/types'
 import { editorAccount, editorStandardAccount, editorTopupPacks, editorVipPlans, editorWallet } from '../features/content/editorFixtures'
@@ -17,9 +21,9 @@ import type { TelegramUser } from '../hooks/useTelegramAuth'
 
 interface ProfilePageProps { initDataRaw: string | null; telegramUser: TelegramUser | null; preview?: boolean; scenario?: string; view?: 'profile' | 'wallet' | 'vip' }
 type PaymentMethod = 'telegram_stars' | 'wallet'
-interface VipCheckout { plan: VipPlan; method: PaymentMethod; quote: VipQuote }
 
 export function ProfilePage({ initDataRaw, telegramUser, preview = false, scenario = 'vip', view = 'profile' }: ProfilePageProps) {
+  const { text } = useContent()
   const [account, setAccount] = useState<UserAccount | null>(null)
   const [wallet, setWallet] = useState<Wallet | null>(null)
   const [plans, setPlans] = useState<VipPlan[]>([])
@@ -123,20 +127,20 @@ export function ProfilePage({ initDataRaw, telegramUser, preview = false, scenar
     finally { setBusyKey(null) }
   }
 
-  if (visibleLoading) return view === 'profile' ? <ProfileSkeleton /> : <div className="page profile-page"><div className="profile-card skeleton profile-loading" /><div className="profile-card skeleton profile-loading" /></div>
-  if (unavailable || !visibleAccount || !visibleWallet) return <StateCard title={view === 'vip' ? 'پلن‌های VIP در دسترس نیست' : view === 'wallet' ? 'کیف پول در دسترس نیست' : 'پروفایل در دسترس نیست'} body={visibleError || 'دوباره تلاش کنید.'} />
+  if (visibleLoading) return view === 'profile' ? <ProfileSkeleton /> : <AccountPageSkeleton />
+  if (unavailable || !visibleAccount || !visibleWallet) return <div className="profile-unavailable"><StateCard title={view === 'vip' ? 'پلن‌های VIP در دسترس نیست' : view === 'wallet' ? 'کیف پول در دسترس نیست' : 'پروفایل در دسترس نیست'} body={visibleError || 'دوباره تلاش کنید.'} /><button className="profile-retry" onClick={() => { if (!preview) { setLoading(true); void load() } }}><Icon name="refresh" size={17} />{text('common.retry')}</button></div>
 
   return <div className={`page profile-page ${view === 'vip' ? 'vip-page' : view === 'profile' ? 'profile-home' : ''}`}>
-    {view === 'profile' && <ProfileAccountCard account={visibleAccount} balance={visibleWallet.balance} displayName={displayName} username={visibleAccount.username || telegramUser?.username} photoUrl={telegramUser?.photoUrl} activePlan={activePlan} />}
+    {view === 'profile' && <ProfileAccountCard account={visibleAccount} balance={visibleWallet.balance} displayName={displayName} username={visibleAccount.username || telegramUser?.username} photoUrl={visibleAccount.photo_url ?? telegramUser?.photoUrl} initDataRaw={initDataRaw} activePlan={activePlan} />}
     {visibleError && <p className="purchase-error">{visibleError}</p>}{visibleNotice && <p className="purchase-notice"><Icon name="check" size={15} />{visibleNotice}</p>}
     {visibleTestInvoice && <section className="payment-simulator"><div><strong>شبیه‌ساز پرداخت سراسری</strong><span>هیچ استاری مصرف نمی‌شود؛ نتیجه را انتخاب کنید.</span></div><div className="payment-simulator-actions"><button disabled={Boolean(busyKey)} onClick={() => void simulate('succeeded')}>موفق</button><button disabled={Boolean(busyKey)} onClick={() => void simulate('failed')}>ناموفق</button><button disabled={Boolean(busyKey)} onClick={() => void simulate('cancelled')}>لغو</button></div></section>}
 
-    {view === 'profile' && <><ProfileQuickLinks /><ProfileActivity transactions={visibleWallet.transactions} /></>}
+    {view === 'profile' && <><ProfileQuickLinks /><ProfileActivity transactions={visibleWallet.transactions} /><ProfileReferrals initDataRaw={initDataRaw} preview={preview} scenario={scenario} onAccountRefresh={load} /></>}
 
-    {view === 'wallet' && <WalletSections wallet={visibleWallet} packs={packs} busyKey={busyKey} onTopup={(pack) => void topup(pack)} />}
-    {view === 'vip' && <VipPlans account={visibleAccount} plans={plans} busyKey={busyKey} onChoose={(plan, method) => void preparePlan(plan, method)} />}
+    {view === 'wallet' && <WalletSections wallet={visibleWallet} packs={preview && scenario === 'no-packs' ? [] : packs} busyKey={busyKey} onTopup={(pack) => void topup(pack)} preview={preview} />}
+    {view === 'vip' && <VipPlans account={visibleAccount} plans={preview && scenario === 'no-plans' ? [] : plans} busyKey={busyKey} onChoose={(plan, method) => void preparePlan(plan, method)} />}
 
-    {checkout && <div className="vip-quote-backdrop" onClick={() => setCheckout(null)}><section className="vip-quote-modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}><span className="vip-quote-icon"><Icon name="crown" size={24} /></span><h3>{checkout.quote.is_upgrade ? 'محاسبه ارتقای VIP' : `خرید ${checkout.plan.title}`}</h3><p>{checkout.quote.is_upgrade ? 'اعتبار روزهای باقی‌مانده از مبلغ پلن جدید کم می‌شود.' : `${checkout.plan.duration.toLocaleString('fa-IR')} روز دسترسی ویژه برای شما فعال می‌شود.`}</p>{checkout.quote.is_upgrade && <div className="vip-upgrade-path"><span>{checkout.quote.current_plan_title}</span><Icon name="arrow" size={16} /><b>{checkout.quote.plan_title}</b></div>}<div className="vip-quote-lines"><div><span>قیمت پلن جدید</span><b>{checkout.quote.original_stars.toLocaleString('fa-IR')} ⭐</b></div>{checkout.quote.is_upgrade && <><div><span>اعتبار {checkout.quote.remaining_days.toLocaleString('fa-IR')} روز باقی‌مانده</span><b className="quote-credit">− {checkout.quote.credit_stars.toLocaleString('fa-IR')} ⭐</b></div><div className="quote-divider" /></>}<div className="quote-total"><span>مبلغ نهایی</span><strong>{checkout.quote.payable_stars.toLocaleString('fa-IR')} ⭐</strong></div></div>{checkout.method === 'wallet' && visibleWallet.balance < checkout.quote.payable_stars && <p className="vip-quote-warning">موجودی کیف پول شما برای این پرداخت کافی نیست.</p>}<div className="vip-quote-actions"><button className="quote-cancel" onClick={() => setCheckout(null)}>انصراف</button><button disabled={checkout.method === 'wallet' && visibleWallet.balance < checkout.quote.payable_stars} onClick={() => void buyPlan()}>تأیید و ادامه پرداخت</button></div></section></div>}
+    {checkout && <VipCheckoutModal checkout={checkout} balance={visibleWallet.balance} preview={preview} onMethod={method => setCheckout(current => current ? { ...current, method } : null)} onClose={() => setCheckout(null)} onConfirm={() => void buyPlan()} />}
     <PaymentResultModal result={paymentResult} onClose={() => setPaymentResult(null)} />
   </div>
 }

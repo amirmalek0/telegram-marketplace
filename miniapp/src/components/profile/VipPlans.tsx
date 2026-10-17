@@ -1,36 +1,34 @@
 import type { UserAccount, VipPlan } from '../../features/commerce/types'
+import { useContent } from '../../features/content/ContentProvider'
 import { formatDate } from '../../utils/format'
 import { Icon } from '../ui/Icon'
 
-interface VipPlansProps {
-  account: UserAccount
-  plans: VipPlan[]
-  busyKey: string | null
-  onChoose: (plan: VipPlan, method: 'telegram_stars' | 'wallet') => void
-}
+interface Props { account: UserAccount; plans: VipPlan[]; busyKey: string | null; onChoose: (plan: VipPlan, method: 'telegram_stars' | 'wallet') => void }
 
-export function VipPlans({ account, plans, busyKey, onChoose }: VipPlansProps) {
-  const activePlan = plans.find((plan) => plan.id === account.active_plan_id)
-
-  return <section className="vip-card">
-    <div className="vip-overview">
-      <span><Icon name="crown" size={24} /></span>
-      <div><small>عضویت ویژه</small><h3>پلن‌های VIP</h3><p>{account.has_active_plan && account.plan_expire_at ? `پلن شما تا ${formatDate(account.plan_expire_at)} فعال است` : 'دسترسی رایگان به محصولات ویژه'}</p></div>
-    </div>
-    <div className="vip-plan-list">
-      {plans.map((plan) => {
-        const active = account.has_active_plan && account.active_plan_id === plan.id
+export function VipPlans({ account, plans, busyKey, onChoose }: Props) {
+  const { text } = useContent()
+  const hasActivePlan = account.has_active_plan && (!account.plan_expire_at || Date.parse(account.plan_expire_at) > Date.now())
+  const activePlan = hasActivePlan ? plans.find(plan => plan.id === account.active_plan_id) : undefined
+  return <div className="membership-plans">
+    <section className={`membership-overview ${hasActivePlan ? 'is-active' : ''}`}>
+      <div className="membership-overview-top"><span className="membership-emblem"><Icon name="crown" size={26} /></span><span className="membership-label">{text('membership.label')}</span>{hasActivePlan && <span className="membership-active"><Icon name="check" size={13} />{text('membership.active')}</span>}</div>
+      <h2>{hasActivePlan ? activePlan?.title || text('profile.vip_active') : text('membership.title')}</h2>
+      <p>{text('membership.benefit')}</p>
+      {hasActivePlan && account.plan_expire_at && <div className="membership-expiry"><Icon name="clock" size={16} /><span>{text('membership.expiry')}</span><strong>{formatDate(account.plan_expire_at)}</strong></div>}
+    </section>
+    <div className="account-section-title"><span><Icon name="crown" size={17} /><h3>{text('membership.choose')}</h3></span></div>
+    {plans.length === 0 ? <div className="account-empty"><Icon name="crown" size={28} /><h3>{text('membership.empty')}</h3><p>{text('membership.empty_hint')}</p></div> : <div className="membership-plan-list">
+      {plans.map(plan => {
+        const active = hasActivePlan && account.active_plan_id === plan.id
         const upgrade = Boolean(activePlan && plan.tier > activePlan.tier)
-        return <article className={`vip-plan ${active ? 'is-active' : ''}`} key={plan.id}>
-          <div className="vip-plan-rank"><Icon name="crown" size={16} /><span>سطح {plan.tier.toLocaleString('fa-IR')}</span>{active && <b><Icon name="check" size={13} />پلن فعال</b>}</div>
-          <div className="vip-plan-copy"><h4>{plan.title}</h4><p>{plan.duration.toLocaleString('fa-IR')} روز دسترسی ویژه</p>{active && account.plan_expire_at && <small>تاریخ انقضا: {formatDate(account.plan_expire_at)}</small>}</div>
-          <strong className="vip-plan-price">{plan.stars_price.toLocaleString('fa-IR')} <i>⭐</i></strong>
-          <div className="vip-plan-actions">
-            <button disabled={Boolean(busyKey)} aria-busy={busyKey === `quote:${plan.id}:telegram_stars`} onClick={() => onChoose(plan, 'telegram_stars')}>{active ? 'تمدید با Stars' : upgrade ? 'ارتقا با Stars' : 'پرداخت با Stars'}<Icon name={busyKey === `quote:${plan.id}:telegram_stars` ? 'clock' : 'arrow'} size={16} /></button>
-            <button className="wallet-buy" disabled={Boolean(busyKey)} aria-busy={busyKey === `quote:${plan.id}:wallet`} onClick={() => onChoose(plan, 'wallet')}><Icon name="wallet" size={16} />{active ? 'تمدید با کیف پول' : upgrade ? 'ارتقا با کیف پول' : 'خرید از کیف پول'}</button>
-          </div>
+        return <article className={`membership-plan ${active ? 'is-active' : ''}`} key={plan.id}>
+          <div className="membership-plan-top"><span className="membership-tier"><Icon name="crown" size={14} /><span>{text('membership.tier').replace('{tier}', plan.tier.toLocaleString('fa-IR'))}</span></span>{active && <span className="membership-active"><Icon name="check" size={13} />{text('membership.active')}</span>}</div>
+          <h4>{plan.title}</h4>
+          <div className="membership-plan-value"><span><Icon name="clock" size={15} /><span>{text('membership.days').replace('{days}', plan.duration.toLocaleString('fa-IR'))}</span></span><strong><bdi>{plan.stars_price.toLocaleString('fa-IR')}</bdi><i aria-label="Stars">⭐</i></strong></div>
+          <button type="button" className="account-primary membership-select" disabled={Boolean(busyKey)} aria-busy={busyKey?.startsWith(`quote:${plan.id}:`) || false} onClick={() => onChoose(plan, 'telegram_stars')}><span>{busyKey?.startsWith(`quote:${plan.id}:`) ? text('membership.calculating') : active ? text('membership.renew') : upgrade ? text('membership.upgrade') : text('membership.select')}</span><Icon name={busyKey?.startsWith(`quote:${plan.id}:`) ? 'clock' : 'back'} size={17} /></button>
         </article>
       })}
-    </div>
-  </section>
+    </div>}
+    {hasActivePlan && <p className="account-footnote"><Icon name="info" size={16} />{text('membership.upgrade_hint')}</p>}
+  </div>
 }

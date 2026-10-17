@@ -13,7 +13,7 @@ export function ProfileActivity({ transactions }: { transactions: WalletTransact
         return <div className="profile-activity-item" key={item.id}>
           <span className={`profile-activity-symbol ${credit ? 'is-credit' : 'is-debit'}`}><Icon name={credit ? 'plus' : 'orders'} size={17} /></span>
           <div><strong>{item.description || 'تراکنش کیف پول'}</strong><time dateTime={item.created_at}>{formatDate(item.created_at)}</time></div>
-          <b className={credit ? 'is-credit' : 'is-debit'} dir="ltr">{credit ? '+' : '−'}{item.amount.toLocaleString('fa-IR')} <span aria-hidden="true">⭐</span></b>
+          <b className={credit ? 'is-credit' : 'is-debit'} dir="ltr">{credit ? '+' : '−'}{Math.abs(item.amount).toLocaleString('fa-IR')} <span aria-hidden="true">⭐</span></b>
         </div>
       }) : <div className="profile-activity-empty"><span><Icon name="clock" size={22} /></span><div><strong>هنوز گردشی ثبت نشده</strong><p>شارژ و خریدهای شما اینجا نمایش داده می‌شود.</p></div></div>}
     </div>
