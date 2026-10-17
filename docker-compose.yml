@@ -16,18 +16,6 @@ services:
       timeout: 5s
       retries: 5
 
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    volumes:
-      - redisdata:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
   minio:
     image: minio/minio:latest
     command: server /data --console-address ":9001"
@@ -72,14 +60,11 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
       minio:
         condition: service_healthy
     environment:
       SERVICE_NAME: api
       DATABASE_URL: postgres://tgmp:tgmp@postgres:5432/telegram_marketplace?sslmode=disable
-      REDIS_URL: redis://redis:6379/0
       BOT_TOKEN: ${BOT_TOKEN}
       TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:-}
       JWT_SECRET: ${JWT_SECRET:-qgGm3V/DGE+dobjQh+hiPO1j/r6CsmLa0TkYAdX+/Z4=}
@@ -112,14 +97,11 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
       minio:
         condition: service_healthy
     environment:
       SERVICE_NAME: bot
       DATABASE_URL: postgres://tgmp:tgmp@postgres:5432/telegram_marketplace?sslmode=disable
-      REDIS_URL: redis://redis:6379/0
       BOT_TOKEN: ${BOT_TOKEN}
       TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:-}
       JWT_SECRET: ${JWT_SECRET:-qgGm3V/DGE+dobjQh+hiPO1j/r6CsmLa0TkYAdX+/Z4=}
@@ -173,6 +155,5 @@ services:
 
 volumes:
   pgdata:
-  redisdata:
   miniodata:
   dbeaverdata:

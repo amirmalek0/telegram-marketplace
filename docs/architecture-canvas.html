@@ -334,7 +334,6 @@
         <div class="gap"><b>Telegram Stars</b> is the only exposed payment method; wallet routes and manual settlement are disabled.</div>
         <div class="gap"><b>cmd/bot</b> wires every service, then returns nil from both start modes.</div>
         <div class="gap"><b>settings</b> has six files and is absent from Wire() and the router.</div>
-        <div class="gap">Redis is provisioned in compose and imported nowhere.</div>
       </div>
     </div>
 
@@ -446,7 +445,6 @@
     pkgl:       { kind:"Shared kit", path:"core/pkg", note:"pagination (params, offset, envelope), storage (S3/MinIO behind a Storage interface), pgconv (pgtype helpers), util. Imports nothing from internal.", kv:{ Packages:"4" } },
     pg:         { kind:"Datastore", path:"postgres:16", note:"24 tables, migrated in-process at boot by database.Migrate. Every repository is a PostgresRepository over pgxpool.", kv:{ Tables:"24", Migration:"in-process" } },
     minio:      { kind:"Object storage", path:"minio", note:"Two buckets created on start: category icons and product files. Reached through the AWS S3 SDK, so a real S3 endpoint drops in unchanged.", kv:{ Buckets:"2" } },
-    redis:      { kind:"Provisioned, unused", path:"redis", alarm:true, note:"A service and a named volume in docker-compose. No Go file imports a Redis client.", kv:{ References:"0" } },
     starsapi:   { kind:"External platform", path:"Telegram Bot API", note:"Creates XTR invoice links, validates pre-checkout queries, and receives successful-payment updates through polling or a secret-protected webhook.", kv:{ Status:"implemented" } },
 
     l_client:   { kind:"Layer 1", path:"miniapp / backoffice", note:"Authorization: tma <initData> from the mini app, Bearer <jwt> from the console." },
@@ -476,7 +474,7 @@
       idx: "01",
       title: "System & containers",
       text: "Two Go processes, three browser-side clients, one database. Both processes call the same dependencies.Wire(), so the bot already holds every service it would need.",
-      count: "14",
+      count: "13",
       zones: [
         { x: 24, y: 24, w: 226, h: 452, c: C.platform, tag: "People" },
         { x: 274, y: 24, w: 246, h: 452, c: C.platform, tag: "Clients" },
@@ -497,7 +495,6 @@
         N("pkgl", 878, 350, 238, 62, "pkg", "storage · pagination", C.platform),
         N("pg", 1188, 70, 178, 62, "postgres", "24 tables", C.infra),
         N("minio", 1188, 200, 178, 62, "minio / s3", "2 buckets", C.infra),
-        N("redis", 1188, 330, 178, 62, "redis", "unused", C.infra, { ghost: true, chip: "0 refs" }),
         N("starsapi", 1188, 500, 178, 62, "Telegram Stars", "live adapter", C.infra, { chip: "XTR" })
       ],
       edges: [

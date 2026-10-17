@@ -24,7 +24,6 @@ telegram-marketplace/
 | **Mini App** | 3000 | Telegram Mini App frontend |
 | **Backoffice** | 3001 | Admin panel frontend |
 | **PostgreSQL** | 5432 | Database |
-| **Redis** | 6379 | Cache and session storage |
 | **MinIO** | 9000/9001 | Object storage (S3-compatible) |
 | **pgAdmin** | 5050 | Database admin UI |
 
