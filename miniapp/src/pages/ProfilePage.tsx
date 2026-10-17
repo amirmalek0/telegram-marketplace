@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { openInvoice } from '@telegram-apps/sdk'
 import { ApiClient } from '../api/client'
 import { PaymentResultModal, type PaymentResult } from '../components/commerce/PaymentResultModal'
+import { PaymentStatusNotice } from '../components/commerce/PaymentStatusNotice'
 import { StateCard } from '../components/feedback/CatalogStates'
 import { ProfileQuickLinks } from '../components/profile/ProfileQuickLinks'
 import { ProfileAccountCard } from '../components/profile/ProfileAccountCard'
@@ -32,6 +33,7 @@ export function ProfilePage({ initDataRaw, telegramUser, preview = false, scenar
   const [error, setError] = useState<string | null>(null)
   const [busyKey, setBusyKey] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  const [noticeKind, setNoticeKind] = useState<PaymentResult['kind']>('success')
   const [testInvoice, setTestInvoice] = useState<StarsInvoice | null>(null)
   const [checkout, setCheckout] = useState<VipCheckout | null>(null)
   const [paymentResult, setPaymentResult] = useState<PaymentResult | null>(null)
@@ -63,12 +65,17 @@ export function ProfilePage({ initDataRaw, telegramUser, preview = false, scenar
   const visibleLoading = preview ? scenario === 'loading' : loading
   const unavailable = preview && scenario === 'unavailable'
   const visibleError = preview && scenario === 'error-message' ? 'اطلاعات پروفایل دریافت نشد' : error
-  const visibleNotice = preview && scenario === 'success' ? 'کیف پول شما با موفقیت شارژ شد.' : notice
+  const visibleNotice = preview && scenario === 'success' ? 'کیف پول شما با موفقیت شارژ شد.' : preview && scenario === 'payment-cancelled' ? text('payment.cancelled_message') : preview && scenario === 'payment-failed' ? 'پرداخت ناموفق بود. دوباره تلاش کنید.' : notice
+  const visibleNoticeKind = preview && scenario === 'payment-cancelled' ? 'cancelled' : preview && scenario === 'payment-failed' ? 'error' : preview && scenario === 'success' ? 'success' : noticeKind
   const visibleTestInvoice: StarsInvoice | null = preview && scenario === 'payment-test' ? { payment_id: 'preview-payment', stars: 50, simulation_enabled: true, completed: false, purpose: 'wallet_topup' } : testInvoice
   const displayName = useMemo(() => [visibleAccount?.first_name || telegramUser?.firstName, visibleAccount?.last_name || telegramUser?.lastName].filter(Boolean).join(' ') || 'کاربر تلگرام', [telegramUser, visibleAccount])
   const activePlan = plans.find((plan) => plan.id === visibleAccount?.active_plan_id)
 
-  const showResult = (kind: PaymentResult['kind'], message: string) => setPaymentResult({ kind, title: kind === 'success' ? 'پرداخت موفق بود' : kind === 'cancelled' ? 'پرداخت لغو شد' : 'پرداخت انجام نشد', message })
+  const showResult = (kind: PaymentResult['kind'], message: string) => {
+    setNotice(message)
+    setNoticeKind(kind)
+    setPaymentResult({ kind, title: text(kind === 'success' ? 'payment.success_title' : kind === 'cancelled' ? 'payment.cancelled_title' : 'payment.failed_title'), message })
+  }
   const handleInvoice = async (invoice: StarsInvoice, successText: string) => {
     if (invoice.completed) { setNotice(successText); showResult('success', successText); await load(); return }
     if (invoice.simulation_enabled) { setTestInvoice(invoice); return }
@@ -81,7 +88,7 @@ export function ProfilePage({ initDataRaw, telegramUser, preview = false, scenar
 
   const preparePlan = async (plan: VipPlan, method: PaymentMethod) => {
     if (busyKey) return
-    setBusyKey(`quote:${plan.id}:${method}`); setError(null)
+    setBusyKey(`quote:${plan.id}:${method}`); setError(null); setNotice(null)
     try {
       const quote: VipQuote = preview || !initDataRaw ? {
         plan_id: plan.id, plan_title: plan.title, original_stars: plan.stars_price,
@@ -117,11 +124,11 @@ export function ProfilePage({ initDataRaw, telegramUser, preview = false, scenar
 
   const simulate = async (outcome: 'succeeded' | 'failed' | 'cancelled') => {
     if (preview || !initDataRaw || !testInvoice || busyKey) return
-    setBusyKey(`simulate:${outcome}`); setError(null)
+    setBusyKey(`simulate:${outcome}`); setError(null); setNotice(null)
     try {
       const result = await new ApiClient({ initDataRaw }).post<SimulatedPayment>('/payment/stars/test/simulate', { payment_id: testInvoice.payment_id, outcome })
       setTestInvoice(null)
-      if (result.status === 'succeeded') { const message = result.purpose === 'wallet_topup' ? 'شارژ آزمایشی کیف پول انجام شد.' : 'خرید آزمایشی پلن VIP انجام شد.'; setNotice(message); showResult('success', message); await load() }
+      if (result.status === 'succeeded') { const message = 'شبیه‌سازی موفق بود؛ موجودی کیف پول و اشتراک واقعی تغییر نکرد.'; setNotice(message); showResult('success', message); await load() }
       else { const cancelled = result.status === 'cancelled'; const message = cancelled ? 'پرداخت آزمایشی لغو شد.' : 'پرداخت آزمایشی ناموفق ثبت شد.'; setError(message); showResult(cancelled ? 'cancelled' : 'error', message) }
     } catch (reason) { const message = reason instanceof Error ? reason.message : 'شبیه‌سازی پرداخت ناموفق بود'; setError(message); showResult('error', message) }
     finally { setBusyKey(null) }
@@ -132,8 +139,12 @@ export function ProfilePage({ initDataRaw, telegramUser, preview = false, scenar
 
   return <div className={`page profile-page ${view === 'vip' ? 'vip-page' : view === 'profile' ? 'profile-home' : ''}`}>
     {view === 'profile' && <ProfileAccountCard account={visibleAccount} balance={visibleWallet.balance} displayName={displayName} username={visibleAccount.username || telegramUser?.username} photoUrl={visibleAccount.photo_url ?? telegramUser?.photoUrl} initDataRaw={initDataRaw} activePlan={activePlan} />}
-    {visibleError && <p className="purchase-error">{visibleError}</p>}{visibleNotice && <p className="purchase-notice"><Icon name="check" size={15} />{visibleNotice}</p>}
-    {visibleTestInvoice && <section className="payment-simulator"><div><strong>شبیه‌ساز پرداخت سراسری</strong><span>هیچ استاری مصرف نمی‌شود؛ نتیجه را انتخاب کنید.</span></div><div className="payment-simulator-actions"><button disabled={Boolean(busyKey)} onClick={() => void simulate('succeeded')}>موفق</button><button disabled={Boolean(busyKey)} onClick={() => void simulate('failed')}>ناموفق</button><button disabled={Boolean(busyKey)} onClick={() => void simulate('cancelled')}>لغو</button></div></section>}
+    {(visibleNotice || visibleError) && <PaymentStatusNotice
+      kind={visibleNotice ? visibleNoticeKind : 'error'}
+      message={visibleNotice || visibleError!}
+      onDismiss={() => { setNotice(null); setError(null) }}
+    />}
+    {visibleTestInvoice && <section className="payment-simulator"><div><strong>شبیه‌ساز پرداخت سراسری</strong><span>این شبیه‌سازی موجودی کیف پول یا اشتراک واقعی ایجاد نمی‌کند.</span></div><div className="payment-simulator-actions"><button disabled={Boolean(busyKey)} onClick={() => void simulate('succeeded')}>موفق</button><button disabled={Boolean(busyKey)} onClick={() => void simulate('failed')}>ناموفق</button><button disabled={Boolean(busyKey)} onClick={() => void simulate('cancelled')}>لغو</button></div></section>}
 
     {view === 'profile' && <><ProfileQuickLinks /><ProfileActivity transactions={visibleWallet.transactions} /><ProfileReferrals initDataRaw={initDataRaw} preview={preview} scenario={scenario} onAccountRefresh={load} /></>}
 

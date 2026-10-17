@@ -210,7 +210,7 @@ export function ProductPage({ products, categoryById, initDataRaw, preview = fal
       })
       setTestInvoice(null)
       if (result.status === 'succeeded') {
-        const message = 'پرداخت آزمایشی موفق بود. محتوای خرید در همین صفحه در دسترس است.'
+        const message = 'شبیه‌سازی موفق بود. هیچ محصول یا اعتبار واقعی به حساب اضافه نشده است.'
         setPurchaseNotice(message)
         setPaymentResult({ kind: 'success', title: 'پرداخت موفق بود', message })
         await Promise.all([refreshProductAccess(result.order_id || result.reference_id || ''), fetchAccount()])
@@ -257,7 +257,7 @@ export function ProductPage({ products, categoryById, initDataRaw, preview = fal
       {visiblePurchaseNotice && <PurchaseNotice tone="success">{visiblePurchaseNotice}</PurchaseNotice>}
       {visibleTestInvoice && (
         <section className="payment-simulator">
-          <div><strong>حالت آزمایشی فروشگاه</strong><span>هیچ استاری مصرف نمی‌شود؛ نتیجه موردنظر را انتخاب کنید.</span></div>
+          <div><strong>حالت آزمایشی فروشگاه</strong><span>فقط شبیه‌سازی است؛ هیچ استاری مصرف یا محصولی تحویل داده نمی‌شود.</span></div>
           <div className="payment-simulator-actions">
             <button disabled={Boolean(simulating)} onClick={() => void simulatePayment('succeeded')}>موفق</button>
             <button disabled={Boolean(simulating)} onClick={() => void simulatePayment('failed')}>ناموفق</button>

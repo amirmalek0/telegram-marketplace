@@ -95,6 +95,8 @@ const profile: EditorScenarioOption[] = [
   { value: 'empty-wallet', label: 'پروفایل — کیف پول خالی' },
   { value: 'payment-test', label: 'پروفایل — پرداخت آزمایشی' },
   { value: 'success', label: 'پروفایل — پیام موفقیت' },
+  { value: 'payment-failed', label: 'پروفایل — پرداخت ناموفق' },
+  { value: 'payment-cancelled', label: 'پروفایل — پرداخت لغوشده' },
   { value: 'error-message', label: 'پروفایل — پیام خطا' },
   { value: 'loading', label: 'پروفایل — در حال بارگذاری' },
   { value: 'unavailable', label: 'پروفایل — در دسترس نیست' },
