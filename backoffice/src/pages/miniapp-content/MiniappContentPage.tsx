@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { BookOpen, ChevronDown, ExternalLink, Keyboard, ListFilter, RefreshCw, Type, Smartphone } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { Button, Select } from '@/components/ui';
-import { SystemHeader } from '@/components/system/SystemHeader';
+import { EditorWorkspace } from './EditorWorkspace';
 import { useAuthStore } from '@/stores/authStore';
-import { ColorPaletteEditor } from './ColorPaletteEditor';
+import { EditorControls } from './EditorControls';
+import type { LayoutDrafts } from './PageLayoutEditor';
+import type { PageId } from './pageLayouts';
 import type { Palette, PaletteMode } from './palette';
 
 function editorURL() {
@@ -30,13 +30,16 @@ export default function MiniappContentPage() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const editorWindowRef = useRef<Window | null>(null);
   const palettePreviewRef = useRef<{ type: string; palette: Palette | null; mode: PaletteMode } | null>(null);
+  const layoutsPreviewRef = useRef<{ type: string; layouts: LayoutDrafts } | null>(null);
+  const previewPathRef = useRef('/');
   const accessToken = useAuthStore((state) => state.accessToken);
-  const [frameKey, setFrameKey] = useState(0);
+  const [frameKey, setFrameKey] = useState(() => Date.now());
   const [connected, setConnected] = useState(false);
   const [connectionSlow, setConnectionSlow] = useState(false);
   const [previewPage, setPreviewPage] = useState<PreviewPageState | null>(null);
   const previewURL = useMemo(() => {
     const url = editorURL();
+    url.pathname = previewPathRef.current;
     url.searchParams.set('preview-reload', String(frameKey));
     return url;
   }, [frameKey]);
@@ -53,11 +56,25 @@ export default function MiniappContentPage() {
     if (!receiver || !accessToken) return;
     receiver.postMessage({ type: 'miniapp-editor-auth', token: accessToken }, previewURL.origin);
     if (palettePreviewRef.current) receiver.postMessage(palettePreviewRef.current, previewURL.origin);
+    if (layoutsPreviewRef.current) receiver.postMessage(layoutsPreviewRef.current, previewURL.origin);
   }, [accessToken, previewURL.origin]);
 
   const previewPalette = useCallback((palette: Palette | null, mode: PaletteMode) => {
     const message = { type: 'miniapp-editor-palette', palette, mode };
     palettePreviewRef.current = message;
+    iframeRef.current?.contentWindow?.postMessage(message, previewURL.origin);
+    if (editorWindowRef.current && !editorWindowRef.current.closed) editorWindowRef.current.postMessage(message, previewURL.origin);
+  }, [previewURL.origin]);
+
+  const previewLayouts = useCallback((layouts: LayoutDrafts) => {
+    const message = { type: 'miniapp-editor-page-layouts', layouts };
+    layoutsPreviewRef.current = message;
+    iframeRef.current?.contentWindow?.postMessage(message, previewURL.origin);
+    if (editorWindowRef.current && !editorWindowRef.current.closed) editorWindowRef.current.postMessage(message, previewURL.origin);
+  }, [previewURL.origin]);
+
+  const openPage = useCallback((page: PageId) => {
+    const message = { type: 'miniapp-editor-navigate-page', page };
     iframeRef.current?.contentWindow?.postMessage(message, previewURL.origin);
     if (editorWindowRef.current && !editorWindowRef.current.closed) editorWindowRef.current.postMessage(message, previewURL.origin);
   }, [previewURL.origin]);
@@ -81,6 +98,7 @@ export default function MiniappContentPage() {
           return typeof candidate.value === 'string' && typeof candidate.label === 'string';
         });
         if (typeof event.data.pathname === 'string' && typeof event.data.scenario === 'string' && scenarios.length > 0) {
+          if (event.data.pathname.startsWith('/') && !event.data.pathname.startsWith('//')) previewPathRef.current = event.data.pathname;
           setPreviewPage({ pathname: event.data.pathname, scenario: event.data.scenario, scenarios });
         }
       }
@@ -110,7 +128,9 @@ export default function MiniappContentPage() {
   };
 
   const openEditorWindow = () => {
-    const editorWindow = window.open(previewURL.toString(), 'miniapp-content-editor');
+    const url = new URL(previewURL);
+    url.pathname = previewPathRef.current;
+    const editorWindow = window.open(url.toString(), 'miniapp-content-editor');
     if (!editorWindow) {
       toast.error('مرورگر اجازه باز کردن پنجره جدید را نداد');
       return;
@@ -119,89 +139,23 @@ export default function MiniappContentPage() {
     editorWindow.focus();
   };
 
-  return (
-    <div className="system-page">
-      <SystemHeader title="ویرایش مینی‌اپ" icon={Smartphone}>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button variant="secondary" size="sm" icon={<RefreshCw size={15} />} onClick={reload}>بارگذاری مجدد</Button>
-            <Button variant="secondary" size="sm" icon={<ExternalLink size={15} />} onClick={openEditorWindow}>باز کردن</Button>
-          </div>
-      </SystemHeader>
-
-      <section className="editor-workspace">
-        <aside className="space-y-4">
-          <div className="surface-card space-y-4 p-4">
-            <div className="flex items-start gap-3">
-              <div className="flex items-center gap-3">
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-violet-500/10 text-violet-500"><ListFilter size={17} /></span>
-                <h2 className="text-sm font-semibold">حالت صفحه</h2>
-              </div>
-            </div>
-            <Select
-              aria-label="حالت صفحه"
-              value={previewPage?.scenario || ''}
-              disabled={!connected || !previewPage}
-              onChange={(event) => selectScenario(event.target.value)}
-              className="h-11 text-xs font-bold outline-none focus:border-violet-500 disabled:opacity-50"
-              options={previewPage?.scenarios || [{ value: '', label: 'در حال دریافت حالت‌ها…' }]}
-            />
-            <button
-              type="button"
-              disabled={!connected}
-              onClick={openCatalog}
-              className="flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-violet-500/10 text-xs font-extrabold text-violet-600 transition hover:bg-violet-500/15 disabled:opacity-50 dark:text-violet-400"
-            >
-              <Type size={16} /> همه متن‌ها
-            </button>
-            {!connected && <div className="system-note" role="status"><p>{connectionSlow ? 'پیش‌نمایش آماده نشد. اتصال مینی‌اپ را بررسی کنید یا بارگذاری مجدد را بزنید.' : 'در حال بارگذاری پیش‌نمایش…'}</p></div>}
-          </div>
-
-          <ColorPaletteEditor onPreview={previewPalette} />
-
-          <details className="surface-card group overflow-hidden">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 p-3.5 [&::-webkit-details-marker]:hidden">
-              <div className="flex items-center gap-3">
-                <span className="grid h-8 w-8 place-items-center rounded-lg bg-sky-500/10 text-sky-500"><BookOpen size={16} /></span>
-                <h3 className="text-sm font-semibold">راهنمای ویرایش</h3>
-              </div>
-              <ChevronDown size={17} className="text-[rgb(var(--color-text-secondary))] transition-transform duration-200 group-open:rotate-180" />
-            </summary>
-            <div className="border-t border-[rgb(var(--color-border))]">
-              <div className="space-y-3 p-4 text-[11px] leading-6 text-[rgb(var(--color-text-secondary))]">
-                <p><b className="text-[rgb(var(--color-text))]">۱. حرکت بین صفحه‌ها:</b> روی لینک‌ها و نوار پایین پیش‌نمایش کلیک کنید.</p>
-                <p><b className="text-[rgb(var(--color-text))]">۲. ویرایش متن معمولی:</b> روی متن خط‌چین‌دار کلیک کنید.</p>
-                <p><b className="text-[rgb(var(--color-text))]">۳. متن دکمه یا لینک:</b> با میانبر کلیک کنید تا عملکرد اصلی آن اجرا نشود.</p>
-                <p><b className="text-[rgb(var(--color-text))]">۴. حالت صفحه:</b> حالت‌های پر، خالی، خطا و سایر وضعیت‌ها را از انتخاب‌گر بالا ببینید.</p>
-                <p><b className="text-[rgb(var(--color-text))]">۵. همه متن‌ها:</b> متن‌های پنهان یا مربوط به حالت‌های دیگر را جست‌وجو و ویرایش کنید.</p>
-                <p><b className="text-[rgb(var(--color-text))]">۶. بازیابی و نمایش:</b> «متن پیش‌فرض» تغییر را حذف می‌کند؛ «بارگذاری مجدد» پیش‌نمایش را تازه و «باز کردن» آن را در تب جدا نمایش می‌دهد.</p>
-                <p><b className="text-[rgb(var(--color-text))]">۷. پالت رنگ:</b> رنگ‌های روشن و تیره را جدا تنظیم کنید. تغییرات تا زدن «ذخیره رنگ‌ها» فقط در پیش‌نمایش هستند. «لغو تغییرات» رنگ‌های ذخیره‌شده را برمی‌گرداند؛ بازگشت به پیش‌فرض هم نیاز به ذخیره دارد.</p>
-              </div>
-              <div className="border-t border-[rgb(var(--color-border))] bg-slate-500/[0.035] p-4">
-                <div className="mb-3 flex items-center gap-2 text-xs font-extrabold"><Keyboard size={16} className="text-violet-500" /> میانبرها</div>
-                <div className="grid gap-3 text-[10px] sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">
-                  <div className="rounded-xl border border-[rgb(var(--color-border))] p-3"><b className="block text-[11px]">macOS</b><p className="mt-2"><kbd>⌥</kbd> + کلیک: ویرایش لینک/دکمه</p><p><kbd>⌘</kbd> + <kbd>Enter</kbd>: ذخیره</p><p><kbd>Esc</kbd>: بستن</p></div>
-                  <div className="rounded-xl border border-[rgb(var(--color-border))] p-3"><b className="block text-[11px]">Windows / Linux</b><p className="mt-2"><kbd>Alt</kbd> + کلیک: ویرایش لینک/دکمه</p><p><kbd>Ctrl</kbd> + <kbd>Enter</kbd>: ذخیره</p><p><kbd>Esc</kbd>: بستن</p></div>
-                </div>
-              </div>
-            </div>
-          </details>
-        </aside>
-
-        <div className="editor-preview">
-          <div className="mb-4 flex items-center justify-between gap-3 text-xs text-[rgb(var(--color-text-secondary))]"><span className="flex items-center gap-2"><Smartphone size={16} />پیش‌نمایش زنده</span><span>موبایل</span></div>
-          <div className="editor-device">
-            <iframe
-              key={frameKey}
-              ref={iframeRef}
-              title="پیش‌نمایش زنده مینی‌اپ"
-              src={previewURL.toString()}
-              className="block h-[700px] w-full border-0 bg-white"
-              onLoad={() => sendCredentials()}
-              allow="clipboard-read; clipboard-write"
-            />
-          </div>
-        </div>
-      </section>
-    </div>
-  );
+  return <EditorWorkspace
+    connected={connected}
+    connectionSlow={connectionSlow}
+    page={previewPage}
+    onScenario={selectScenario}
+    onReload={reload}
+    onOpen={openEditorWindow}
+    onCatalog={openCatalog}
+    controls={<EditorControls onPalette={previewPalette} onLayouts={previewLayouts} onOpenPage={openPage} pathname={previewPage?.pathname} />}
+  >
+    <iframe
+      key={frameKey}
+      ref={iframeRef}
+      title="پیش‌نمایش زنده مینی‌اپ"
+      src={previewURL.toString()}
+      onLoad={() => sendCredentials()}
+      allow="clipboard-read; clipboard-write"
+    />
+  </EditorWorkspace>;
 }
