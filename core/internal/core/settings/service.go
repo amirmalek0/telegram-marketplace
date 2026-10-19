@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strings"
 
 	"telegram-marketplace/internal/core/settings/model"
 	"telegram-marketplace/internal/core/settings/repository"
@@ -40,6 +41,21 @@ func (s *Service) UpdateContent(ctx context.Context, key, value, adminID string)
 	}
 	if key == "appearance.palette" {
 		if err := validatePalette(value); err != nil {
+			return nil, err
+		}
+	}
+	if key == "appearance.shop_sections" {
+		if err := validateShopArrangement(value); err != nil {
+			return nil, err
+		}
+	}
+	if key == "appearance.shop_designs" {
+		if err := validateShopDesigns(value); err != nil {
+			return nil, err
+		}
+	}
+	if strings.HasPrefix(key, "appearance.page.") {
+		if err := validatePageLayout(key, value); err != nil {
 			return nil, err
 		}
 	}
