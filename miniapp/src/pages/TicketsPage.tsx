@@ -6,8 +6,9 @@ import { Icon } from '../components/ui/Icon'
 import { ticketStatusLabels } from '../features/tickets/metadata'
 import type { TicketStatus } from '../features/tickets/types'
 import { useTickets } from '../features/tickets/useTickets'
+import type { SectionSourceProps } from '../features/content/sectionRendering'
 
-interface TicketsPageProps {
+interface TicketsPageProps extends SectionSourceProps {
   initDataRaw: string | null
   ready: boolean
   preview?: boolean
@@ -23,7 +24,7 @@ const filters: { value: TicketFilter; label: string }[] = [
   { value: 'closed', label: ticketStatusLabels.closed },
 ]
 
-export function TicketsPage({ initDataRaw, ready, preview = false, scenario = 'content' }: TicketsPageProps) {
+export function TicketsPage({ initDataRaw, ready, preview = false, scenario = 'content', sectionRenderer }: TicketsPageProps) {
   const { tickets, loading, error, reload } = useTickets(initDataRaw, ready, preview)
   const [filter, setFilter] = useState<TicketFilter>('all')
   const filteredTickets = useMemo(
@@ -34,8 +35,7 @@ export function TicketsPage({ initDataRaw, ready, preview = false, scenario = 'c
   const visibleLoading = preview ? scenario === 'loading' : loading
   const visibleError = preview && scenario === 'error' ? 'دریافت تیکت‌ها ناموفق بود' : error
   const hasTickets = preview && scenario === 'empty' ? false : scenario === 'filtered-empty' ? true : tickets.length > 0
-  return (
-    <div className="page tickets-page">
+  const intro = (
       <section className="ticket-overview">
         <div className="ticket-overview-copy">
           <span className="ticket-overview-kicker"><Icon name="tickets" size={16} />مرکز پشتیبانی</span>
@@ -46,7 +46,8 @@ export function TicketsPage({ initDataRaw, ready, preview = false, scenario = 'c
           <span>تیکت جدید</span>
         </Link>
       </section>
-
+  )
+  const list = <>
       <div className="ticket-filters" role="group" aria-label="فیلتر وضعیت تیکت‌ها">
         {filters.map((item) => (
           <button
@@ -73,6 +74,6 @@ export function TicketsPage({ initDataRaw, ready, preview = false, scenario = 'c
           {visibleTickets.map((ticket) => <TicketCard key={ticket.id} ticket={ticket} />)}
         </div>
       ) : <TicketEmpty filtered={hasTickets} />}
-    </div>
-  )
+    </>
+  return sectionRenderer ? sectionRenderer({ slots: { 'tickets.intro': intro, 'tickets.list': list } }) : <div className="page tickets-page">{intro}{list}</div>
 }

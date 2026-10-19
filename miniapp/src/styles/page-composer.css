@@ -1,0 +1,27 @@
+.composed-page { display: grid; gap: 24px; animation: none; }
+.composed-page-shop { gap: 26px; padding-top: 16px; }
+.composed-page-profile { padding-top: 16px; }
+.composed-page-product { gap: 20px; padding-top: 16px; }
+.composed-page-category { padding-top: 10px; }
+.composed-page-wallet, .composed-page-vip { gap: 20px; }
+.composed-page-orders, .composed-page-downloads { gap: 20px; }
+.composed-page-tickets { gap: 0; padding-top: 12px; }
+.composed-page-ticket, .composed-page-new-ticket { padding-top: 12px; }
+.composed-section { min-width: 0; display: grid; gap: 12px; }
+.composed-section.shop-page { padding-top: 0; gap: 0; }
+.composed-section.profile-home, .composed-section.product-detail, .composed-section.category-detail-page, .composed-section.tickets-page { padding-top: 0; }
+.composed-section.product-detail { gap: 20px; }
+.composed-section > .page { padding: 0; animation: none; }
+.composed-section > .ticket-thread-page.has-fixed-reply { padding-bottom: calc(180px + env(safe-area-inset-bottom)); }
+.composed-section > .notification-page { margin: 0; padding: 0; }
+.composed-section:empty { display: none; }
+.composed-section.section-design-soft { padding: 14px; border-radius: var(--radius-card); background: color-mix(in srgb,var(--accent) 7%,var(--bg)); }
+.composed-section.section-design-outlined { padding: 14px; border: 1px solid color-mix(in srgb,var(--accent) 35%,var(--line)); border-radius: var(--radius-card); }
+.composed-section.section-design-glass { padding: 14px; border: 1px solid color-mix(in srgb,var(--text) 12%,transparent); border-radius: var(--radius-card); background: color-mix(in srgb,var(--surface-solid) 72%,transparent); box-shadow: inset 0 1px color-mix(in srgb,var(--text) 8%,transparent), 0 8px 24px #00000006; }
+.composed-section.section-design-compact { --space-card: 12px; --radius-card: 14px; gap: 10px; }
+.composed-section.section-design-compact :is(.profile-library,.profile-activity-list,.wallet-sections,.membership-plans,.order-list,.delivery-list,.ticket-list,.notification-list) { gap: 8px; }
+.composed-section.section-design-compact :is(.profile-library-tile,.membership-plan,.notification-card,.commerce-dashboard,.wallet-balance-card) { padding: 12px; }
+.composed-section.section-design-compact .profile-library-tile { min-height: 70px; }
+.composed-section.section-design-compact .profile-library-icon { width: 36px; height: 36px; flex-basis: 36px; }
+/* A nested provider never adds page padding or a second page entrance animation. */
+.composed-section .skeleton-page { padding: 0; }

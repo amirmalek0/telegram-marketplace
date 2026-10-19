@@ -7,10 +7,11 @@ import { Icon } from '../components/ui/Icon'
 import type { Product } from '../features/catalog/types'
 import type { Delivery } from '../features/commerce/types'
 import { editorDeliveries } from '../features/content/editorFixtures'
+import { renderSectionStatus, type SectionSourceProps } from '../features/content/sectionRendering'
 
-interface DownloadsPageProps { initDataRaw: string | null; products: Product[]; preview?: boolean; scenario?: string }
+interface DownloadsPageProps extends SectionSourceProps { initDataRaw: string | null; products: Product[]; preview?: boolean; scenario?: string }
 
-export function DownloadsPage({ initDataRaw, products, preview = false, scenario = 'content' }: DownloadsPageProps) {
+export function DownloadsPage({ initDataRaw, products, preview = false, scenario = 'content', sectionRenderer }: DownloadsPageProps) {
   const location = useLocation()
   const expectedOrderID = (location.state as { orderId?: string } | null)?.orderId
   const [deliveries, setDeliveries] = useState<Delivery[]>([])
@@ -60,15 +61,10 @@ export function DownloadsPage({ initDataRaw, products, preview = false, scenario
   const processingCount = visibleDeliveries.filter((delivery) => delivery.status === 'processing').length
   const itemCount = visibleDeliveries.reduce((sum, delivery) => sum + delivery.items.length, 0)
 
-  if (visibleLoading) return <div className="page"><div className="commerce-loading skeleton" /></div>
-  if (visibleError) return <StateCard title="دریافت محصولات ناموفق بود" body={visibleError} />
-
-  return (
-    <div className="page commerce-page">
-      {visibleDeliveries.length === 0 ? (
-        <section className="commerce-empty"><Icon name="download" size={30} /><h2>هنوز محصولی تحویل نشده</h2><p>بعد از پرداخت موفق، محصول شما اینجا قرار می‌گیرد.</p><button onClick={() => void load()}>به‌روزرسانی</button></section>
-      ) : (
-        <>
+  if (visibleLoading) return renderSectionStatus(sectionRenderer, <div className="page"><div className="commerce-loading skeleton" /></div>)
+  if (visibleError) return renderSectionStatus(sectionRenderer, <StateCard title="دریافت محصولات ناموفق بود" body={visibleError} />)
+  if (visibleDeliveries.length === 0) return renderSectionStatus(sectionRenderer, <section className="commerce-empty"><Icon name="download" size={30} /><h2>هنوز محصولی تحویل نشده</h2><p>بعد از پرداخت موفق، محصول شما اینجا قرار می‌گیرد.</p><button onClick={() => void load()}>به‌روزرسانی</button></section>)
+  const summary = (
           <section className="commerce-dashboard downloads-dashboard">
             <div className="commerce-dashboard-head">
               <span className="commerce-dashboard-icon"><Icon name="download" size={21} /></span>
@@ -81,9 +77,7 @@ export function DownloadsPage({ initDataRaw, products, preview = false, scenario
               <div className="is-warning"><strong>{processingCount.toLocaleString('fa-IR')}</strong><span>در حال آماده‌سازی</span></div>
             </div>
           </section>
-          <div className="delivery-list">{visibleDeliveries.map((delivery) => <DeliveryCard delivery={delivery} key={delivery.order_id} />)}</div>
-        </>
-      )}
-    </div>
   )
+  const list = <div className="delivery-list">{visibleDeliveries.map((delivery) => <DeliveryCard delivery={delivery} key={delivery.order_id} />)}</div>
+  return sectionRenderer ? sectionRenderer({ slots: { 'downloads.summary': summary, 'downloads.list': list } }) : <div className="page commerce-page">{summary}{list}</div>
 }

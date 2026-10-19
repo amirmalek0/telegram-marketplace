@@ -19,11 +19,12 @@ import type { PaginatedResponse } from '../features/catalog/types'
 import type { SimulatedPayment, StarsInvoice, UserAccount, VipPlan, VipQuote, Wallet, WalletTopupPack } from '../features/commerce/types'
 import { editorAccount, editorStandardAccount, editorTopupPacks, editorVipPlans, editorWallet } from '../features/content/editorFixtures'
 import type { TelegramUser } from '../hooks/useTelegramAuth'
+import { renderSectionStatus, type SectionSourceProps } from '../features/content/sectionRendering'
 
-interface ProfilePageProps { initDataRaw: string | null; telegramUser: TelegramUser | null; preview?: boolean; scenario?: string; view?: 'profile' | 'wallet' | 'vip' }
+interface ProfilePageProps extends SectionSourceProps { initDataRaw: string | null; telegramUser: TelegramUser | null; preview?: boolean; scenario?: string; view?: 'profile' | 'wallet' | 'vip' }
 type PaymentMethod = 'telegram_stars' | 'wallet'
 
-export function ProfilePage({ initDataRaw, telegramUser, preview = false, scenario = 'vip', view = 'profile' }: ProfilePageProps) {
+export function ProfilePage({ initDataRaw, telegramUser, preview = false, scenario = 'vip', view = 'profile', sectionRenderer }: ProfilePageProps) {
   const { text } = useContent()
   const [account, setAccount] = useState<UserAccount | null>(null)
   const [wallet, setWallet] = useState<Wallet | null>(null)
@@ -134,11 +135,10 @@ export function ProfilePage({ initDataRaw, telegramUser, preview = false, scenar
     finally { setBusyKey(null) }
   }
 
-  if (visibleLoading) return view === 'profile' ? <ProfileSkeleton /> : <AccountPageSkeleton />
-  if (unavailable || !visibleAccount || !visibleWallet) return <div className="profile-unavailable"><StateCard title={view === 'vip' ? 'پلن‌های VIP در دسترس نیست' : view === 'wallet' ? 'کیف پول در دسترس نیست' : 'پروفایل در دسترس نیست'} body={visibleError || 'دوباره تلاش کنید.'} /><button className="profile-retry" onClick={() => { if (!preview) { setLoading(true); void load() } }}><Icon name="refresh" size={17} />{text('common.retry')}</button></div>
-
-  return <div className={`page profile-page ${view === 'vip' ? 'vip-page' : view === 'profile' ? 'profile-home' : ''}`}>
-    {view === 'profile' && <ProfileAccountCard account={visibleAccount} balance={visibleWallet.balance} displayName={displayName} username={visibleAccount.username || telegramUser?.username} photoUrl={visibleAccount.photo_url ?? telegramUser?.photoUrl} initDataRaw={initDataRaw} activePlan={activePlan} />}
+  if (visibleLoading) return renderSectionStatus(sectionRenderer, view === 'profile' ? <ProfileSkeleton /> : <AccountPageSkeleton />)
+  if (unavailable || !visibleAccount || !visibleWallet) return renderSectionStatus(sectionRenderer, <div className="profile-unavailable"><StateCard title={view === 'vip' ? 'پلن‌های VIP در دسترس نیست' : view === 'wallet' ? 'کیف پول در دسترس نیست' : 'پروفایل در دسترس نیست'} body={visibleError || 'دوباره تلاش کنید.'} /><button className="profile-retry" onClick={() => { if (!preview) { setLoading(true); void load() } }}><Icon name="refresh" size={17} />{text('common.retry')}</button></div>)
+  const identity = <ProfileAccountCard account={visibleAccount} balance={visibleWallet.balance} displayName={displayName} username={visibleAccount.username || telegramUser?.username} photoUrl={visibleAccount.photo_url ?? telegramUser?.photoUrl} initDataRaw={initDataRaw} activePlan={activePlan} />
+  const chrome = <>
     {(visibleNotice || visibleError) && <PaymentStatusNotice
       kind={visibleNotice ? visibleNoticeKind : 'error'}
       message={visibleNotice || visibleError!}
@@ -146,12 +146,23 @@ export function ProfilePage({ initDataRaw, telegramUser, preview = false, scenar
     />}
     {visibleTestInvoice && <section className="payment-simulator"><div><strong>شبیه‌ساز پرداخت سراسری</strong><span>این شبیه‌سازی موجودی کیف پول یا اشتراک واقعی ایجاد نمی‌کند.</span></div><div className="payment-simulator-actions"><button disabled={Boolean(busyKey)} onClick={() => void simulate('succeeded')}>موفق</button><button disabled={Boolean(busyKey)} onClick={() => void simulate('failed')}>ناموفق</button><button disabled={Boolean(busyKey)} onClick={() => void simulate('cancelled')}>لغو</button></div></section>}
 
-    {view === 'profile' && <><ProfileQuickLinks /><ProfileActivity transactions={visibleWallet.transactions} /><ProfileReferrals initDataRaw={initDataRaw} preview={preview} scenario={scenario} onAccountRefresh={load} /></>}
-
-    {view === 'wallet' && <WalletSections wallet={visibleWallet} packs={preview && scenario === 'no-packs' ? [] : packs} busyKey={busyKey} onTopup={(pack) => void topup(pack)} preview={preview} />}
-    {view === 'vip' && <VipPlans account={visibleAccount} plans={preview && scenario === 'no-plans' ? [] : plans} busyKey={busyKey} onChoose={(plan, method) => void preparePlan(plan, method)} />}
-
     {checkout && <VipCheckoutModal checkout={checkout} balance={visibleWallet.balance} preview={preview} onMethod={method => setCheckout(current => current ? { ...current, method } : null)} onClose={() => setCheckout(null)} onConfirm={() => void buyPlan()} />}
     <PaymentResultModal result={paymentResult} onClose={() => setPaymentResult(null)} />
+  </>
+  const walletProps = { wallet: visibleWallet, packs: preview && scenario === 'no-packs' ? [] : packs, busyKey, onTopup: (pack: WalletTopupPack) => void topup(pack), preview }
+  const vipProps = { account: visibleAccount, plans: preview && scenario === 'no-plans' ? [] : plans, busyKey, onChoose: (plan: VipPlan, method: PaymentMethod) => void preparePlan(plan, method) }
+  const shortcuts = <ProfileQuickLinks />
+  const activity = <ProfileActivity transactions={visibleWallet.transactions} />
+  const referrals = <ProfileReferrals initDataRaw={initDataRaw} preview={preview} scenario={scenario} onAccountRefresh={load} />
+  if (sectionRenderer) return sectionRenderer({ slots: {
+    'account.identity': identity, 'account.shortcuts': shortcuts, 'account.activity': activity, 'account.referrals': referrals,
+    'wallet.balance': <WalletSections {...walletProps} only="balance" />, 'wallet.packs': <WalletSections {...walletProps} only="packs" />, 'wallet.history': <WalletSections {...walletProps} only="history" />,
+    'vip.overview': <VipPlans {...vipProps} only="overview" />, 'vip.plans': <VipPlans {...vipProps} only="plans" />,
+  }, chrome })
+  return <div className={`page profile-page ${view === 'vip' ? 'vip-page' : view === 'profile' ? 'profile-home' : ''}`}>
+    {view === 'profile' && identity}{chrome}
+    {view === 'profile' && <>{shortcuts}{activity}{referrals}</>}
+    {view === 'wallet' && <WalletSections {...walletProps} />}
+    {view === 'vip' && <VipPlans {...vipProps} />}
   </div>
 }

@@ -3,20 +3,20 @@ import { useContent } from '../../features/content/ContentProvider'
 import { formatDate } from '../../utils/format'
 import { Icon } from '../ui/Icon'
 
-interface Props { account: UserAccount; plans: VipPlan[]; busyKey: string | null; onChoose: (plan: VipPlan, method: 'telegram_stars' | 'wallet') => void }
+interface Props { account: UserAccount; plans: VipPlan[]; busyKey: string | null; onChoose: (plan: VipPlan, method: 'telegram_stars' | 'wallet') => void; only?: 'overview' | 'plans' }
 
-export function VipPlans({ account, plans, busyKey, onChoose }: Props) {
+export function VipPlans({ account, plans, busyKey, onChoose, only }: Props) {
   const { text } = useContent()
   const hasActivePlan = account.has_active_plan && (!account.plan_expire_at || Date.parse(account.plan_expire_at) > Date.now())
   const activePlan = hasActivePlan ? plans.find(plan => plan.id === account.active_plan_id) : undefined
   return <div className="membership-plans">
-    <section className={`membership-overview ${hasActivePlan ? 'is-active' : ''}`}>
+    {(!only || only === 'overview') && <section className={`membership-overview ${hasActivePlan ? 'is-active' : ''}`}>
       <div className="membership-overview-top"><span className="membership-emblem"><Icon name="crown" size={26} /></span><span className="membership-label">{text('membership.label')}</span>{hasActivePlan && <span className="membership-active"><Icon name="check" size={13} />{text('membership.active')}</span>}</div>
       <h2>{hasActivePlan ? activePlan?.title || text('profile.vip_active') : text('membership.title')}</h2>
       <p>{text('membership.benefit')}</p>
       {hasActivePlan && account.plan_expire_at && <div className="membership-expiry"><Icon name="clock" size={16} /><span>{text('membership.expiry')}</span><strong>{formatDate(account.plan_expire_at)}</strong></div>}
-    </section>
-    <div className="account-section-title"><span><Icon name="crown" size={17} /><h3>{text('membership.choose')}</h3></span></div>
+    </section>}
+    {(!only || only === 'plans') && <><div className="account-section-title"><span><Icon name="crown" size={17} /><h3>{text('membership.choose')}</h3></span></div>
     {plans.length === 0 ? <div className="account-empty"><Icon name="crown" size={28} /><h3>{text('membership.empty')}</h3><p>{text('membership.empty_hint')}</p></div> : <div className="membership-plan-list">
       {plans.map(plan => {
         const active = hasActivePlan && account.active_plan_id === plan.id
@@ -30,5 +30,6 @@ export function VipPlans({ account, plans, busyKey, onChoose }: Props) {
       })}
     </div>}
     {hasActivePlan && <p className="account-footnote"><Icon name="info" size={16} />{text('membership.upgrade_hint')}</p>}
+    </>}
   </div>
 }

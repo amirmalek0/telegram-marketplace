@@ -1,16 +1,22 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { ApiClient } from '../../api/client'
 import { contentCatalog, type ContentKey } from './contentCatalog'
 import { editorScenariosForPath } from './editorScenarios'
 import { paletteKey } from '../theme/palette'
 import { usePalette } from '../theme/usePalette'
 import { editableTextAtPoint, highlightEditableText, type EditableText } from './textSelection'
+import { defaultShopSections, defaultShopArrangement, parseShopArrangement, parseShopSections, shopArrangementKey, type ShopSection } from './shopArrangement'
+import { defaultPageLayout, pageForPath, pageIds, pageLayoutPrefix, parsePageLayout, type PageId, type PageLayout } from './pageLayouts'
+import { defaultShopDesigns, parseShopDesigns, shopDesignsKey, type ShopDesigns } from './shopDesigns'
 
 interface ContentResponse { data: Record<string, string> }
 interface ContentEntry { key: string; value: string }
 
 interface ContentContextValue {
+  layoutForPage: (page: PageId) => PageLayout
+  shopDesigns: ShopDesigns
+  shopSections: ShopSection[]
   adminToken: string | null
   editorMode: boolean
   editorReady: boolean
@@ -19,6 +25,9 @@ interface ContentContextValue {
 }
 
 const ContentContext = createContext<ContentContextValue>({
+  layoutForPage: defaultPageLayout,
+  shopDesigns: defaultShopDesigns,
+  shopSections: defaultShopSections,
   adminToken: null,
   editorMode: false,
   editorReady: true,
@@ -56,8 +65,22 @@ function applyTemplate(template: string, values: string[]) {
 
 export function ContentProvider({ children }: { children: ReactNode }) {
   const location = useLocation()
+  const navigate = useNavigate()
   const editorMode = useMemo(() => new URLSearchParams(window.location.search).get('content-editor') === '1', [])
   const [overrides, setOverrides] = useState<Record<string, string>>({})
+  const [previewLayouts, setPreviewLayouts] = useState<Partial<Record<PageId, PageLayout>>>({})
+  const layoutForPage = useCallback((page: PageId): PageLayout => {
+    const configured = previewLayouts[page] ?? parsePageLayout(overrides[pageLayoutPrefix + page], page)
+    if (configured) return configured
+    if (page !== 'shop') return defaultPageLayout(page)
+    const arrangement = parseShopArrangement(overrides[shopArrangementKey]) ?? defaultShopArrangement
+    const designs = parseShopDesigns(overrides[shopDesignsKey]) ?? defaultShopDesigns
+    return { version: 1, sections: arrangement.order.map(section => ({ type: 'catalog.' + section, visible: !arrangement.hidden.includes(section), design: designs[section] })) }
+  }, [overrides, previewLayouts])
+  const [previewShopDesigns, setPreviewShopDesigns] = useState<ShopDesigns | null>(null)
+  const shopDesigns = useMemo(() => previewShopDesigns ?? parseShopDesigns(overrides[shopDesignsKey]) ?? defaultShopDesigns, [previewShopDesigns, overrides])
+  const [previewShopSections, setPreviewShopSections] = useState<ShopSection[] | null>(null)
+  const shopSections = useMemo(() => previewShopSections ?? parseShopSections(overrides[shopArrangementKey]) ?? defaultShopSections, [previewShopSections, overrides])
   const previewPalette = usePalette(overrides[paletteKey], editorMode)
   const [adminToken, setAdminToken] = useState<string | null>(null)
   const [activeKey, setActiveKey] = useState<ContentKey | null>(null)
@@ -66,7 +89,14 @@ export function ContentProvider({ children }: { children: ReactNode }) {
   const [draft, setDraft] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
-  const scenarioOptions = useMemo(() => editorScenariosForPath(location.pathname), [location.pathname])
+  const addedScenarioPaths = [...new Set(layoutForPage(pageForPath(location.pathname)).sections.filter(section => section.visible).map(section => {
+    const group = section.type.split('.')[0]
+    return group === 'catalog' ? '/' : group === 'account' ? '/profile' : ['wallet', 'vip', 'orders', 'downloads', 'tickets', 'notifications'].includes(group) ? '/' + group : location.pathname
+  }))].sort().join('|')
+  const scenarioOptions = useMemo(() => {
+    const options = [location.pathname, ...addedScenarioPaths.split('|')].flatMap(editorScenariosForPath)
+    return options.filter((option, index) => options.findIndex(item => item.value === option.value) === index)
+  }, [location.pathname, addedScenarioPaths])
   const [editorScenario, setEditorScenario] = useState(scenarioOptions[0].value)
   const rootRef = useRef<HTMLDivElement>(null)
   const editableTextsRef = useRef<EditableText[]>([])
@@ -99,12 +129,36 @@ export function ContentProvider({ children }: { children: ReactNode }) {
         if (scenarioOptions.some((option) => option.value === nextScenario)) setEditorScenario(nextScenario)
       }
       if (event.data?.type === 'miniapp-editor-open-catalog') setCatalogOpen(true)
+      if (event.data?.type === 'miniapp-editor-navigate-page' && pageIds.includes(event.data.page)) {
+        setEditorScenario(current => current.startsWith('phone-') ? scenarioOptions[0].value : current)
+      }
+      if (event.data?.type === 'miniapp-editor-page-layouts' && event.data.layouts && typeof event.data.layouts === 'object') {
+        const valid: Partial<Record<PageId, PageLayout>> = {}
+        for (const page of pageIds) {
+          const layout = parsePageLayout(event.data.layouts[page], page)
+          if (layout) valid[page] = layout
+        }
+        setPreviewLayouts(current => JSON.stringify(current) === JSON.stringify(valid) ? current : valid)
+      }
       if (event.data?.type === 'miniapp-editor-palette') previewPalette(event.data.palette, event.data.mode)
+      if (event.data?.type === 'miniapp-editor-shop-arrangement') {
+        const sections = parseShopSections(event.data.arrangement ?? event.data.sections)
+        if (sections) setPreviewShopSections(sections)
+      }
+      if (event.data?.type === 'miniapp-editor-open-shop') {
+        navigate('/')
+        setEditorScenario('content')
+        window.scrollTo(0, 0)
+      }
+      if (event.data?.type === 'miniapp-editor-shop-designs') {
+        const designs = parseShopDesigns(event.data.designs)
+        if (designs) setPreviewShopDesigns(designs)
+      }
     }
     window.addEventListener('message', receiveToken)
     hostWindow.postMessage({ type: 'miniapp-editor-ready' }, trustedOrigin || '*')
     return () => window.removeEventListener('message', receiveToken)
-  }, [editorMode, scenarioOptions, previewPalette])
+  }, [editorMode, scenarioOptions, previewPalette, navigate])
 
   useEffect(() => {
     if (!editorMode) return
@@ -259,12 +313,15 @@ export function ContentProvider({ children }: { children: ReactNode }) {
   }
 
   const value = useMemo<ContentContextValue>(() => ({
+    layoutForPage,
+    shopDesigns,
+    shopSections,
     adminToken,
     editorMode,
     editorReady: !editorMode || Boolean(adminToken),
     editorScenario,
     text,
-  }), [adminToken, editorMode, editorScenario, text])
+  }), [adminToken, editorMode, editorScenario, text, shopSections, shopDesigns, layoutForPage])
 
   const visibleCatalog = useMemo(() => {
     const query = catalogQuery.trim().toLocaleLowerCase('fa')

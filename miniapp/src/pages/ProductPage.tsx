@@ -18,7 +18,9 @@ import type { Delivery, SimulatedPayment, StarsInvoice, UserAccount, Wallet } fr
 import { editorAccount, editorDeliveries, editorWallet } from '../features/content/editorFixtures'
 import { formatDate } from '../utils/format'
 
-interface ProductPageProps extends CatalogState {
+import { renderSectionStatus, type SectionSourceProps } from '../features/content/sectionRendering'
+
+interface ProductPageProps extends CatalogState, SectionSourceProps {
   initDataRaw: string | null
   preview?: boolean
   scenario?: string
@@ -39,7 +41,7 @@ function ProductFact({ icon, label, value }: ProductFactProps) {
   )
 }
 
-export function ProductPage({ products, categoryById, initDataRaw, preview = false, scenario = 'content' }: ProductPageProps) {
+export function ProductPage({ products, categoryById, initDataRaw, preview = false, scenario = 'content', sectionRenderer }: ProductPageProps) {
   const { productId = '' } = useParams()
   const [product, setProduct] = useState<Product | undefined>(() => products.find((item) => item.id === productId))
   const [loading, setLoading] = useState(!product)
@@ -129,8 +131,8 @@ export function ProductPage({ products, categoryById, initDataRaw, preview = fal
   const visibleLoading = preview ? scenario === 'loading' : loading
   const visibleError = preview && scenario === 'not-found' ? 'این محصول دیگر در دسترس نیست.' : error
 
-  if (visibleLoading) return <ProductSkeleton />
-  if (visibleError || !product) return <StateCard title="محصول پیدا نشد" body={visibleError || 'این محصول دیگر در دسترس نیست.'} />
+  if (visibleLoading) return renderSectionStatus(sectionRenderer, <ProductSkeleton />)
+  if (visibleError || !product) return renderSectionStatus(sectionRenderer, <StateCard title="محصول پیدا نشد" body={visibleError || 'این محصول دیگر در دسترس نیست.'} />)
 
   const displayProduct: Product = preview && scenario === 'vip'
     ? { ...product, vip_only: true }
@@ -223,8 +225,7 @@ export function ProductPage({ products, categoryById, initDataRaw, preview = fal
     } finally { setSimulating(null) }
   }
 
-  return (
-    <div className="page detail-page product-detail">
+  const overview = (
       <section className="product-overview-card">
       <div className="product-detail-hero">
         <ProductArtwork product={displayProduct} large />
@@ -239,7 +240,8 @@ export function ProductPage({ products, categoryById, initDataRaw, preview = fal
         <h2>{displayProduct.title}</h2>
       </div>
       </section>
-
+  )
+  const checkout = <>
       <ProductPurchasePanel
         stars={appliedCoupon?.payable_stars ?? displayProduct.stars_price}
         couponFree={appliedCoupon?.payable_stars === 0}
@@ -277,12 +279,12 @@ export function ProductPage({ products, categoryById, initDataRaw, preview = fal
         </section>
       )}
 
-      <section className="product-description-section">
+  </>
+  const description = <section className="product-description-section">
         <h3>درباره محصول</h3>
         <p>{displayProduct.description || 'توضیحی برای این محصول ثبت نشده است.'}</p>
       </section>
-
-      <section className="product-facts-card">
+  const facts = <section className="product-facts-card">
         <div className="product-section-title">
           <span><Icon name="sparkles" size={17} /></span>
           <h3>اطلاعات محصول</h3>
@@ -301,9 +303,9 @@ export function ProductPage({ products, categoryById, initDataRaw, preview = fal
           </a>
         )}
       </section>
-
-      <RelatedProducts currentProduct={displayProduct} products={products} category={category} />
-      <PaymentResultModal result={paymentResult} onClose={() => setPaymentResult(null)} />
-    </div>
-  )
+  const related = <RelatedProducts currentProduct={displayProduct} products={products} category={category} />
+  const chrome = <PaymentResultModal result={paymentResult} onClose={() => setPaymentResult(null)} />
+  return sectionRenderer ? sectionRenderer({ slots: {
+    'product.overview': overview, 'product.checkout': checkout, 'product.description': description, 'product.facts': facts, 'product.related': related,
+  }, chrome }) : <div className="page detail-page product-detail">{overview}{checkout}{description}{facts}{related}{chrome}</div>
 }

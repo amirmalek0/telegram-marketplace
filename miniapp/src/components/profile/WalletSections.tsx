@@ -4,19 +4,19 @@ import { useContent } from '../../features/content/ContentProvider'
 import { Icon } from '../ui/Icon'
 import { WalletHistory } from './WalletHistory'
 
-interface Props { wallet: Wallet; packs: WalletTopupPack[]; busyKey: string | null; onTopup: (pack: WalletTopupPack) => void; preview?: boolean }
-export function WalletSections({ wallet, packs, busyKey, onTopup, preview }: Props) {
+interface Props { wallet: Wallet; packs: WalletTopupPack[]; busyKey: string | null; onTopup: (pack: WalletTopupPack) => void; preview?: boolean; only?: 'balance' | 'packs' | 'history' }
+export function WalletSections({ wallet, packs, busyKey, onTopup, preview, only }: Props) {
   const { text } = useContent()
   const [selectedID, setSelectedID] = useState<string | null>(null)
   const selected = packs.find(pack => pack.id === selectedID)
   return <div className="wallet-sections">
-    <section className="wallet-balance-card">
+    {(!only || only === 'balance') && <section className="wallet-balance-card">
       <div className="wallet-balance-heading"><span><Icon name="wallet" size={19} />{text('wallet.ready_balance')}</span><span className="wallet-store-label">{text('wallet.store_credit')}</span></div>
       <strong className="wallet-balance-number"><bdi>{wallet.balance.toLocaleString('fa-IR')}</bdi><i aria-label="Stars">⭐</i></strong>
       <p>{text('wallet.ready_hint')}</p>
       <div className="wallet-balance-rule"><Icon name="info" size={15} />{text('wallet.credit_hint')}</div>
-    </section>
-    <section className="wallet-recharge" aria-labelledby="wallet-packs-title">
+    </section>}
+    {(!only || only === 'packs') && <section className="wallet-recharge" aria-labelledby="wallet-packs-title">
       <div className="account-section-title"><span><Icon name="plus" size={18} /><h3 id="wallet-packs-title">{text('wallet.choose_pack')}</h3></span><small>{text('wallet.pay_stars')}</small></div>
       {packs.length === 0 ? <div className="account-empty"><Icon name="wallet" size={28} /><h3>{text('wallet.no_packs')}</h3><p>{text('wallet.no_packs_hint')}</p></div> : <>
         <div className="wallet-pack-options" role="group" aria-labelledby="wallet-packs-title">
@@ -30,7 +30,7 @@ export function WalletSections({ wallet, packs, busyKey, onTopup, preview }: Pro
           {preview && <p className="account-footnote">{text('membership.preview')}</p>}
         </div>
       </>}
-    </section>
-    <WalletHistory transactions={wallet.transactions} />
+    </section>}
+    {(!only || only === 'history') && <WalletHistory transactions={wallet.transactions} />}
   </div>
 }

@@ -6,10 +6,11 @@ import { Icon } from '../components/ui/Icon'
 import type { Product, PaginatedResponse } from '../features/catalog/types'
 import type { Order } from '../features/commerce/types'
 import { editorOrders } from '../features/content/editorFixtures'
+import { renderSectionStatus, type SectionSourceProps } from '../features/content/sectionRendering'
 
-interface OrdersPageProps { initDataRaw: string | null; products: Product[]; preview?: boolean; scenario?: string }
+interface OrdersPageProps extends SectionSourceProps { initDataRaw: string | null; products: Product[]; preview?: boolean; scenario?: string }
 
-export function OrdersPage({ initDataRaw, products, preview = false, scenario = 'content' }: OrdersPageProps) {
+export function OrdersPage({ initDataRaw, products, preview = false, scenario = 'content', sectionRenderer }: OrdersPageProps) {
   const [orders, setOrders] = useState<Order[]>([])
   const [filter, setFilter] = useState<'all' | 'paid' | 'open'>('all')
   const [loading, setLoading] = useState(true)
@@ -57,15 +58,10 @@ export function OrdersPage({ initDataRaw, products, preview = false, scenario = 
       ? visibleOrders.filter((order) => order.status === 'pending' || order.delivery_status === 'processing')
       : visibleOrders
 
-  if (visibleLoading) return <div className="page order-page"><div className="order-skeleton skeleton" /><div className="order-skeleton skeleton" /></div>
-  if (visibleError) return <div className="page"><section className="commerce-empty"><Icon name="orders" size={30} /><h2>دریافت سفارش‌ها ناموفق بود</h2><p>{visibleError}</p><button onClick={() => void loadOrders()}>تلاش دوباره</button></section></div>
-
-  return (
-    <div className="page order-page">
-      {visibleOrders.length === 0 ? (
-        <section className="commerce-empty"><Icon name="orders" size={30} /><h2>هنوز سفارشی ندارید</h2><p>محصول دلخواهتان را از فروشگاه انتخاب کنید.</p><NavLink to="/">رفتن به فروشگاه</NavLink></section>
-      ) : (
-        <>
+  if (visibleLoading) return renderSectionStatus(sectionRenderer, <div className="page order-page"><div className="order-skeleton skeleton" /><div className="order-skeleton skeleton" /></div>)
+  if (visibleError) return renderSectionStatus(sectionRenderer, <div className="page"><section className="commerce-empty"><Icon name="orders" size={30} /><h2>دریافت سفارش‌ها ناموفق بود</h2><p>{visibleError}</p><button onClick={() => void loadOrders()}>تلاش دوباره</button></section></div>)
+  if (visibleOrders.length === 0) return renderSectionStatus(sectionRenderer, <section className="commerce-empty"><Icon name="orders" size={30} /><h2>هنوز سفارشی ندارید</h2><p>محصول دلخواهتان را از فروشگاه انتخاب کنید.</p><NavLink to="/">رفتن به فروشگاه</NavLink></section>)
+  const summary = (
           <section className="commerce-dashboard orders-dashboard">
             <div className="commerce-dashboard-head">
               <span className="commerce-dashboard-icon"><Icon name="orders" size={21} /></span>
@@ -78,7 +74,8 @@ export function OrdersPage({ initDataRaw, products, preview = false, scenario = 
               <div className="is-warning"><strong>{openCount.toLocaleString('fa-IR')}</strong><span>در جریان</span></div>
             </div>
           </section>
-
+  )
+  const list = <>
           <div className="commerce-filters" role="group" aria-label="فیلتر سفارش‌ها">
             <button type="button" aria-pressed={filter === 'all'} className={filter === 'all' ? 'active' : ''} onClick={() => setFilter('all')}>همه</button>
             <button type="button" aria-pressed={filter === 'paid'} className={filter === 'paid' ? 'active' : ''} onClick={() => setFilter('paid')}>پرداخت‌شده</button>
@@ -89,7 +86,5 @@ export function OrdersPage({ initDataRaw, products, preview = false, scenario = 
             {filteredOrders.length === 0 && <div className="commerce-filter-empty"><Icon name="orders" size={20} /><span>سفارشی در این وضعیت نیست</span></div>}
           </div>
         </>
-      )}
-    </div>
-  )
+  return sectionRenderer ? sectionRenderer({ slots: { 'orders.summary': summary, 'orders.list': list } }) : <div className="page order-page">{summary}{list}</div>
 }
