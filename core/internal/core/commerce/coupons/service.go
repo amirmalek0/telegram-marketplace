@@ -41,7 +41,19 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (*model.Coupon,
 		expiresAt,
 		req.ProductIDs,
 	)
+	coupon.CurrencyScope = req.CurrencyScope
+	if coupon.CurrencyScope == "" {
+		coupon.CurrencyScope = "stars"
+	}
+	coupon.TomanDiscountType = model.DiscountType(req.TomanDiscountType)
+	coupon.TomanDiscountValue = req.TomanDiscountValue
 
+	if coupon.DiscountType == "" {
+		coupon.DiscountType = model.DiscountTypeStatic
+	}
+	if coupon.TomanDiscountType == "" {
+		coupon.TomanDiscountType = model.DiscountTypeStatic
+	}
 	if err := validateDefinition(coupon); err != nil {
 		return nil, err
 	}
@@ -114,6 +126,7 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) (*mo
 	}
 
 	update := model.CouponUpdate{
+		CurrencyScope: req.CurrencyScope, TomanDiscountValue: req.TomanDiscountValue,
 		Code:          req.Code,
 		DiscountValue: req.DiscountValue,
 		UsageLimit:    req.UsageLimit,
@@ -121,6 +134,10 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) (*mo
 		ProductIDs:    req.ProductIDs,
 	}
 
+	if req.TomanDiscountType != nil {
+		dt := model.DiscountType(*req.TomanDiscountType)
+		update.TomanDiscountType = &dt
+	}
 	if req.DiscountType != nil {
 		dt := model.DiscountType(*req.DiscountType)
 		update.DiscountType = &dt
@@ -146,6 +163,12 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) (*mo
 		coupon.ExpiresAt = nil
 	}
 	coupon.Code = model.NormalizeCode(coupon.Code)
+	if coupon.DiscountType == "" {
+		coupon.DiscountType = model.DiscountTypeStatic
+	}
+	if coupon.TomanDiscountType == "" {
+		coupon.TomanDiscountType = model.DiscountTypeStatic
+	}
 	if err := validateDefinition(coupon); err != nil {
 		return nil, err
 	}
@@ -168,6 +191,12 @@ func (s *Service) Delete(ctx context.Context, id string) error {
 // Validate validates a coupon code and returns the validation result.
 func (s *Service) Validate(ctx context.Context, telegramID int64, req ValidateRequest) (*ValidateResponse, error) {
 	req.Code = model.NormalizeCode(req.Code)
+	if req.Currency == "" {
+		req.Currency = "stars"
+	}
+	if req.Currency != "stars" && req.Currency != "toman" {
+		return nil, model.ErrCurrencyNotApplicable
+	}
 	if _, err := uuid.Parse(req.ProductID); err != nil {
 		return nil, errors.New("شناسه محصول معتبر نیست")
 	}
@@ -195,15 +224,24 @@ func (s *Service) Validate(ctx context.Context, telegramID int64, req ValidateRe
 		}, nil
 	}
 
-	stars, err := s.repo.ProductStars(ctx, req.ProductID)
+	var stars int64
+	if req.Currency == "toman" {
+		stars, err = s.repo.ProductToman(ctx, req.ProductID)
+	} else {
+		stars, err = s.repo.ProductStars(ctx, req.ProductID)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("coupons.service.Validate product: %w", err)
 	}
-	discount, err := coupon.DiscountStars(stars)
+	discount, err := coupon.DiscountFor(req.Currency, stars)
 	if err != nil {
 		return &ValidateResponse{Valid: false, Code: req.Code, Message: err.Error()}, nil
 	}
+	if req.Currency == "toman" {
+		return &ValidateResponse{Currency: "toman", ProductID: req.ProductID, OriginalToman: stars, DiscountToman: discount, PayableToman: stars - discount, Valid: true, Code: coupon.Code, DiscountType: string(coupon.TomanDiscountType), DiscountValue: coupon.TomanDiscountValue, ProductIDs: coupon.ProductIDs}, nil
+	}
 	return &ValidateResponse{
+		Currency:  "stars",
 		ProductID: req.ProductID, OriginalStars: stars, DiscountStars: discount, PayableStars: stars - discount,
 		Valid:         true,
 		Code:          coupon.Code,

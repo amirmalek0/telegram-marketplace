@@ -51,15 +51,16 @@ export default function CouponsPage() {
 
   const begin = (row?: CouponResponse) => {
     setEditing(row || null);
-    setForm(row ? { code: row.code, discount_type: row.discount_type, discount_value: String(row.discount_value), usage_limit: String(row.usage_limit), expires_at: row.expires_at || '', product_ids: row.product_ids || [], user_ids: row.user_ids || [], user_scope: row.user_ids?.length ? 'selected' : 'all' } : emptyCouponForm);
+    setForm(row ? { currency_scope: row.currency_scope || 'stars', toman_discount_type: row.toman_discount_type || 'static', toman_discount_value: String(row.toman_discount_value || ''), code: row.code, discount_type: row.discount_type, discount_value: String(row.discount_value), usage_limit: String(row.usage_limit), expires_at: row.expires_at || '', product_ids: row.product_ids || [], user_ids: row.user_ids || [], user_scope: row.user_ids?.length ? 'selected' : 'all' } : emptyCouponForm);
     setOpen(true);
   };
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     if (saving) return;
     if (form.user_scope === 'selected' && !form.user_ids.length) return toast.error('حداقل یک کاربر انتخاب کنید');
-    const payload: CreateCouponRequest = { code: form.code.trim(), discount_type: form.discount_type, discount_value: Number(form.discount_value), usage_limit: Number(form.usage_limit || 0), expires_at: form.expires_at, product_ids: form.product_ids, user_ids: form.user_scope === 'selected' ? form.user_ids : [] };
-    if (!payload.code || !Number.isFinite(payload.discount_value) || payload.discount_value <= 0 || (payload.discount_type === 'percentage' && payload.discount_value > 100) || (payload.discount_type === 'static' && !Number.isSafeInteger(payload.discount_value)) || !Number.isSafeInteger(payload.usage_limit) || payload.usage_limit < 0) return toast.error('کد، مقدار تخفیف و سقف استفاده را بررسی کنید');
+    const payload: CreateCouponRequest = { currency_scope: form.currency_scope, toman_discount_type: form.toman_discount_type, toman_discount_value: form.currency_scope === 'stars' ? 0 : Number(form.toman_discount_value), code: form.code.trim(), discount_type: form.discount_type, discount_value: form.currency_scope === 'toman' ? 0 : Number(form.discount_value), usage_limit: Number(form.usage_limit || 0), expires_at: form.expires_at, product_ids: form.product_ids, user_ids: form.user_scope === 'selected' ? form.user_ids : [] };
+    const validDiscount = (kind: string, value: number) => Number.isFinite(value) && value > 0 && (kind === 'percentage' ? value <= 100 : Number.isSafeInteger(value));
+    if (!payload.code || (form.currency_scope !== 'toman' && !validDiscount(payload.discount_type,payload.discount_value)) || (form.currency_scope !== 'stars' && !validDiscount(payload.toman_discount_type,payload.toman_discount_value)) || !Number.isSafeInteger(payload.usage_limit) || payload.usage_limit < 0) return toast.error('کد، مقدار تخفیف و سقف استفاده را بررسی کنید');
     setSaving(true);
     try {
       editing ? await couponsApi.update(editing.id, payload) : await couponsApi.create(payload);
@@ -83,8 +84,8 @@ export default function CouponsPage() {
     finally { setSaving(false); }
   };
   const columns: Column<CouponResponse>[] = [
-    { key: 'code', title: 'کد تخفیف', render: (_, row) => <div className="finance-stack"><CopyIdentifier value={row.code} label="کد تخفیف" full /><span className="finance-muted">{row.discount_type === 'percentage' ? 'تخفیف درصدی' : 'تخفیف ثابت'}</span></div> },
-    { key: 'discount_value', title: 'مقدار', render: (_, row) => <span className="finance-amount">{row.discount_type === 'percentage' ? `${row.discount_value.toLocaleString('fa-IR')}٪` : <StarsAmount value={row.discount_value} />}</span> },
+    { key: 'code', title: 'کد تخفیف', render: (_, row) => <div className="finance-stack"><CopyIdentifier value={row.code} label="کد تخفیف" full /><span className="finance-muted">{row.currency_scope === 'both' ? 'Stars و تومان' : row.currency_scope === 'toman' ? 'تومان' : 'Stars'}</span></div> },
+    { key: 'discount_value', title: 'مقدار', render: (_, row) => <div className="finance-stack">{row.currency_scope !== 'toman' && <span className="finance-amount">{row.discount_type === 'percentage' ? <>{row.discount_value.toLocaleString('fa-IR')}٪ ⭐</> : <StarsAmount value={row.discount_value} />}</span>}{row.currency_scope !== 'stars' && row.currency_scope && <span>{row.toman_discount_value.toLocaleString('fa-IR')}{row.toman_discount_type === 'percentage' ? '٪ از قیمت تومان' : ' تومان'}</span>}</div> },
     { key: 'usage_count', title: 'مصرف / ظرفیت', render: (_, row) => <div className="finance-coupon-usage"><span>{row.usage_count.toLocaleString('fa-IR')} از {row.usage_limit ? row.usage_limit.toLocaleString('fa-IR') : 'نامحدود'}</span>{row.usage_limit > 0 && <progress value={Math.min(row.usage_count, row.usage_limit)} max={row.usage_limit} aria-label={`مصرف کد ${row.code}`} />}</div> },
     { key: 'user_ids', title: 'دامنه استفاده', render: (_, row) => <div className="finance-stack"><span>{row.user_ids?.length ? `${row.user_ids.length.toLocaleString('fa-IR')} کاربر منتخب` : 'همه کاربران'}</span><span className="finance-muted">{row.product_ids?.length ? `${row.product_ids.length.toLocaleString('fa-IR')} محصول منتخب` : 'همه محصولات'}</span></div> },
     { key: 'expires_at', title: 'اعتبار', render: (_, row) => { const status = states[couponState(row)]; return <div className="finance-stack"><Badge variant={status.variant} dot>{status.label}</Badge><span className="finance-muted">{row.expires_at ? formatDate(row.expires_at) : 'بدون انقضا'}</span></div>; } },

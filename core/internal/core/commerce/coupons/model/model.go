@@ -34,18 +34,21 @@ func (dt DiscountType) IsValid() bool {
 
 // Coupon represents a discount coupon in the system.
 type Coupon struct {
-	ID            string       `db:"id" json:"id"`
-	Code          string       `db:"code" json:"code"`
-	DiscountType  DiscountType `db:"discount_type" json:"discount_type"`
-	DiscountValue float64      `db:"discount_value" json:"discount_value"`
-	UsageLimit    int          `db:"usage_limit" json:"usage_limit"`
-	UsageCount    int          `db:"usage_count" json:"usage_count"`
-	ExpiresAt     *time.Time   `db:"expires_at" json:"expires_at,omitempty"`
-	IsActive      bool         `db:"is_active" json:"is_active"`
-	ProductIDs    []string     `db:"product_ids" json:"product_ids"`
-	UserIDs       []string     `db:"user_ids" json:"user_ids"`
-	CreatedAt     time.Time    `db:"created_at" json:"created_at"`
-	UpdatedAt     time.Time    `db:"updated_at" json:"updated_at"`
+	CurrencyScope      string       `db:"currency_scope" json:"currency_scope"`
+	TomanDiscountType  DiscountType `db:"toman_discount_type" json:"toman_discount_type"`
+	TomanDiscountValue float64      `db:"toman_discount_value" json:"toman_discount_value"`
+	ID                 string       `db:"id" json:"id"`
+	Code               string       `db:"code" json:"code"`
+	DiscountType       DiscountType `db:"discount_type" json:"discount_type"`
+	DiscountValue      float64      `db:"discount_value" json:"discount_value"`
+	UsageLimit         int          `db:"usage_limit" json:"usage_limit"`
+	UsageCount         int          `db:"usage_count" json:"usage_count"`
+	ExpiresAt          *time.Time   `db:"expires_at" json:"expires_at,omitempty"`
+	IsActive           bool         `db:"is_active" json:"is_active"`
+	ProductIDs         []string     `db:"product_ids" json:"product_ids"`
+	UserIDs            []string     `db:"user_ids" json:"user_ids"`
+	CreatedAt          time.Time    `db:"created_at" json:"created_at"`
+	UpdatedAt          time.Time    `db:"updated_at" json:"updated_at"`
 }
 
 // Summary counts coupons across the entire catalog, not just a list page.
@@ -136,34 +139,48 @@ func (c *Coupon) CalculateDiscount(totalAmount float64) (discountAmount float64)
 func NewCoupon(code string, discountType DiscountType, discountValue float64, usageLimit int, expiresAt *time.Time, productIDs []string) *Coupon {
 	now := time.Now()
 	return &Coupon{
-		Code:          code,
-		DiscountType:  discountType,
-		DiscountValue: discountValue,
-		UsageLimit:    usageLimit,
-		UsageCount:    0,
-		ExpiresAt:     expiresAt,
-		IsActive:      true,
-		ProductIDs:    productIDs,
-		UserIDs:       []string{},
-		CreatedAt:     now,
-		UpdatedAt:     now,
+		CurrencyScope:     "stars",
+		TomanDiscountType: DiscountTypeStatic,
+		Code:              code,
+		DiscountType:      discountType,
+		DiscountValue:     discountValue,
+		UsageLimit:        usageLimit,
+		UsageCount:        0,
+		ExpiresAt:         expiresAt,
+		IsActive:          true,
+		ProductIDs:        productIDs,
+		UserIDs:           []string{},
+		CreatedAt:         now,
+		UpdatedAt:         now,
 	}
 }
 
 // CouponUpdate holds optional fields for partially updating a coupon.
 type CouponUpdate struct {
-	Code          *string
-	DiscountType  *DiscountType
-	DiscountValue *float64
-	UsageLimit    *int
-	ExpiresAt     *time.Time
-	IsActive      *bool
-	ProductIDs    *[]string
-	UserIDs       *[]string
+	CurrencyScope      *string
+	TomanDiscountType  *DiscountType
+	TomanDiscountValue *float64
+	Code               *string
+	DiscountType       *DiscountType
+	DiscountValue      *float64
+	UsageLimit         *int
+	ExpiresAt          *time.Time
+	IsActive           *bool
+	ProductIDs         *[]string
+	UserIDs            *[]string
 }
 
 // ApplyUpdates applies non-nil fields from the update to the coupon and sets UpdatedAt.
 func (c *Coupon) ApplyUpdates(u CouponUpdate) {
+	if u.CurrencyScope != nil {
+		c.CurrencyScope = *u.CurrencyScope
+	}
+	if u.TomanDiscountType != nil {
+		c.TomanDiscountType = *u.TomanDiscountType
+	}
+	if u.TomanDiscountValue != nil {
+		c.TomanDiscountValue = *u.TomanDiscountValue
+	}
 	if u.Code != nil {
 		c.Code = *u.Code
 	}

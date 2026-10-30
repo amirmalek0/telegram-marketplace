@@ -22,6 +22,7 @@ type Repository interface {
 	UserID(context.Context, int64) (string, error)
 	UsersExist(context.Context, []string) (bool, error)
 	ProductStars(ctx context.Context, productID string) (int64, error)
+	ProductToman(ctx context.Context, productID string) (int64, error)
 	Create(ctx context.Context, c *model.Coupon) error
 	GetByID(ctx context.Context, id string) (*model.Coupon, error)
 	GetByCode(ctx context.Context, code string) (*model.Coupon, error)
@@ -63,6 +64,12 @@ func (r *postgresRepository) UsersExist(ctx context.Context, ids []string) (bool
 	return count == len(ids), err
 }
 
+func (r *postgresRepository) ProductToman(ctx context.Context, productID string) (int64, error) {
+	var price int64
+	err := r.db.QueryRow(ctx, queryProductToman, productID).Scan(&price)
+	return price, err
+}
+
 func (r *postgresRepository) ProductStars(ctx context.Context, productID string) (int64, error) {
 	var stars int64
 	err := r.db.QueryRow(ctx, queryProductStars, productID).Scan(&stars)
@@ -71,7 +78,7 @@ func (r *postgresRepository) ProductStars(ctx context.Context, productID string)
 
 func (r *postgresRepository) Create(ctx context.Context, c *model.Coupon) error {
 	err := r.db.QueryRow(ctx, queryCreateCoupon,
-		c.Code, c.DiscountType, c.DiscountValue, c.UsageLimit, c.UsageCount, c.ExpiresAt, c.IsActive, c.ProductIDs, c.CreatedAt, c.UpdatedAt, c.UserIDs,
+		c.Code, c.DiscountType, c.DiscountValue, c.UsageLimit, c.UsageCount, c.ExpiresAt, c.IsActive, c.ProductIDs, c.CreatedAt, c.UpdatedAt, c.UserIDs, c.Scope(), c.TomanDiscountType, c.TomanDiscountValue,
 	).Scan(&c.ID)
 	if err != nil {
 		return fmt.Errorf("coupons.repository.Create: %w", err)
@@ -140,7 +147,7 @@ func (r *postgresRepository) Count(ctx context.Context) (int64, error) {
 
 func (r *postgresRepository) Update(ctx context.Context, c *model.Coupon) error {
 	_, err := r.db.Exec(ctx, queryUpdateCoupon,
-		c.Code, c.DiscountType, c.DiscountValue, c.UsageLimit, c.ExpiresAt, c.IsActive, c.ProductIDs, c.UpdatedAt, c.ID, c.UserIDs,
+		c.Code, c.DiscountType, c.DiscountValue, c.UsageLimit, c.ExpiresAt, c.IsActive, c.ProductIDs, c.UpdatedAt, c.ID, c.UserIDs, c.Scope(), c.TomanDiscountType, c.TomanDiscountValue,
 	)
 	if err != nil {
 		return fmt.Errorf("coupons.repository.Update: %w", err)
