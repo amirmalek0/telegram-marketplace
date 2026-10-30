@@ -1,6 +1,7 @@
 package repository
 
 const (
+	queryLockContentGraph = `SELECT pg_advisory_xact_lock(20261022, 1)`
 	queryListContent = `
 		SELECT content_key, value, updated_at
 		FROM miniapp_content

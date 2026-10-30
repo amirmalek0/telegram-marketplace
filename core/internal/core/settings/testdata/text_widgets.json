@@ -1,0 +1,248 @@
+[
+  {
+    "name": "heading",
+    "expected": true,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.heading\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"h2\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\".widget:hover { color: #ff0000; }\\n@media (max-width: 480px) { .widget { font-size: 22px; } }\"}}]}"
+  },
+  {
+    "name": "h1",
+    "expected": true,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.heading\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"h1\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\".widget:hover { color: #ff0000; }\\n@media (max-width: 480px) { .widget { font-size: 22px; } }\"}}]}"
+  },
+  {
+    "name": "h2",
+    "expected": true,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.heading\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"h2\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\".widget:hover { color: #ff0000; }\\n@media (max-width: 480px) { .widget { font-size: 22px; } }\"}}]}"
+  },
+  {
+    "name": "h3",
+    "expected": true,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.heading\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"h3\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\".widget:hover { color: #ff0000; }\\n@media (max-width: 480px) { .widget { font-size: 22px; } }\"}}]}"
+  },
+  {
+    "name": "h4",
+    "expected": true,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.heading\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"h4\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\".widget:hover { color: #ff0000; }\\n@media (max-width: 480px) { .widget { font-size: 22px; } }\"}}]}"
+  },
+  {
+    "name": "h5",
+    "expected": true,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.heading\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"h5\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\".widget:hover { color: #ff0000; }\\n@media (max-width: 480px) { .widget { font-size: 22px; } }\"}}]}"
+  },
+  {
+    "name": "h6",
+    "expected": true,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.heading\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"h6\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\".widget:hover { color: #ff0000; }\\n@media (max-width: 480px) { .widget { font-size: 22px; } }\"}}]}"
+  },
+  {
+    "name": "paragraph plain",
+    "expected": true,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.paragraph\",\"visible\":true,\"design\":\"plain\",\"text\":{\"tag\":\"p\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\".widget:hover { color: #ff0000; }\\n@media (max-width: 480px) { .widget { font-size: 22px; } }\"}}]}"
+  },
+  {
+    "name": "paragraph soft",
+    "expected": true,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.paragraph\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"p\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\".widget:hover { color: #ff0000; }\\n@media (max-width: 480px) { .widget { font-size: 22px; } }\"}}]}"
+  },
+  {
+    "name": "paragraph outlined",
+    "expected": true,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.paragraph\",\"visible\":true,\"design\":\"outlined\",\"text\":{\"tag\":\"p\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\".widget:hover { color: #ff0000; }\\n@media (max-width: 480px) { .widget { font-size: 22px; } }\"}}]}"
+  },
+  {
+    "name": "paragraph glass",
+    "expected": true,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.paragraph\",\"visible\":true,\"design\":\"glass\",\"text\":{\"tag\":\"p\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\".widget:hover { color: #ff0000; }\\n@media (max-width: 480px) { .widget { font-size: 22px; } }\"}}]}"
+  },
+  {
+    "name": "paragraph accent",
+    "expected": true,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.paragraph\",\"visible\":true,\"design\":\"accent\",\"text\":{\"tag\":\"p\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\".widget:hover { color: #ff0000; }\\n@media (max-width: 480px) { .widget { font-size: 22px; } }\"}}]}"
+  },
+  {
+    "name": "independent heading instances",
+    "expected": true,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.heading\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"h2\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\".widget:hover { color: #ff0000; }\\n@media (max-width: 480px) { .widget { font-size: 22px; } }\"}},{\"id\":\"widget-87654321\",\"type\":\"text.heading\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"h2\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\".widget:hover { color: #ff0000; }\\n@media (max-width: 480px) { .widget { font-size: 22px; } }\"}}]}"
+  },
+  {
+    "name": "missing id",
+    "expected": false,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"type\":\"text.heading\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"h2\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\".widget:hover { color: #ff0000; }\\n@media (max-width: 480px) { .widget { font-size: 22px; } }\"}}]}"
+  },
+  {
+    "name": "invalid id",
+    "expected": false,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"invalid\",\"type\":\"text.heading\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"h2\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\".widget:hover { color: #ff0000; }\\n@media (max-width: 480px) { .widget { font-size: 22px; } }\"}}]}"
+  },
+  {
+    "name": "unknown theme",
+    "expected": false,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.heading\",\"visible\":true,\"design\":\"html\",\"text\":{\"tag\":\"h2\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\".widget:hover { color: #ff0000; }\\n@media (max-width: 480px) { .widget { font-size: 22px; } }\"}}]}"
+  },
+  {
+    "name": "unknown kind",
+    "expected": false,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.script\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"h2\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\".widget:hover { color: #ff0000; }\\n@media (max-width: 480px) { .widget { font-size: 22px; } }\"}}]}"
+  },
+  {
+    "name": "invisible string",
+    "expected": false,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.heading\",\"visible\":\"true\",\"design\":\"soft\",\"text\":{\"tag\":\"h2\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\".widget:hover { color: #ff0000; }\\n@media (max-width: 480px) { .widget { font-size: 22px; } }\"}}]}"
+  },
+  {
+    "name": "extra fields",
+    "expected": false,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.heading\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"h2\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\".widget:hover { color: #ff0000; }\\n@media (max-width: 480px) { .widget { font-size: 22px; } }\"},\"html\":\"<script>alert(1)</script>\"}]}"
+  },
+  {
+    "name": "script tag",
+    "expected": false,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.heading\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"script\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\".widget:hover { color: #ff0000; }\\n@media (max-width: 480px) { .widget { font-size: 22px; } }\"}}]}"
+  },
+  {
+    "name": "null text",
+    "expected": false,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.heading\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"h2\",\"content\":null,\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\".widget:hover { color: #ff0000; }\\n@media (max-width: 480px) { .widget { font-size: 22px; } }\"}}]}"
+  },
+  {
+    "name": "long text",
+    "expected": false,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.heading\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"h2\",\"content\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\".widget:hover { color: #ff0000; }\\n@media (max-width: 480px) { .widget { font-size: 22px; } }\"}}]}"
+  },
+  {
+    "name": "null css",
+    "expected": false,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.heading\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"h2\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":null}}]}"
+  },
+  {
+    "name": "long css",
+    "expected": false,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.heading\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"h2\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\"                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 \"}}]}"
+  },
+  {
+    "name": "null styles",
+    "expected": false,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.heading\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"h2\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":null,\"css\":\".widget:hover { color: #ff0000; }\\n@media (max-width: 480px) { .widget { font-size: 22px; } }\"}}]}"
+  },
+  {
+    "name": "unknown style",
+    "expected": false,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.heading\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"h2\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"position\":\"fixed\"},\"css\":\".widget:hover { color: #ff0000; }\\n@media (max-width: 480px) { .widget { font-size: 22px; } }\"}}]}"
+  },
+  {
+    "name": "style injection",
+    "expected": false,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.heading\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"h2\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"color\":\"red;position:fixed\"},\"css\":\".widget:hover { color: #ff0000; }\\n@media (max-width: 480px) { .widget { font-size: 22px; } }\"}}]}"
+  },
+  {
+    "name": "invalid number",
+    "expected": false,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.heading\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"h2\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":\"20\"},\"css\":\".widget:hover { color: #ff0000; }\\n@media (max-width: 480px) { .widget { font-size: 22px; } }\"}}]}"
+  },
+  {
+    "name": "oversized size",
+    "expected": false,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.heading\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"h2\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":500},\"css\":\".widget:hover { color: #ff0000; }\\n@media (max-width: 480px) { .widget { font-size: 22px; } }\"}}]}"
+  },
+  {
+    "name": "unknown enum",
+    "expected": false,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.heading\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"h2\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"direction\":\"auto\"},\"css\":\".widget:hover { color: #ff0000; }\\n@media (max-width: 480px) { .widget { font-size: 22px; } }\"}}]}"
+  },
+  {
+    "name": "unknown config",
+    "expected": false,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.heading\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"h2\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\".widget:hover { color: #ff0000; }\\n@media (max-width: 480px) { .widget { font-size: 22px; } }\",\"html\":\"<b>test</b>\"}}]}"
+  },
+  {
+    "name": "unsafe CSS @import \"x.css\";",
+    "expected": false,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.heading\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"h2\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\"@import \\\"x.css\\\";\"}}]}"
+  },
+  {
+    "name": "unsafe CSS .widget { background:url(https://x.example); }",
+    "expected": false,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.heading\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"h2\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\".widget { background:url(https://x.example); }\"}}]}"
+  },
+  {
+    "name": "unsafe CSS .widget { background: image-set(\"remote.png\" 1x); }",
+    "expected": false,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.heading\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"h2\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\".widget { background: image-set(\\\"remote.png\\\" 1x); }\"}}]}"
+  },
+  {
+    "name": "unsafe CSS @font-face {font-family:x; src:local(x)}",
+    "expected": false,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.heading\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"h2\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\"@font-face {font-family:x; src:local(x)}\"}}]}"
+  },
+  {
+    "name": "unsafe CSS .widget { color: r\\65 d; }",
+    "expected": false,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.heading\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"h2\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\".widget { color: r\\\\65 d; }\"}}]}"
+  },
+  {
+    "name": "unsafe CSS @im/**/port \"x.css\";",
+    "expected": false,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.heading\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"h2\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\"@im/**/port \\\"x.css\\\";\"}}]}"
+  },
+  {
+    "name": "duplicate id",
+    "expected": false,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.heading\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"h2\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\".widget:hover { color: #ff0000; }\\n@media (max-width: 480px) { .widget { font-size: 22px; } }\"}},{\"id\":\"widget-12345678\",\"type\":\"text.heading\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"h2\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\".widget:hover { color: #ff0000; }\\n@media (max-width: 480px) { .widget { font-size: 22px; } }\"}}]}"
+  },
+  {
+    "name": "legacy",
+    "expected": true,
+    "page": "shop",
+    "value": "{\"version\":1,\"sections\":[{\"type\":\"catalog.products\",\"visible\":true,\"design\":\"list\"}]}"
+  },
+  {
+    "name": "protected controls preserved",
+    "expected": true,
+    "page": "product",
+    "value": "{\"version\":1,\"sections\":[{\"type\":\"product.checkout\",\"visible\":true,\"design\":\"original\"},{\"id\":\"widget-12345678\",\"type\":\"text.heading\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"h2\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\".widget:hover { color: #ff0000; }\\n@media (max-width: 480px) { .widget { font-size: 22px; } }\"}}]}"
+  },
+  {
+    "name": "cannot replace protected controls",
+    "expected": false,
+    "page": "product",
+    "value": "{\"version\":1,\"sections\":[{\"id\":\"widget-12345678\",\"type\":\"text.heading\",\"visible\":true,\"design\":\"soft\",\"text\":{\"tag\":\"h2\",\"content\":\"عنوان فارسی\\nخط دوم\",\"styles\":{\"fontSize\":28,\"paddingRight\":16,\"borderLeftWidth\":2,\"borderColor\":\"#007aff\",\"textAlign\":\"start\"},\"css\":\".widget:hover { color: #ff0000; }\\n@media (max-width: 480px) { .widget { font-size: 22px; } }\"}}]}"
+  }
+]

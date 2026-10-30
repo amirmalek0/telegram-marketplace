@@ -29,6 +29,7 @@ var pageSectionRules = func() map[string]sectionRule {
 		result[key] = sectionRule{designs: surfaces}
 	}
 	result["catalog.categories"] = sectionRule{designs: []string{"ribbon", "grid", "pills", "list", "tiles"}}
+	result["catalog.search"] = sectionRule{designs: []string{"rounded", "glass", "outline", "soft", "underline", "spotlight"}}
 	result["catalog.products"] = sectionRule{designs: []string{"list", "grid", "featured", "compact", "carousel"}}
 	for _, key := range []string{"product.overview", "product.description", "product.facts", "product.related"} {
 		result[key] = sectionRule{page: "product", designs: surfaces}
@@ -61,11 +62,68 @@ func validatePageLayout(key, value string) error {
 	}
 	seen := make(map[string]bool)
 	for _, section := range sections {
+		if raw, ok := section["appearance"]; ok {
+			if err := validateWidgetAppearance(raw); err != nil {
+				return err
+			}
+			delete(section, "appearance")
+		}
 		var sectionType, design string
 		var visible *bool
-		if len(section) != 3 || json.Unmarshal(section["type"], &sectionType) != nil ||
+		if json.Unmarshal(section["type"], &sectionType) != nil ||
 			json.Unmarshal(section["design"], &design) != nil || json.Unmarshal(section["visible"], &visible) != nil || visible == nil {
 			return fmt.Errorf("invalid page section")
+		}
+		if raw, ok := section["factIcons"]; ok {
+			if sectionType != "product.facts" {
+				return fmt.Errorf("fact icons are only supported on product facts")
+			}
+			if err := validateProductFactIcons(raw); err != nil {
+				return err
+			}
+			delete(section, "factIcons")
+		}
+		if raw, ok := section["facts"]; ok {
+			if sectionType != "product.facts" {
+				return fmt.Errorf("fact visibility is only supported on product facts")
+			}
+			if err := validateProductFacts(raw); err != nil {
+				return err
+			}
+			delete(section, "facts")
+		}
+		if sectionType == "text.heading" || sectionType == "text.paragraph" {
+			id, err := validateTextWidget(section, sectionType, design)
+			if err != nil {
+				return err
+			}
+			if seen[id] {
+				return fmt.Errorf("duplicate widget identifier")
+			}
+			seen[id] = true
+			continue
+		}
+		if sectionType == "global.widget" {
+			var id, widgetID string
+			if len(section) != 5 || design != "original" || json.Unmarshal(section["id"], &id) != nil || !widgetIDPattern.MatchString(id) || json.Unmarshal(section["widgetId"], &widgetID) != nil || !widgetIDPattern.MatchString(widgetID) || seen[id] {
+				return fmt.Errorf("invalid global widget reference")
+			}
+			seen[id] = true
+			continue
+		}
+		if sectionType == "media.image" {
+			id, err := validateImageWidget(section, design)
+			if err != nil {
+				return err
+			}
+			if seen[id] {
+				return fmt.Errorf("duplicate widget identifier")
+			}
+			seen[id] = true
+			continue
+		}
+		if len(section) != 3 {
+			return fmt.Errorf("invalid page section fields")
 		}
 		rule, exists := pageSectionRules[sectionType]
 		if !exists || seen[sectionType] || (rule.page != "" && rule.page != page) || (rule.required && !*visible) {

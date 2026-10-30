@@ -10,10 +10,31 @@ import (
 )
 
 type fakeRepository struct {
-	required bool
-	entries  []model.ContentEntry
-	last     *model.ContentEntry
-	deleted  string
+	required      bool
+	entries       []model.ContentEntry
+	last          *model.ContentEntry
+	deleted       string
+	linkedUpdates []model.ContentEntry
+}
+
+func (f *fakeRepository) DeleteLinkedContent(_ context.Context, key, _ string, prepare func([]model.ContentEntry) ([]model.ContentEntry, error)) error {
+	updates, err := prepare(f.entries)
+	if err != nil {
+		return err
+	}
+	f.linkedUpdates = updates
+	f.deleted = key
+	return nil
+}
+
+func (f *fakeRepository) MutateContent(ctx context.Context, key string, value *string, adminID string, validate func([]model.ContentEntry) error) (*model.ContentEntry, error) {
+	if err := validate(f.entries); err != nil {
+		return nil, err
+	}
+	if value == nil {
+		return nil, f.DeleteContent(ctx, key)
+	}
+	return f.UpsertContent(ctx, key, *value, adminID)
 }
 
 func (f *fakeRepository) PhoneVerificationRequired(context.Context) (bool, error) {

@@ -16,5 +16,5 @@ type ContentResponse struct {
 }
 
 type UpdateContentRequest struct {
-	Value *string `json:"value" binding:"required,max=4000"`
+	Value *string `json:"value" binding:"required"`
 }

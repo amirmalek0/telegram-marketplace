@@ -15,6 +15,8 @@ type Repository interface {
 	ListContent(ctx context.Context) ([]model.ContentEntry, error)
 	UpsertContent(ctx context.Context, key, value, adminID string) (*model.ContentEntry, error)
 	DeleteContent(ctx context.Context, key string) error
+	DeleteLinkedContent(ctx context.Context, key, adminID string, prepare func([]model.ContentEntry) ([]model.ContentEntry, error)) error
+	MutateContent(ctx context.Context, key string, value *string, adminID string, validate func([]model.ContentEntry) error) (*model.ContentEntry, error)
 }
 
 type postgresRepository struct{ db *pgxpool.Pool }

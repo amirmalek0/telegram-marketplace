@@ -1,0 +1,307 @@
+[
+  {
+    "name": "classic/standard",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"classic\",\"layout\":\"standard\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "classic/reversed",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"classic\",\"layout\":\"reversed\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "classic/stacked",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"classic\",\"layout\":\"stacked\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "classic/centered",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"classic\",\"layout\":\"centered\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "minimal/standard",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"minimal\",\"layout\":\"standard\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "minimal/reversed",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"minimal\",\"layout\":\"reversed\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "minimal/stacked",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"minimal\",\"layout\":\"stacked\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "minimal/centered",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"minimal\",\"layout\":\"centered\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "glass/standard",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"glass\",\"layout\":\"standard\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "glass/reversed",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"glass\",\"layout\":\"reversed\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "glass/stacked",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"glass\",\"layout\":\"stacked\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "glass/centered",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"glass\",\"layout\":\"centered\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "solid/standard",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"solid\",\"layout\":\"standard\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "solid/reversed",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"solid\",\"layout\":\"reversed\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "solid/stacked",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"solid\",\"layout\":\"stacked\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "solid/centered",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"solid\",\"layout\":\"centered\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "outline/standard",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"outline\",\"layout\":\"standard\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "outline/reversed",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"outline\",\"layout\":\"reversed\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "outline/stacked",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"outline\",\"layout\":\"stacked\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "outline/centered",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"outline\",\"layout\":\"centered\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "pill/standard",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"pill\",\"layout\":\"standard\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "pill/reversed",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"pill\",\"layout\":\"reversed\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "pill/stacked",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"pill\",\"layout\":\"stacked\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "pill/centered",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"pill\",\"layout\":\"centered\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "gradient/standard",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"gradient\",\"layout\":\"standard\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "gradient/reversed",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"gradient\",\"layout\":\"reversed\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "gradient/stacked",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"gradient\",\"layout\":\"stacked\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "gradient/centered",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"gradient\",\"layout\":\"centered\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "underline/standard",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"underline\",\"layout\":\"standard\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "underline/reversed",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"underline\",\"layout\":\"reversed\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "underline/stacked",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"underline\",\"layout\":\"stacked\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "underline/centered",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"underline\",\"layout\":\"centered\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "elevated/standard",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"elevated\",\"layout\":\"standard\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "elevated/reversed",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"elevated\",\"layout\":\"reversed\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "elevated/stacked",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"elevated\",\"layout\":\"stacked\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "elevated/centered",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"elevated\",\"layout\":\"centered\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "soft/standard",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"soft\",\"layout\":\"standard\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "soft/reversed",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"soft\",\"layout\":\"reversed\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "soft/stacked",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"soft\",\"layout\":\"stacked\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "soft/centered",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"soft\",\"layout\":\"centered\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "split/standard",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"split\",\"layout\":\"standard\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "split/reversed",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"split\",\"layout\":\"reversed\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "split/stacked",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"split\",\"layout\":\"stacked\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "split/centered",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"split\",\"layout\":\"centered\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "compact/standard",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"compact\",\"layout\":\"standard\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "compact/reversed",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"compact\",\"layout\":\"reversed\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "compact/stacked",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"compact\",\"layout\":\"stacked\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "compact/centered",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"compact\",\"layout\":\"centered\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "unknownTheme",
+    "valid": false,
+    "value": "{\"version\":1,\"theme\":\"unsafe\",\"layout\":\"standard\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "unknownLayout",
+    "valid": false,
+    "value": "{\"version\":1,\"theme\":\"classic\",\"layout\":\"random\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "invalidScope",
+    "valid": false,
+    "value": "{\"version\":1,\"theme\":\"classic\",\"layout\":\"standard\",\"sticky\":true,\"searchScope\":\"x\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "nullSticky",
+    "valid": false,
+    "value": "{\"version\":1,\"theme\":\"classic\",\"layout\":\"standard\",\"sticky\":null,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "extra",
+    "valid": false,
+    "value": "{\"version\":1,\"theme\":\"classic\",\"layout\":\"standard\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"],\"extra\":1}"
+  },
+  {
+    "name": "missing",
+    "valid": false,
+    "value": "{\"theme\":\"classic\",\"layout\":\"standard\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "invalidVersion",
+    "valid": false,
+    "value": "{\"version\":2,\"theme\":\"classic\",\"layout\":\"standard\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "duplicateAction",
+    "valid": false,
+    "value": "{\"version\":1,\"theme\":\"classic\",\"layout\":\"standard\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"theme\",\"theme\",\"search\"]}"
+  },
+  {
+    "name": "unknownAction",
+    "valid": false,
+    "value": "{\"version\":1,\"theme\":\"classic\",\"layout\":\"standard\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true},\"actionOrder\":[\"search\",\"title\",\"notifications\"]}"
+  },
+  {
+    "name": "missingIcon",
+    "valid": false,
+    "value": "{\"version\":1,\"theme\":\"classic\",\"layout\":\"standard\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "extraIcon",
+    "valid": false,
+    "value": "{\"version\":1,\"theme\":\"classic\",\"layout\":\"standard\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":true,\"title\":true,\"back\":false},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "stringIcon",
+    "valid": false,
+    "value": "{\"version\":1,\"theme\":\"classic\",\"layout\":\"standard\",\"sticky\":true,\"searchScope\":\"shop\",\"icons\":{\"theme\":true,\"notifications\":true,\"search\":\"false\",\"title\":true},\"actionOrder\":[\"theme\",\"notifications\",\"search\"]}"
+  },
+  {
+    "name": "all-hidden",
+    "valid": true,
+    "value": "{\"version\":1,\"theme\":\"classic\",\"layout\":\"standard\",\"sticky\":false,\"searchScope\":\"all\",\"icons\":{\"theme\":false,\"notifications\":false,\"search\":false,\"title\":false},\"actionOrder\":[\"search\",\"notifications\",\"theme\"]}"
+  }
+]

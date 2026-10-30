@@ -7,7 +7,7 @@ import (
 )
 
 func TestPageLayoutsAllAllowedSections(t *testing.T) {
-	if len(layoutPages) != 12 || len(pageSectionRules) != 27 {
+	if len(layoutPages) != 12 || len(pageSectionRules) != 28 {
 		t.Fatal("unexpected registry size")
 	}
 	for page := range layoutPages {

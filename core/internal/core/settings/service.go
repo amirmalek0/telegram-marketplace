@@ -8,13 +8,21 @@ import (
 
 	"telegram-marketplace/internal/core/settings/model"
 	"telegram-marketplace/internal/core/settings/repository"
+	"telegram-marketplace/pkg/storage"
 )
 
 var contentKeyPattern = regexp.MustCompile(`^[a-z0-9][a-z0-9._-]{1,119}$`)
 
-type Service struct{ repo repository.Repository }
+type Service struct {
+	repo         repository.Repository
+	logoStorage  storage.Storage
+	imageStorage storage.Storage
+}
 
 func NewService(repo repository.Repository) *Service { return &Service{repo: repo} }
+
+func (s *Service) SetLogoStorage(store storage.Storage)  { s.logoStorage = store }
+func (s *Service) SetImageStorage(store storage.Storage) { s.imageStorage = store }
 
 func (s *Service) ListContent(ctx context.Context) (*ContentResponse, error) {
 	entries, err := s.repo.ListContent(ctx)
@@ -36,11 +44,26 @@ func (s *Service) UpdateContent(ctx context.Context, key, value, adminID string)
 	if !contentKeyPattern.MatchString(key) {
 		return nil, fmt.Errorf("invalid content key")
 	}
-	if len([]rune(value)) > 4000 {
+	if (!strings.HasPrefix(key, "appearance.page.") && !strings.HasPrefix(key, globalWidgetPrefix) && len([]rune(value)) > 4000) || len(value) > 262144 {
 		return nil, fmt.Errorf("content value is too long")
+	}
+	if key == "appearance.checkout" {
+		if err := validateCheckoutPresentation(value); err != nil {
+			return nil, err
+		}
 	}
 	if key == "appearance.palette" {
 		if err := validatePalette(value); err != nil {
+			return nil, err
+		}
+	}
+	if key == "appearance.header" {
+		if err := validateHeader(value); err != nil {
+			return nil, err
+		}
+	}
+	if key == "appearance.navigation" {
+		if err := validateNavigation(value); err != nil {
 			return nil, err
 		}
 	}
@@ -59,6 +82,14 @@ func (s *Service) UpdateContent(ctx context.Context, key, value, adminID string)
 			return nil, err
 		}
 	}
+	if strings.HasPrefix(key, globalWidgetPrefix) {
+		if _, err := validateGlobalWidget(key, value); err != nil {
+			return nil, err
+		}
+	}
+	if strings.HasPrefix(key, "appearance.page.") || strings.HasPrefix(key, globalWidgetPrefix) {
+		return s.repo.MutateContent(ctx, key, &value, adminID, func(entries []model.ContentEntry) error { return validateGlobalMutation(entries, key, &value) })
+	}
 	entry, err := s.repo.UpsertContent(ctx, key, value, adminID)
 	if err != nil {
 		return nil, fmt.Errorf("settings.service.UpdateContent: %w", err)
@@ -69,6 +100,10 @@ func (s *Service) UpdateContent(ctx context.Context, key, value, adminID string)
 func (s *Service) ResetContent(ctx context.Context, key string) error {
 	if !contentKeyPattern.MatchString(key) {
 		return fmt.Errorf("invalid content key")
+	}
+	if strings.HasPrefix(key, "appearance.page.") || strings.HasPrefix(key, globalWidgetPrefix) {
+		_, err := s.repo.MutateContent(ctx, key, nil, "", func(entries []model.ContentEntry) error { return validateGlobalMutation(entries, key, nil) })
+		return err
 	}
 	if err := s.repo.DeleteContent(ctx, key); err != nil {
 		return fmt.Errorf("settings.service.ResetContent: %w", err)

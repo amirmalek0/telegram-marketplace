@@ -2,6 +2,7 @@ package settings
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"telegram-marketplace/internal/app/middleware"
@@ -27,6 +28,8 @@ func (h *Handler) UpdateContent(c *gin.Context) {
 		return
 	}
 	var req UpdateContentRequest
+	// Allow bounded layout documents (including escaped JSON), not unlimited bodies.
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 2<<20)
 	if err := c.ShouldBindJSON(&req); err != nil || req.Value == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "value is required"})
 		return
@@ -40,6 +43,19 @@ func (h *Handler) UpdateContent(c *gin.Context) {
 }
 
 func (h *Handler) ResetContent(c *gin.Context) {
+	if strings.HasPrefix(c.Param("key"), globalWidgetPrefix) && c.Query("cascade") == "true" {
+		adminID, ok := middleware.GetAdminID(c)
+		if !ok {
+			c.JSON(http.StatusForbidden, gin.H{"error": "admin access required"})
+			return
+		}
+		if err := h.service.DeleteGlobalWidget(c.Request.Context(), c.Param("key"), adminID); err != nil {
+			c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
+			return
+		}
+		c.Status(http.StatusNoContent)
+		return
+	}
 	if err := h.service.ResetContent(c.Request.Context(), c.Param("key")); err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"error": err.Error()})
 		return
