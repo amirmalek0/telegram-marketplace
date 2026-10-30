@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -52,6 +53,8 @@ func TestReferralPostgres(t *testing.T) {
 	// Minimal existing-schema contract. Test referral upgrades independently of
 	// unrelated historical migrations, which explicitly assume the public schema.
 	for _, sql := range []string{
+		`CREATE TABLE settings(id UUID PRIMARY KEY,require_phone_verification BOOLEAN NOT NULL)`,
+		`INSERT INTO settings VALUES('00000000-0000-0000-0000-000000000001',true)`,
 		`CREATE TABLE admins(id UUID PRIMARY KEY DEFAULT gen_random_uuid(),username TEXT,password_hash TEXT)`,
 		`CREATE TABLE users(id UUID PRIMARY KEY DEFAULT gen_random_uuid(),telegram_id BIGINT UNIQUE NOT NULL,first_name TEXT,last_name TEXT,username TEXT,wallet_balance BIGINT NOT NULL DEFAULT 0,is_banned BOOLEAN NOT NULL DEFAULT false,phone_number TEXT NOT NULL DEFAULT '',phone_verified_at TIMESTAMPTZ)`,
 		`CREATE TABLE referrals(id UUID PRIMARY KEY DEFAULT gen_random_uuid())`,
@@ -68,6 +71,9 @@ func TestReferralPostgres(t *testing.T) {
 				t.Fatalf("migration pass=%d statement=%d: %v", pass, i, err)
 			}
 		}
+	}
+	if _, err = db.Exec(ctx, `ALTER TABLE referral_notifications ADD COLUMN IF NOT EXISTS template_vars JSONB NOT NULL DEFAULT '{}'::jsonb`); err != nil {
+		t.Fatal(err)
 	}
 	repo := repository.NewPostgresRepository(db)
 	s, err := repo.Settings(ctx)
@@ -127,6 +133,53 @@ func TestReferralPostgres(t *testing.T) {
 		exec(`INSERT INTO payments(user_id,purpose,method,currency,amount_minor,checkout_reference,status,is_test,paid_at) VALUES($1,$2,'wallet','XTR',5,$3,$4,$5,now())`, id, purpose, uuid.NewString(), status, test)
 	}
 
+	t.Run("phone rewards require the global phone gate", func(t *testing.T) {
+		configure(true, "phone_verified", 12, 8)
+		a, code, _ := inviter()
+		b, n := user(code)
+		exec(`UPDATE users SET phone_number='+989123456789',phone_verified_at=now() WHERE id=$1`, b)
+		exec(`UPDATE settings SET require_phone_verification=false`)
+		defer exec(`UPDATE settings SET require_phone_verification=true`)
+		config, err := repo.Settings(ctx)
+		if err != nil || config.Enabled || config.RewardTrigger != "phone_verified" {
+			t.Fatalf("rule not safely paused: %+v %v", config, err)
+		}
+		config.Enabled = true
+		if err := repo.SaveSettings(ctx, config, admin); !errors.Is(err, model.ErrPhoneVerificationDisabled) {
+			t.Fatalf("invalid combination accepted: %v", err)
+		}
+		reward(n)
+		balance(a, 0)
+		balance(b, 0)
+		_, pausedN := user(code)
+		paused, _, err := repo.Summary(ctx, pausedN)
+		if err != nil || paused.Invitation != nil || paused.Enabled {
+			t.Fatalf("paused rule attributed invitation: %+v %v", paused, err)
+		}
+		// Switching the current rule must not accidentally pay old phone-based snapshots.
+		configure(true, "bot_open", 10, 10)
+		reward(n)
+		balance(a, 0)
+		balance(b, 0)
+		ids, err := repo.Eligible(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, id := range ids {
+			if id == n {
+				t.Fatal("paused phone reward was eligible")
+			}
+		}
+		c, cn := user(code)
+		reward(cn)
+		balance(c, 10)
+		balance(a, 10)
+		exec(`UPDATE settings SET require_phone_verification=true`)
+		reward(n)
+		reward(n)
+		balance(a, 22)
+		balance(b, 8)
+	})
 	t.Run("disabled and existing users cannot attach", func(t *testing.T) {
 		configure(false, "bot_open", 10, 10)
 		a, code, an := inviter()

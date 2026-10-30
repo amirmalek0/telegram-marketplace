@@ -14,6 +14,7 @@ type fakeRepo struct {
 	rewards   int
 	saved     bool
 	rewardErr error
+	saveErr   error
 }
 
 func (r *fakeRepo) Onboard(_ context.Context, _ int64, _, _, _, code string) (string, bool, error) {
@@ -22,6 +23,9 @@ func (r *fakeRepo) Onboard(_ context.Context, _ int64, _, _, _, code string) (st
 }
 func (r *fakeRepo) Reward(context.Context, int64) error { r.rewards++; return r.rewardErr }
 func (r *fakeRepo) SaveSettings(context.Context, model.Settings, string) error {
+	if r.saveErr != nil {
+		return r.saveErr
+	}
 	r.saved = true
 	return nil
 }

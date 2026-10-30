@@ -6,8 +6,23 @@ import (
 	"strings"
 	"telegram-marketplace/internal/app/middleware"
 	"telegram-marketplace/internal/core/membership/auth"
+	"telegram-marketplace/internal/core/membership/referrals/model"
 	"testing"
 )
+
+func TestPhoneRewardDependencyReturnsActionableConflict(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	repo := &fakeRepo{saveErr: model.ErrPhoneVerificationDisabled}
+	r := gin.New()
+	r.PUT("/settings", func(c *gin.Context) { c.Set(middleware.AdminClaimsKey, &auth.Claims{AdminID: "admin"}) }, NewHandler(NewService(repo, nil)).UpdateSettings)
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest("PUT", "/settings", strings.NewReader(`{"enabled":true,"inviter_stars":10,"invitee_stars":10,"reward_trigger":"phone_verified"}`))
+	req.Header.Set("Content-Type", "application/json")
+	r.ServeHTTP(w, req)
+	if w.Code != 409 || !strings.Contains(w.Body.String(), model.ErrPhoneVerificationDisabled.Error()) || repo.saved {
+		t.Fatalf("unexpected conflict: %d %s", w.Code, w.Body.String())
+	}
+}
 
 func TestSettingsRequiresAllFieldsAndIntegerRewards(t *testing.T) {
 	gin.SetMode(gin.TestMode)

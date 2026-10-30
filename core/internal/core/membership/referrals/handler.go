@@ -1,6 +1,7 @@
 package referrals
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"telegram-marketplace/internal/app/middleware"
@@ -56,6 +57,10 @@ func (h *Handler) UpdateSettings(c *gin.Context) {
 		return
 	}
 	if err := h.service.SaveSettings(c.Request.Context(), s, admin); err != nil {
+		if errors.Is(err, model.ErrPhoneVerificationDisabled) {
+			c.JSON(http.StatusConflict, gin.H{"error": model.ErrPhoneVerificationDisabled.Error()})
+			return
+		}
 		c.JSON(503, gin.H{"error": "ذخیره تنظیمات دعوت ناموفق بود"})
 		return
 	}

@@ -32,8 +32,22 @@ func (r *postgresRepository) Settings(ctx context.Context) (model.Settings, erro
 	return scanSettings(r.db.QueryRow(ctx, querySettings))
 }
 func (r *postgresRepository) SaveSettings(ctx context.Context, s model.Settings, admin string) error {
-	_, err := r.db.Exec(ctx, querySaveSettings, s.Enabled, s.InviterStars, s.InviteeStars, s.RewardTrigger, admin, s.InviterMessage, s.InviteeMessage)
-	return err
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+	var required bool
+	if err = tx.QueryRow(ctx, queryLockPhoneRequirement).Scan(&required); err != nil {
+		return err
+	}
+	if s.Enabled && s.RewardTrigger == "phone_verified" && !required {
+		return model.ErrPhoneVerificationDisabled
+	}
+	if _, err = tx.Exec(ctx, querySaveSettings, s.Enabled, s.InviterStars, s.InviteeStars, s.RewardTrigger, admin, s.InviterMessage, s.InviteeMessage); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
 }
 
 // Creating the account and attributing its first invitation is one transaction.

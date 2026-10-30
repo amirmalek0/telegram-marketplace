@@ -1,7 +1,11 @@
 package repository
 
-const querySettings = `SELECT enabled,inviter_stars,invitee_stars,reward_trigger,inviter_message,invitee_message FROM referral_settings WHERE id=true`
-const queryLockSettings = querySettings + ` FOR SHARE`
+// Phone-based referrals are effectively paused while the global phone gate is off.
+// Retain the configured trigger/rewards rather than silently moving money under another rule.
+const querySettings = `SELECT s.enabled AND (s.reward_trigger<>'phone_verified' OR g.require_phone_verification),s.inviter_stars,s.invitee_stars,s.reward_trigger,s.inviter_message,s.invitee_message
+ FROM referral_settings s JOIN settings g ON g.id='00000000-0000-0000-0000-000000000001' WHERE s.id=true`
+const queryLockSettings = querySettings + ` FOR SHARE OF s,g`
+const queryLockPhoneRequirement = `SELECT require_phone_verification FROM settings WHERE id='00000000-0000-0000-0000-000000000001' FOR SHARE`
 const querySaveSettings = `UPDATE referral_settings SET enabled=$1,inviter_stars=$2,invitee_stars=$3,reward_trigger=$4,updated_by=$5,updated_at=now(),inviter_message=COALESCE(NULLIF($6,''),inviter_message),invitee_message=COALESCE(NULLIF($7,''),invitee_message) WHERE id=true`
 const queryOnboard = `INSERT INTO users(telegram_id,first_name,last_name,username) VALUES($1,$2,$3,$4)
  ON CONFLICT(telegram_id) DO UPDATE SET first_name=EXCLUDED.first_name,last_name=EXCLUDED.last_name,username=EXCLUDED.username
@@ -16,7 +20,8 @@ const querySummary = `SELECT count(*),count(*) FILTER(WHERE rewarded_at IS NOT N
 const queryInvitation = `SELECT reward_trigger,invitee_stars,rewarded_at FROM referrals WHERE invitee_id=$1`
 const eligible = `r.rewarded_at IS NULL AND r.inviter_id IS NOT NULL AND r.invitee_id IS NOT NULL AND (
  r.reward_trigger='bot_open' OR
- (r.reward_trigger='phone_verified' AND EXISTS(SELECT 1 FROM users u WHERE u.id=r.invitee_id AND u.phone_verified_at IS NOT NULL AND u.phone_number<>'')) OR
+ (r.reward_trigger='phone_verified' AND EXISTS(SELECT 1 FROM settings WHERE id='00000000-0000-0000-0000-000000000001' AND require_phone_verification)
+ AND EXISTS(SELECT 1 FROM users u WHERE u.id=r.invitee_id AND u.phone_verified_at IS NOT NULL AND u.phone_number<>'')) OR
  (r.reward_trigger='first_purchase' AND EXISTS(SELECT 1 FROM payments p WHERE p.user_id=r.invitee_id AND p.status='succeeded'
  AND p.purpose IN ('product','vip_plan') AND p.amount_minor>0 AND NOT p.is_test AND p.paid_at>=r.created_at)))`
 const queryEligible = `SELECT r.invitee_telegram_id FROM referrals r JOIN users a ON a.id=r.inviter_id JOIN users b ON b.id=r.invitee_id

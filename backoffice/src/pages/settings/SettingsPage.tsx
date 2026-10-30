@@ -9,6 +9,8 @@ import { PhoneVerificationSetting } from './PhoneVerificationSetting';
 import { ReferralSettings } from './ReferralSettings';
 
 export default function SettingsPage() {
+  const [phoneRequired, setPhoneRequired] = useState<boolean | null>(null);
+  const [phoneSaving, setPhoneSaving] = useState(false);
   const [config, setConfig] = useState<PaymentConfigResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -26,13 +28,13 @@ export default function SettingsPage() {
     <section className="surface-card system-setting">
       <div className="system-setting-top">
         <span className="system-setting-icon">{testMode ? <FlaskConical size={21} /> : <ShieldCheck size={21} />}</span>
-        <div className="system-setting-title"><h2>پرداخت Telegram Stars</h2>{loading ? <span role="status" className="text-xs">در حال دریافت…</span> : config ? <Badge variant={testMode ? 'warning' : 'success'}>{testMode ? 'حالت آزمایشی' : 'پرداخت واقعی'}</Badge> : <span className="text-xs text-rose-500" role="alert">تنظیمات دریافت نشد</span>}</div>
+        <div className="system-setting-title"><h2>حالت سراسری پرداخت‌ها</h2>{loading ? <span role="status" className="text-xs">در حال دریافت…</span> : config ? <Badge variant={testMode ? 'warning' : 'success'}>{testMode ? 'حالت آزمایشی' : 'پرداخت واقعی'}</Badge> : <span className="text-xs text-rose-500" role="alert">تنظیمات دریافت نشد</span>}</div>
         {!loading && !config ? <Button variant="secondary" size="sm" onClick={() => void load()}>تلاش دوباره</Button> : <Button variant="secondary" size="sm" icon={<Settings2 size={15} />} disabled={loading || !config} onClick={open}>تغییر حالت</Button>}
       </div>
-      <div className="system-setting-body"><p>این حالت برای خرید محصول، پلن VIP و شارژ کیف پول اعمال می‌شود.</p><details><summary>نکات پرداخت</summary><p>پرداخت از موجودی داخلی کیف پول فوری است و به تلگرام متصل نمی‌شود. حالت آزمایشی موجودی، اشتراک یا تحویل واقعی ایجاد نمی‌کند. پرداخت کیف پول و دسترسی VIP همچنان واقعی هستند.</p></details></div>
+      <div className="system-setting-body"><p>این حالت برای پرداخت‌های جدید Stars و کارت‌به‌کارتِ محصول، پلن VIP و شارژ کیف پول اعمال می‌شود.</p><details><summary>نکات پرداخت</summary><p>کارت‌به‌کارت آزمایشی نیز نیازمند بررسی مدیر است؛ پول واقعی واریز نکنید. حالت آزمایشی موجودی، اشتراک یا تحویل واقعی ایجاد نمی‌کند. پرداخت از کیف پول داخلی و دسترسی VIP همچنان واقعی هستند.</p></details></div>
     </section>
-    <PhoneVerificationSetting />
-    <ReferralSettings />
+    <PhoneVerificationSetting onChange={setPhoneRequired} onBusyChange={setPhoneSaving} />
+    <ReferralSettings phoneVerificationRequired={phoneRequired} phoneSaving={phoneSaving} />
     <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title="حالت پرداخت سراسری" description="حالت فاکتورهای جدید Telegram Stars را انتخاب کنید" size="sm" icon={<Settings2 size={18} />} footer={<><Button variant="secondary" onClick={() => setModalOpen(false)}>انصراف</Button><Button disabled={!config || selectedMode === config.test_mode} onClick={requestChange}>ادامه</Button></>}>
       <div className="space-y-3">
         <button type="button" onClick={() => setSelectedMode(false)} className={`flex w-full items-start gap-3 rounded-xl border p-4 text-right transition-colors ${!selectedMode ? 'border-emerald-500/50 bg-emerald-500/[0.06]' : 'border-[rgb(var(--color-border))]'}`}><span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-emerald-500/10 text-emerald-500"><ShieldCheck size={18} /></span><span className="min-w-0 flex-1"><span className="flex items-center justify-between gap-2"><b className="text-sm">پرداخت واقعی</b>{!selectedMode && <Check size={17} className="text-emerald-500" />}</span><small className="mt-1 block leading-5 text-[rgb(var(--color-text-secondary))]">تلگرام Stars واقعی از کاربر دریافت می‌کند.</small></span></button>
