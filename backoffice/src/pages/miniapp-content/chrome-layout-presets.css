@@ -1,0 +1,149 @@
+/* Generated copy: edit tools/chrome-layout-presets.css and run the generator. */
+/* Shared by real navigation and scaled gallery previews. No theme changes routes or permissions. */
+:root .chrome-host[data-structure][data-variant] .chrome-header {
+  display:flex;align-items:center;gap:12px;min-height:60px;padding:12px;
+  border:1px solid var(--line);border-radius:18px;background:var(--surface-solid);box-shadow:none;
+}
+:root .chrome-host[data-structure][data-variant] .chrome-brand { display:flex;align-items:center;gap:10px;min-width:0;flex:1; }
+:root .chrome-host[data-structure][data-variant] .chrome-brand-copy { min-width:0; }
+:root .chrome-host[data-structure][data-variant] .chrome-title { color:var(--text);font-size:18px;line-height:1.5;font-weight:750;max-width:none;margin:0;white-space:normal;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden; }
+:root .chrome-host[data-structure][data-variant] .chrome-logo { display:grid;place-items:center;width:42px;height:42px;flex:0 0 42px;border-radius:12px;background:var(--accent-soft);color:var(--accent);box-shadow:none; }
+:root .chrome-host[data-structure][data-variant] .chrome-logo::after { display:none; }
+:root .chrome-host[data-structure][data-variant] .chrome-tools { display:flex;gap:6px;align-items:center;margin:0;flex-shrink:0; }
+:root .chrome-host[data-structure][data-variant] .chrome-tool { display:flex;align-items:stretch;min-width:0; }
+:root .chrome-host[data-structure][data-variant] .chrome-tool .header-search { width:100%; }
+:root .chrome-host[data-structure][data-variant] .chrome-tool :is(.theme-toggle,.search-toggle),
+:root .chrome-host[data-structure][data-variant] .chrome-action { display:flex;align-items:center;justify-content:center;gap:6px;position:relative;min-width:44px;min-height:44px;width:100%;height:auto;flex:auto;padding:8px;border:1px solid var(--line);border-radius:10px;background:var(--surface-soft);color:var(--text);box-shadow:none;text-decoration:none; }
+.header-action-caption { display:none; }
+.chrome-host[data-structure] .header-action-caption { font-size:11px;font-weight:650;line-height:1.5;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis; }
+/* Ten genuinely different header compositions. Layout overrides remain available in the editor. */
+:root .chrome-host[data-structure='masthead'][data-variant] .chrome-header { flex-direction:column; }
+:root .chrome-host[data-structure='masthead'][data-variant] .chrome-brand { flex-direction:column;text-align:center; }
+:root .chrome-host[data-structure='masthead'][data-variant] .chrome-logo { width:56px;height:56px;flex-basis:56px;border-radius:50%; }
+:root .chrome-host[data-structure='masthead'][data-variant] .chrome-tools { justify-content:center; }
+:root .chrome-host[data-structure='utility'][data-variant] .chrome-header { flex-direction:column-reverse;align-items:stretch;border-radius:4px; }
+:root .chrome-host[data-structure='utility'][data-variant] .chrome-tools { justify-content:flex-end;border-bottom:1px solid var(--line);padding-bottom:8px; }
+:root .chrome-host[data-structure='utility'][data-variant] .chrome-title { font-size:26px; }
+:root .chrome-host[data-structure='utility'][data-variant] .chrome-brand { padding-block:6px; }
+:root .chrome-host[data-structure='console'][data-variant] .chrome-header { display:grid;grid-template-columns:minmax(0,1fr) minmax(80px,.6fr);align-items:stretch; }
+:root .chrome-host[data-structure='console'][data-variant] .chrome-brand { flex-direction:column;align-items:flex-start;justify-content:center;border-inline-end:1px solid var(--line);padding-inline-end:12px; }
+:root .chrome-host[data-structure='console'][data-variant] .chrome-tools { display:grid;grid-template-columns:1fr; }
+:root .chrome-host[data-structure='balanced'][data-variant] .chrome-header { display:grid;grid-template-columns:minmax(44px,1fr) minmax(0,2fr) minmax(44px,1fr); }
+:root .chrome-host[data-structure='balanced'][data-variant] .chrome-brand { grid-column:2;grid-row:1;flex-direction:column;text-align:center;gap:4px; }
+:root .chrome-host[data-structure='balanced'][data-variant] .chrome-tools { display:contents; }
+:root .chrome-host[data-structure='balanced'][data-variant] .chrome-tool:nth-child(1) { grid-column:1;grid-row:1; }
+:root .chrome-host[data-structure='balanced'][data-variant] .chrome-tool:nth-child(2) { grid-column:3;grid-row:1; }
+:root .chrome-host[data-structure='balanced'][data-variant] .chrome-tool:nth-child(3) { grid-column:1/-1;grid-row:2; }
+:root .chrome-host[data-structure='banner'][data-variant] .chrome-header { flex-direction:column;align-items:stretch;padding:0;gap:0; }
+:root .chrome-host[data-structure='banner'][data-variant] .chrome-brand { padding:18px 16px; }
+:root .chrome-host[data-structure='banner'][data-variant] .chrome-title { font-size:25px; }
+:root .chrome-host[data-structure='banner'][data-variant] .chrome-tools { display:grid;grid-template-columns:repeat(var(--header-tool-count,3),minmax(0,1fr));padding:8px;border-top:1px solid var(--line);background:var(--surface-soft);border-radius:0 0 18px 18px; }
+:root .chrome-host[data-structure='split'][data-variant] .chrome-header { display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);background:transparent;border:0;padding:0;align-items:stretch; }
+:root .chrome-host[data-structure='split'][data-variant] .chrome-brand { padding:12px;flex-direction:column;justify-content:center;text-align:center;border:1px solid var(--line);border-radius:18px;background:var(--surface-solid); }
+:root .chrome-host[data-structure='split'][data-variant] .chrome-tools { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding:8px;border:1px solid var(--line);border-radius:18px;background:var(--surface-solid); }
+:root .chrome-host[data-structure='split'][data-variant] .chrome-tool:nth-child(3) { grid-column:1/-1; }
+:root .chrome-host[data-structure='portrait'][data-variant] .chrome-header { flex-direction:column;align-items:stretch; }
+:root .chrome-host[data-structure='portrait'][data-variant] .chrome-brand { flex-direction:row-reverse;justify-content:space-between;padding:6px 0; }
+:root .chrome-host[data-structure='portrait'][data-variant] .chrome-logo { width:76px;height:76px;flex-basis:76px;border-radius:22px; }
+:root .chrome-host[data-structure='portrait'][data-variant] .chrome-title { font-size:24px; }
+:root .chrome-host[data-structure='portrait'][data-variant] .chrome-tools { justify-content:space-between; }
+:root .chrome-host[data-structure='portrait'][data-variant] .chrome-tool { flex:1; }
+:root .chrome-host[data-structure='ribbon'][data-variant] .chrome-header { flex-wrap:wrap;background:transparent;border:0;border-bottom:2px solid var(--text);border-radius:0;padding:10px 0; }
+:root .chrome-host[data-structure='ribbon'][data-variant] .chrome-brand { flex-basis:100%; }
+:root .chrome-host[data-structure='ribbon'][data-variant] .chrome-tools { margin-inline-start:auto;gap:0; }
+:root .chrome-host[data-structure='ribbon'][data-variant] .chrome-tool + .chrome-tool { border-inline-start:1px solid var(--line); }
+:root .chrome-host[data-structure='compact'][data-variant] .chrome-header { flex-direction:row-reverse;padding:6px;gap:8px; }
+:root .chrome-host[data-structure='compact'][data-variant] .chrome-brand { flex-direction:row-reverse;text-align:left;gap:5px; }
+:root .chrome-host[data-structure='compact'][data-variant] .chrome-title { font-size:15px; }
+:root .chrome-host[data-structure='compact'][data-variant] .chrome-logo { width:32px;height:36px;flex-basis:32px; }
+:root .chrome-host[data-structure='compact'][data-variant] .chrome-tools { gap:2px; }
+:root .chrome-host[data-structure='corner'][data-variant] .chrome-header { display:grid;grid-template-columns:1fr;gap:14px; }
+:root .chrome-host[data-structure='corner'][data-variant] .chrome-brand { justify-content:space-between;flex-direction:row-reverse; }
+:root .chrome-host[data-structure='corner'][data-variant] .chrome-tools { justify-self:end;border-inline-start:3px solid var(--accent);padding-inline-start:12px; }
+/* Five control geometries, not color variants. Captions belong inside the real buttons. */
+:root .chrome-host[data-structure][data-variant='tiles'] .chrome-tool :is(.theme-toggle,.search-toggle),:root .chrome-host[data-structure][data-variant='tiles'] .chrome-action { flex-direction:column;min-height:60px;border-radius:5px; }
+.chrome-host[data-variant='tiles'] .header-action-caption,.chrome-host[data-variant='pills'] .header-action-caption,.chrome-host[data-variant='tags'] .header-action-caption { display:block; }
+:root .chrome-host[data-structure][data-variant='pills'] .chrome-tool :is(.theme-toggle,.search-toggle),:root .chrome-host[data-structure][data-variant='pills'] .chrome-action { border-radius:99px;padding-inline:12px; }
+:root .chrome-host[data-structure][data-variant='rules'] .chrome-tool :is(.theme-toggle,.search-toggle),:root .chrome-host[data-structure][data-variant='rules'] .chrome-action { border:0;border-bottom:2px solid var(--accent);border-radius:0;background:transparent; }
+:root .chrome-host[data-structure][data-variant='circles'] .chrome-tool :is(.theme-toggle,.search-toggle),:root .chrome-host[data-structure][data-variant='circles'] .chrome-action { width:44px;height:44px;flex:0 0 44px;border:2px solid var(--line);border-radius:50%;background:transparent; }
+:root .chrome-host[data-structure][data-variant='circles'] .chrome-tool { justify-content:center; }
+:root .chrome-host[data-structure][data-variant='circles'] .header-search { display:flex;justify-content:center; }
+:root .chrome-host[data-structure][data-variant='tags'] .chrome-tool :is(.theme-toggle,.search-toggle),:root .chrome-host[data-structure][data-variant='tags'] .chrome-action { flex-direction:column;background:transparent;border:0;padding:4px;gap:4px; }
+.chrome-host[data-variant='tags'] .header-action-caption { padding:2px 8px;background:var(--accent-soft);color:var(--accent);border-radius:4px; }
+/* Compact, balanced and multi-column layouts must fit every action at 320px. */
+.chrome-host:is([data-structure='compact'],[data-structure='balanced'],[data-structure='split']) .header-action-caption { display:none; }
+:root .chrome-host[data-structure][data-no-tools='true'] .chrome-header { display:flex; }
+:root .chrome-host[data-structure][data-no-tools='true'] .chrome-brand { border:0;width:100%; }
+:root .chrome-host[data-structure][data-no-tools='true'] .chrome-tools { display:none; }
+/* Explicit layout overrides, and protected compact detail-page navigation. */
+:root .chrome-host[data-structure][data-header-layout='reversed'] .chrome-header { display:flex;flex-direction:row-reverse; }
+:root .chrome-host[data-structure][data-header-layout='standard'] .chrome-header { display:flex;flex-direction:row; }
+:root .chrome-host[data-structure][data-header-layout='stacked'] .chrome-header { display:flex;flex-direction:column;align-items:stretch; }
+:root .chrome-host[data-structure][data-header-layout='centered'] .chrome-header { display:flex;flex-direction:column;align-items:center; }
+:root .chrome-host[data-structure][data-header-layout]:not([data-header-layout='preset']) .chrome-tools { display:flex;flex-wrap:wrap; }
+:root .chrome-host[data-structure][data-header-layout]:not([data-header-layout='preset']) .chrome-brand { flex-direction:row;border:0; }
+:root .chrome-host[data-structure][data-variant] .chrome-header.is-detail { display:flex;flex-direction:row;min-height:54px;padding:8px;gap:8px; }
+:root .chrome-host[data-structure][data-variant] .is-detail .chrome-brand { flex-direction:row;text-align:start;border:0;padding:0;flex:1;gap:8px; }
+:root .chrome-host[data-structure][data-variant] .is-detail .chrome-logo { width:32px;height:32px;flex-basis:32px; }
+:root .chrome-host[data-structure][data-variant] .is-detail .chrome-title { font-size:15px; }
+:root .chrome-host[data-structure][data-variant] .is-detail .chrome-tools { display:flex;margin:0;padding:0;background:none;border:0; }
+/* Shared base for structural navigation. Existing color/size overrides are resolved upstream. */
+:root .chrome-nav[data-structure][data-variant] { display:grid;grid-template-columns:repeat(var(--nav-count,5),minmax(0,1fr));align-items:stretch;gap:4px;padding:6px;height:var(--nav-height,66px);background:var(--nav-bg);border:1px solid var(--nav-border);border-radius:var(--nav-radius,22px);box-shadow:none; }
+:root .chrome-nav[data-structure][data-variant] .nav-item { display:flex;flex-direction:column;justify-content:center;align-items:center;min-width:0;min-height:44px;padding:4px 2px;gap:2px;border:0;border-radius:var(--nav-item-radius,16px);color:var(--nav-item-color,var(--nav-text));background:transparent;box-shadow:none;text-decoration:none; }
+:root .chrome-nav[data-structure][data-variant] .nav-item.active { color:var(--nav-item-active-color,var(--nav-selected-text)); }
+:root .chrome-nav[data-structure][data-variant] .nav-icon { display:grid;place-items:center;width:34px;height:30px;flex-shrink:0;border-radius:10px;position:relative; }
+:root .chrome-nav[data-structure][data-variant] [data-nav-label] { font-size:var(--nav-label-size,11px);line-height:1.4;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+:root .chrome-nav[data-structure][data-variant] { --nav-theme-active-bg:var(--accent-soft);--nav-theme-active-text:var(--accent); }
+/* Ten navigation arrangements retain the admin's DOM order and visible routes. */
+:root .chrome-nav[data-structure='stack'][data-variant] .nav-item { flex-direction:column;gap:4px; }
+:root .chrome-nav[data-structure='inline'][data-variant] .nav-item { flex-direction:row;gap:5px; }
+:root .chrome-nav[data-structure='inline'][data-variant][data-many='true'] { grid-template-columns:repeat(3,minmax(0,1fr));height:calc(var(--nav-height,66px) * 1.65); }
+:root .chrome-nav[data-structure='expand'][data-variant] { display:flex; }
+:root .chrome-nav[data-structure='expand'][data-variant] .nav-item { flex:1; }
+:root .chrome-nav[data-structure='expand'][data-variant] .nav-item.active { flex:2.1;flex-direction:row;gap:6px; }
+:root .chrome-nav[data-structure='expand'][data-variant] .nav-item:not(.active) [data-nav-label] { display:none; }
+:root .chrome-nav[data-structure='reverse'][data-variant] .nav-item { flex-direction:column-reverse; }
+:root .chrome-nav[data-structure='bubbles'][data-variant] { --nav-theme-bg:transparent;border-color:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;gap:7px; }
+:root .chrome-nav[data-structure='bubbles'][data-variant] .nav-item { background:transparent; }
+:root .chrome-nav[data-structure='bubbles'][data-variant] .nav-icon { width:38px;height:38px;border:1px solid var(--nav-border);border-radius:50%;background:var(--surface-solid); }
+:root .chrome-nav[data-structure='lift'][data-variant] .nav-item.active .nav-icon { transform:translateY(-14px);width:44px;height:44px;border:4px solid var(--bg);border-radius:50%;background:var(--nav-selected-bg);margin-bottom:-14px; }
+:root .chrome-nav[data-structure='lift'][data-variant] { overflow:visible; }
+:root .chrome-nav[data-structure='splitdock'][data-variant] { --nav-theme-bg:transparent;gap:0;border-color:transparent;backdrop-filter:none;-webkit-backdrop-filter:none; }
+:root .chrome-nav[data-structure='splitdock'][data-variant] .nav-item[data-group-start='true'] { margin-left:10px;border-radius:var(--nav-item-radius,16px) 0 0 var(--nav-item-radius,16px); }
+:root .chrome-nav[data-structure='splitdock'][data-variant] .nav-item { background:var(--surface-solid);border-radius:0; }
+:root .chrome-nav[data-structure='splitdock'][data-variant] .nav-item:first-child { border-radius:var(--nav-item-radius,16px) 0 0 var(--nav-item-radius,16px); }
+:root .chrome-nav[data-structure='splitdock'][data-variant] .nav-item:is(:last-child,[data-group-end='true']) { border-radius:0 var(--nav-item-radius,16px) var(--nav-item-radius,16px) 0; }
+:root .chrome-nav[data-structure='splitdock'][data-variant][data-crowded='true'] .nav-item[data-group-start='true'] { margin-left:0;border-left:3px double var(--nav-border); }
+:root .chrome-nav[data-structure='folders'][data-variant] { padding:0 6px 6px;gap:2px;align-items:end;border-top:0; }
+:root .chrome-nav[data-structure='folders'][data-variant] .nav-item { height:calc(100% - 8px);border-radius:10px 10px 4px 4px; }
+:root .chrome-nav[data-structure='folders'][data-variant] .nav-item.active { height:calc(100% + 8px);border:1px solid var(--nav-border);border-bottom:0;border-radius:14px 14px 0 0;background:var(--nav-selected-bg); }
+:root .chrome-nav[data-structure='launcher'][data-variant] { grid-template-columns:repeat(var(--nav-grid-columns,3),minmax(0,1fr));height:calc(var(--nav-height,66px) * var(--nav-rows,2));gap:5px; }
+:root .chrome-nav[data-structure='launcher'][data-variant] .nav-item { flex-direction:row;gap:7px;background:var(--surface-soft); }
+:root .chrome-nav[data-structure='labelrail'][data-variant] { height:calc(var(--nav-height,66px) + var(--nav-label-size,11px) * 1.4 + 8px);padding-bottom:calc(var(--nav-label-size,11px) * 1.4 + 14px);position:fixed; }
+:root .chrome-nav[data-structure='labelrail'][data-variant] .nav-item { position:static;min-height:44px; }
+:root .chrome-nav[data-structure='labelrail'][data-variant] .nav-item:not(.active) [data-nav-label] { display:none; }
+:root .chrome-nav[data-structure='labelrail'][data-variant] .nav-item.active [data-nav-label] { position:absolute;bottom:0;inset-inline:0;max-width:none;max-height:none;height:calc(var(--nav-label-size,11px) * 1.4 + 8px);text-align:center;padding:4px 12px;border-top:1px solid var(--nav-border);background:var(--nav-selected-bg);color:var(--nav-item-active-color,var(--nav-selected-text));border-radius:0 0 var(--nav-radius,22px) var(--nav-radius,22px); }
+/* Active geometry variants are distinct even with a monochrome palette. */
+:root .chrome-nav[data-structure][data-variant='plate'] .nav-item.active { background:var(--nav-selected-bg);box-shadow:inset 0 0 0 1px var(--nav-border); }
+:root .chrome-nav[data-structure][data-variant='ring'] .nav-item.active .nav-icon { outline:2px solid currentColor;outline-offset:-2px;border-radius:50%;background:var(--nav-selected-bg); }
+:root .chrome-nav[data-structure][data-variant='marker'] .nav-item.active .nav-icon::after { content:'';position:absolute;bottom:-3px;left:50%;width:18px;height:3px;transform:translateX(-50%);border-radius:3px;background:currentColor; }
+:root .chrome-nav[data-structure][data-variant='lozenge'] .nav-item.active .nav-icon { border-radius:4px 14px 4px 14px;background:var(--nav-selected-bg);border:1px solid currentColor; }
+:root .chrome-nav[data-structure][data-variant='bracket'] .nav-item.active { border-inline:2px solid currentColor;border-radius:3px;background:var(--nav-selected-bg); }
+/* All families collapse to one icon row. Hidden labels never leave an empty second row. */
+:root .chrome-nav[data-structure][data-variant].is-compact { display:grid;grid-template-columns:repeat(var(--nav-count,5),minmax(0,1fr));height:52px;padding:4px 6px;gap:3px; }
+:root .chrome-nav[data-structure][data-variant].is-compact .nav-item { min-height:42px;height:auto;flex-direction:row;margin-left:0; }
+:root .chrome-nav[data-structure][data-variant].is-compact [data-nav-label] { display:none; }
+:root .chrome-nav[data-structure][data-variant].is-compact .nav-icon { height:32px; }
+:root .chrome-nav[data-structure='folders'][data-variant].is-compact .nav-item.active { height:auto; }
+.chrome-nav[data-structure] .nav-item:focus-visible,.chrome-host[data-structure] :is(button,a):focus-visible { outline:2px solid var(--accent);outline-offset:2px; }
+@media(max-width:360px) {
+  :root .chrome-host[data-structure][data-variant] .chrome-header { gap:6px;padding:8px; }
+  :root .chrome-host[data-structure][data-variant] .chrome-tools { gap:3px; }
+  :root .chrome-host[data-structure='compact'][data-variant] .chrome-logo { display:none; }
+  :root .chrome-nav[data-structure='expand'][data-variant] .nav-item.active { flex:1.9;gap:2px; }
+}
+@media(max-width:400px) {
+  :root .chrome-nav[data-structure='expand'][data-variant][data-crowded='true'] { display:grid;grid-template-columns:repeat(6,minmax(0,1fr)); }
+  :root .chrome-nav[data-structure='expand'][data-variant][data-crowded='true'] .nav-item.active { flex-direction:column; }
+}
+@media(prefers-reduced-motion:reduce) { .chrome-host[data-structure] *, .chrome-nav[data-structure], .chrome-nav[data-structure] * { transition:none; } }

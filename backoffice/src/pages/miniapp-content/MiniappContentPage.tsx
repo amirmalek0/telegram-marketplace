@@ -1,10 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
+import { apiClient } from '@/api/client';
 import { EditorWorkspace } from './EditorWorkspace';
 import { useAuthStore } from '@/stores/authStore';
 import { EditorControls } from './EditorControls';
-import type { LayoutDrafts } from './PageLayoutEditor';
-import type { PageId } from './pageLayouts';
+import type { LayoutDrafts, WidgetSelection } from './PageLayoutEditor';
+import { pageIds, type PageId } from './pageLayouts';
+import { widgetIdPattern } from './textWidgets';
+import type { HeaderSettings } from './headerSettings';
+import type { GlobalWidgets } from './globalWidgets';
+import type { NavigationSettings } from './navigationSettings';
 import type { Palette, PaletteMode } from './palette';
 
 function editorURL() {
@@ -27,16 +32,21 @@ interface PreviewPageState {
 }
 
 export default function MiniappContentPage() {
+  const refreshingPreviewAuth = useRef(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const editorWindowRef = useRef<Window | null>(null);
   const palettePreviewRef = useRef<{ type: string; palette: Palette | null; mode: PaletteMode } | null>(null);
   const layoutsPreviewRef = useRef<{ type: string; layouts: LayoutDrafts } | null>(null);
+  const headerPreviewRef = useRef<{ type: string; settings: HeaderSettings } | null>(null);
+  const globalsPreviewRef = useRef<{ type: string; widgets: GlobalWidgets } | null>(null);
+  const navigationPreviewRef = useRef<{ type: string; settings: NavigationSettings } | null>(null);
   const previewPathRef = useRef('/');
   const accessToken = useAuthStore((state) => state.accessToken);
   const [frameKey, setFrameKey] = useState(() => Date.now());
   const [connected, setConnected] = useState(false);
   const [connectionSlow, setConnectionSlow] = useState(false);
   const [previewPage, setPreviewPage] = useState<PreviewPageState | null>(null);
+  const [selection, setSelection] = useState<WidgetSelection>();
   const previewURL = useMemo(() => {
     const url = editorURL();
     url.pathname = previewPathRef.current;
@@ -53,11 +63,20 @@ export default function MiniappContentPage() {
 
   const sendCredentials = useCallback((target?: Window | null) => {
     const receiver = target || iframeRef.current?.contentWindow;
-    if (!receiver || !accessToken) return;
-    receiver.postMessage({ type: 'miniapp-editor-auth', token: accessToken }, previewURL.origin);
+    const currentToken = useAuthStore.getState().accessToken;
+    if (!receiver || !currentToken) return;
+    receiver.postMessage({ type: 'miniapp-editor-auth', token: currentToken }, previewURL.origin);
     if (palettePreviewRef.current) receiver.postMessage(palettePreviewRef.current, previewURL.origin);
     if (layoutsPreviewRef.current) receiver.postMessage(layoutsPreviewRef.current, previewURL.origin);
+    if (headerPreviewRef.current) receiver.postMessage(headerPreviewRef.current, previewURL.origin);
+    if (globalsPreviewRef.current) receiver.postMessage(globalsPreviewRef.current, previewURL.origin);
+    if (navigationPreviewRef.current) receiver.postMessage(navigationPreviewRef.current, previewURL.origin);
   }, [accessToken, previewURL.origin]);
+
+  useEffect(() => {
+    sendCredentials();
+    if (editorWindowRef.current && !editorWindowRef.current.closed) sendCredentials(editorWindowRef.current);
+  }, [sendCredentials]);
 
   const previewPalette = useCallback((palette: Palette | null, mode: PaletteMode) => {
     const message = { type: 'miniapp-editor-palette', palette, mode };
@@ -73,6 +92,26 @@ export default function MiniappContentPage() {
     if (editorWindowRef.current && !editorWindowRef.current.closed) editorWindowRef.current.postMessage(message, previewURL.origin);
   }, [previewURL.origin]);
 
+  const previewHeader = useCallback((settings: HeaderSettings) => {
+    const message = { type: 'miniapp-editor-header', settings };
+    headerPreviewRef.current = message;
+    iframeRef.current?.contentWindow?.postMessage(message, previewURL.origin);
+    if (editorWindowRef.current && !editorWindowRef.current.closed) editorWindowRef.current.postMessage(message, previewURL.origin);
+  }, [previewURL.origin]);
+
+  const previewGlobals = useCallback((widgets: GlobalWidgets) => {
+    const message = { type: 'miniapp-editor-global-widgets', widgets };
+    globalsPreviewRef.current = message;
+    iframeRef.current?.contentWindow?.postMessage(message, previewURL.origin);
+    if (editorWindowRef.current && !editorWindowRef.current.closed) editorWindowRef.current.postMessage(message, previewURL.origin);
+  }, [previewURL.origin]);
+  const previewNavigation = useCallback((settings: NavigationSettings) => {
+    const message = { type: 'miniapp-editor-navigation', settings };
+    navigationPreviewRef.current = message;
+    iframeRef.current?.contentWindow?.postMessage(message, previewURL.origin);
+    if (editorWindowRef.current && !editorWindowRef.current.closed) editorWindowRef.current.postMessage(message, previewURL.origin);
+  }, [previewURL.origin]);
+
   const openPage = useCallback((page: PageId) => {
     const message = { type: 'miniapp-editor-navigate-page', page };
     iframeRef.current?.contentWindow?.postMessage(message, previewURL.origin);
@@ -84,6 +123,16 @@ export default function MiniappContentPage() {
       const fromFrame = event.source === iframeRef.current?.contentWindow;
       const fromEditorWindow = event.source === editorWindowRef.current;
       if (event.origin !== previewURL.origin || (!fromFrame && !fromEditorWindow)) return;
+      if (event.data?.type === 'miniapp-editor-widget-selected' && typeof event.data.id === 'string' && widgetIdPattern.test(event.data.id) && pageIds.includes(event.data.page)) {
+        setSelection({ id: event.data.id, page: event.data.page, request: Date.now() });
+      }
+      if (event.data?.type === 'miniapp-editor-auth-required' && !refreshingPreviewAuth.current) {
+        refreshingPreviewAuth.current = true;
+        // Reuse the dashboard's normal refresh/session-expiry handling.
+        void apiClient.get('/payment/methods/config').then(() => sendCredentials(event.source as Window))
+          .catch(() => { toast.error('نشست مدیریت معتبر نیست؛ دوباره وارد شوید.'); })
+          .finally(() => { refreshingPreviewAuth.current = false; });
+      }
       if (event.data?.type === 'miniapp-editor-ready') {
         sendCredentials(event.source as Window);
         if (fromFrame) setConnected(true);
@@ -147,7 +196,7 @@ export default function MiniappContentPage() {
     onReload={reload}
     onOpen={openEditorWindow}
     onCatalog={openCatalog}
-    controls={<EditorControls onPalette={previewPalette} onLayouts={previewLayouts} onOpenPage={openPage} pathname={previewPage?.pathname} />}
+    controls={<EditorControls onNavigation={previewNavigation} onGlobals={previewGlobals} onHeader={previewHeader} onPalette={previewPalette} onLayouts={previewLayouts} onOpenPage={openPage} pathname={previewPage?.pathname} selection={selection} />}
   >
     <iframe
       key={frameKey}

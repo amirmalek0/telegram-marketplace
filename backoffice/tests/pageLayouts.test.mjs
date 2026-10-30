@@ -8,7 +8,7 @@ test('page and section registries match across independent builds', () => {
   assert.deepEqual(admin.sectionLibrary, app.sectionLibrary);
   assert.deepEqual(admin.defaultSections, app.defaultSections);
   assert.equal(admin.pageIds.length, 12);
-  assert.equal(admin.sectionLibrary.filter(section => !section.page).length, 18);
+  assert.equal(admin.sectionLibrary.filter(section => !section.page).length, 19);
   assert.equal(new Set(admin.sectionLibrary.map(section => section.type)).size, admin.sectionLibrary.length);
 });
 
