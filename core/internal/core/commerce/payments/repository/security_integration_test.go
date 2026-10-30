@@ -50,6 +50,7 @@ func TestPaymentSecurityPostgres(t *testing.T) {
 		q := pgx.Identifier{table}.Sanitize()
 		exec("CREATE TABLE " + q + " (LIKE public." + q + " INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES)")
 	}
+	setupMethodTestSchema(t, ctx, db)
 	exec(`ALTER TABLE payments ADD COLUMN IF NOT EXISTS precheckout_accepted_at TIMESTAMPTZ`)
 	exec(`ALTER TABLE payments DROP CONSTRAINT payments_amount_minor_check`)
 	exec(`ALTER TABLE payments ADD CONSTRAINT payments_amount_minor_check CHECK(amount_minor>0 OR (is_test AND amount_minor=0))`)

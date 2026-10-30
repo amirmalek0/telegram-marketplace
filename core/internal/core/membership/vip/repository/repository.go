@@ -48,7 +48,7 @@ var _ Repository = (*postgresRepository)(nil)
 
 func (r *postgresRepository) Create(ctx context.Context, p *model.Plan) error {
 	err := r.db.QueryRow(ctx, queryCreatePlan,
-		p.Title, p.StarsPrice, p.Duration, p.Tier, p.Status, p.CreatedAt,
+		p.Title, p.StarsPrice, p.Duration, p.Tier, p.Status, p.CreatedAt, p.TomanPrice,
 	).Scan(&p.ID)
 	if err != nil {
 		return fmt.Errorf("vip.repository.Create: %w", err)
@@ -58,7 +58,7 @@ func (r *postgresRepository) Create(ctx context.Context, p *model.Plan) error {
 
 func (r *postgresRepository) Update(ctx context.Context, p *model.Plan) error {
 	_, err := r.db.Exec(ctx, queryUpdatePlan,
-		p.Title, p.StarsPrice, p.Duration, p.Tier, p.Status, p.ID,
+		p.Title, p.StarsPrice, p.Duration, p.Tier, p.Status, p.ID, p.TomanPrice,
 	)
 	if err != nil {
 		return fmt.Errorf("vip.repository.Update: %w", err)

@@ -62,7 +62,9 @@ func TestCouponCheckoutPostgres(t *testing.T) {
 		id := pgx.Identifier{table}.Sanitize()
 		exec("CREATE TABLE " + id + " (LIKE public." + id + " INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES)")
 	}
+	setupMethodTestSchema(t, ctx, db)
 	exec(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS coupon_code TEXT NOT NULL DEFAULT ''`)
+	exec(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS currency TEXT NOT NULL DEFAULT 'XTR'`)
 	exec(`CREATE TABLE payment_refunds(charge_id TEXT PRIMARY KEY,checkout_reference TEXT NOT NULL,telegram_id BIGINT NOT NULL,completed_at TIMESTAMPTZ)`)
 	exec(`ALTER TABLE users ADD COLUMN IF NOT EXISTS photo_url TEXT NOT NULL DEFAULT ''`)
 	exec(`ALTER TABLE coupons ADD COLUMN IF NOT EXISTS user_ids JSONB NOT NULL DEFAULT '[]'::jsonb`)

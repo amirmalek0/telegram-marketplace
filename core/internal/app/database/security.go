@@ -14,5 +14,5 @@ var securityMigrations = []string{
 	`CREATE INDEX IF NOT EXISTS idx_admin_sessions_expiry ON admin_sessions(expires_at)`,
 	`ALTER TABLE payments ADD COLUMN IF NOT EXISTS precheckout_accepted_at TIMESTAMPTZ`,
 	`ALTER TABLE payments DROP CONSTRAINT IF EXISTS payments_amount_minor_check`,
-	`ALTER TABLE payments ADD CONSTRAINT payments_amount_minor_check CHECK (amount_minor>0 OR (is_test AND amount_minor=0))`,
+	`ALTER TABLE payments ADD CONSTRAINT payments_amount_minor_check CHECK (amount_minor>0 OR (amount_minor=0 AND (is_test OR (method='card_to_card' AND currency='IRR' AND COALESCE(checkout_data->>'coupon_code','')<>''))))`,
 }

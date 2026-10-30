@@ -12,39 +12,47 @@ import (
 
 // CreateRequest represents the payload for creating a new product.
 type CreateRequest struct {
-	Title         string   `json:"title" binding:"required"`
-	Description   string   `json:"description"`
-	StarsPrice    int64    `json:"stars_price" binding:"required,gt=0"`
-	CategoryID    string   `json:"category_id" binding:"required"`
-	DeliveryType  string   `json:"delivery_type" binding:"required,oneof=file message inventory bundle api"`
-	FileID        *string  `json:"file_id"`
-	FileIDs       []string `json:"file_ids"`
-	MessageID     *string  `json:"message_id"`
-	InventoryID   *string  `json:"inventory_id"`
-	BundleID      *string  `json:"bundle_id"`
-	APIID         *string  `json:"api_id"`
-	DemoURL       *string  `json:"demo_url"`
-	VIPOnly       bool     `json:"vip_only"`
-	Repurchasable *bool    `json:"repurchasable"`
+	TomanPrice             int64    `json:"toman_price" binding:"min=0,max=1000000000"`
+	PaymentMethodsOverride bool     `json:"payment_methods_override"`
+	StarsEnabled           *bool    `json:"stars_enabled"`
+	CardToCardEnabled      bool     `json:"card_to_card_enabled"`
+	Title                  string   `json:"title" binding:"required"`
+	Description            string   `json:"description"`
+	StarsPrice             int64    `json:"stars_price" binding:"required,gt=0"`
+	CategoryID             string   `json:"category_id" binding:"required"`
+	DeliveryType           string   `json:"delivery_type" binding:"required,oneof=file message inventory bundle api"`
+	FileID                 *string  `json:"file_id"`
+	FileIDs                []string `json:"file_ids"`
+	MessageID              *string  `json:"message_id"`
+	InventoryID            *string  `json:"inventory_id"`
+	BundleID               *string  `json:"bundle_id"`
+	APIID                  *string  `json:"api_id"`
+	DemoURL                *string  `json:"demo_url"`
+	VIPOnly                bool     `json:"vip_only"`
+	Repurchasable          *bool    `json:"repurchasable"`
 }
 
 // UpdateRequest represents the payload for updating a product.
 type UpdateRequest struct {
-	Title         *string  `json:"title"`
-	Description   *string  `json:"description"`
-	StarsPrice    *int64   `json:"stars_price" binding:"omitempty,gt=0"`
-	CategoryID    *string  `json:"category_id"`
-	DeliveryType  *string  `json:"delivery_type" binding:"omitempty,oneof=file message inventory bundle api"`
-	FileID        *string  `json:"file_id"`
-	FileIDs       []string `json:"file_ids"`
-	MessageID     *string  `json:"message_id"`
-	InventoryID   *string  `json:"inventory_id"`
-	BundleID      *string  `json:"bundle_id"`
-	APIID         *string  `json:"api_id"`
-	DemoURL       *string  `json:"demo_url"`
-	VIPOnly       *bool    `json:"vip_only"`
-	Repurchasable *bool    `json:"repurchasable"`
-	Status        *string  `json:"status" binding:"omitempty,oneof=active draft archived"`
+	TomanPrice             *int64   `json:"toman_price" binding:"omitempty,min=0,max=1000000000"`
+	PaymentMethodsOverride *bool    `json:"payment_methods_override"`
+	StarsEnabled           *bool    `json:"stars_enabled"`
+	CardToCardEnabled      *bool    `json:"card_to_card_enabled"`
+	Title                  *string  `json:"title"`
+	Description            *string  `json:"description"`
+	StarsPrice             *int64   `json:"stars_price" binding:"omitempty,gt=0"`
+	CategoryID             *string  `json:"category_id"`
+	DeliveryType           *string  `json:"delivery_type" binding:"omitempty,oneof=file message inventory bundle api"`
+	FileID                 *string  `json:"file_id"`
+	FileIDs                []string `json:"file_ids"`
+	MessageID              *string  `json:"message_id"`
+	InventoryID            *string  `json:"inventory_id"`
+	BundleID               *string  `json:"bundle_id"`
+	APIID                  *string  `json:"api_id"`
+	DemoURL                *string  `json:"demo_url"`
+	VIPOnly                *bool    `json:"vip_only"`
+	Repurchasable          *bool    `json:"repurchasable"`
+	Status                 *string  `json:"status" binding:"omitempty,oneof=active draft archived"`
 }
 
 // --- Response DTOs ---
@@ -54,25 +62,29 @@ type PaginatedResponse = pagination.Response[Response]
 
 // Response represents a product in API responses.
 type Response struct {
-	ID            string             `json:"id"`
-	Title         string             `json:"title"`
-	Description   string             `json:"description"`
-	StarsPrice    int64              `json:"stars_price"`
-	CategoryID    string             `json:"category_id"`
-	ImageURL      string             `json:"image_url"`
-	DeliveryType  model.DeliveryType `json:"delivery_type"`
-	FileID        *string            `json:"file_id,omitempty"`
-	FileIDs       []string           `json:"file_ids,omitempty"`
-	MessageID     *string            `json:"message_id,omitempty"`
-	InventoryID   *string            `json:"inventory_id,omitempty"`
-	BundleID      *string            `json:"bundle_id,omitempty"`
-	APIID         *string            `json:"api_id,omitempty"`
-	DemoURL       *string            `json:"demo_url,omitempty"`
-	VIPOnly       bool               `json:"vip_only"`
-	Repurchasable bool               `json:"repurchasable"`
-	ViewsCount    int                `json:"views_count"`
-	Status        string             `json:"status"`
-	CreatedAt     time.Time          `json:"created_at"`
+	TomanPrice             int64              `json:"toman_price"`
+	PaymentMethodsOverride bool               `json:"payment_methods_override"`
+	StarsEnabled           bool               `json:"stars_enabled"`
+	CardToCardEnabled      bool               `json:"card_to_card_enabled"`
+	ID                     string             `json:"id"`
+	Title                  string             `json:"title"`
+	Description            string             `json:"description"`
+	StarsPrice             int64              `json:"stars_price"`
+	CategoryID             string             `json:"category_id"`
+	ImageURL               string             `json:"image_url"`
+	DeliveryType           model.DeliveryType `json:"delivery_type"`
+	FileID                 *string            `json:"file_id,omitempty"`
+	FileIDs                []string           `json:"file_ids,omitempty"`
+	MessageID              *string            `json:"message_id,omitempty"`
+	InventoryID            *string            `json:"inventory_id,omitempty"`
+	BundleID               *string            `json:"bundle_id,omitempty"`
+	APIID                  *string            `json:"api_id,omitempty"`
+	DemoURL                *string            `json:"demo_url,omitempty"`
+	VIPOnly                bool               `json:"vip_only"`
+	Repurchasable          bool               `json:"repurchasable"`
+	ViewsCount             int                `json:"views_count"`
+	Status                 string             `json:"status"`
+	CreatedAt              time.Time          `json:"created_at"`
 }
 
 // toResponse converts a model.Product to a Response and resolves its image key
@@ -89,7 +101,8 @@ func (s *Service) toResponse(ctx context.Context, p *model.Product, includeDeliv
 	}
 
 	response := Response{
-		ID:            p.ID,
+		ID:         p.ID,
+		TomanPrice: p.TomanPrice, PaymentMethodsOverride: p.PaymentMethodsOverride, StarsEnabled: p.StarsEnabled, CardToCardEnabled: p.CardToCardEnabled,
 		Title:         p.Title,
 		Description:   p.Description,
 		StarsPrice:    p.StarsPrice,

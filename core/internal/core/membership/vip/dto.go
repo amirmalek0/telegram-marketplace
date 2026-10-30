@@ -10,6 +10,7 @@ import (
 
 // CreatePlanRequest represents the payload for creating a new VIP plan.
 type CreatePlanRequest struct {
+	TomanPrice int64  `json:"toman_price" binding:"min=0,max=1000000000"`
 	Title      string `json:"title" binding:"required,min=1,max=100"`
 	StarsPrice int64  `json:"stars_price" binding:"required,gt=0"`
 	Duration   int    `json:"duration" binding:"required,gt=0"`
@@ -19,6 +20,7 @@ type CreatePlanRequest struct {
 
 // UpdatePlanRequest represents the payload for partially updating a VIP plan.
 type UpdatePlanRequest struct {
+	TomanPrice *int64  `json:"toman_price" binding:"omitempty,min=0,max=1000000000"`
 	Title      *string `json:"title" binding:"omitempty,min=1,max=100"`
 	StarsPrice *int64  `json:"stars_price" binding:"omitempty,gt=0"`
 	Duration   *int    `json:"duration" binding:"omitempty,gt=0"`
@@ -30,6 +32,7 @@ type UpdatePlanRequest struct {
 
 // PlanResponse represents a VIP plan in API responses.
 type PlanResponse struct {
+	TomanPrice int64     `json:"toman_price"`
 	ID         string    `json:"id"`
 	Title      string    `json:"title"`
 	StarsPrice int64     `json:"stars_price"`
@@ -48,6 +51,7 @@ type PaginatedPlanResponse = pagination.Response[PlanResponse]
 func toPlanResponse(p *model.Plan) PlanResponse {
 	return PlanResponse{
 		ID:         p.ID,
+		TomanPrice: p.TomanPrice,
 		Title:      p.Title,
 		StarsPrice: p.StarsPrice,
 		Duration:   p.Duration,

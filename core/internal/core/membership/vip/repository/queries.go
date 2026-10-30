@@ -5,19 +5,19 @@ package repository
 const (
 	// queryCreatePlan inserts a new VIP plan and returns the generated UUID.
 	queryCreatePlan = `
-		INSERT INTO vip_plans (title, stars_price, duration, tier, status, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO vip_plans (title, stars_price, duration, tier, status, created_at, toman_price)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING id`
 
 	// queryGetPlanByID retrieves a VIP plan by its UUID.
 	queryGetPlanByID = `
-		SELECT id, title, stars_price, duration, tier, status, created_at
+		SELECT toman_price, id, title, stars_price, duration, tier, status, created_at
 		FROM vip_plans
 		WHERE id = $1`
 
 	// queryListPlans retrieves a paginated list of VIP plans ordered by created_at.
 	queryListPlans = `
-		SELECT id, title, stars_price, duration, tier, status, created_at
+		SELECT toman_price, id, title, stars_price, duration, tier, status, created_at
 		FROM vip_plans
 		ORDER BY tier ASC, duration ASC, created_at ASC
 		LIMIT $1 OFFSET $2`
@@ -32,7 +32,7 @@ const (
 			stars_price = $2,
 			duration = $3,
 			tier = $4,
-			status = $5
+			status = $5, toman_price=$7
 		WHERE id = $6`
 
 	// queryDeletePlan removes a VIP plan by ID.

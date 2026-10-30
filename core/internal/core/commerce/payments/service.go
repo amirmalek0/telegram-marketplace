@@ -25,13 +25,28 @@ type APIExecutor interface {
 // Service owns provider-neutral payment persistence. Telegram Stars invoice
 // creation and update processing will be added on top of this layer.
 type Service struct {
-	referrals   interface{ Check(context.Context, int64) }
-	repo        paymentsrepo.Repository
-	invoices    InvoiceCreator
-	apiExecutor APIExecutor
-	fileStorage storage.Storage
+	botText interface {
+		Text(context.Context, string, map[string]string) string
+	}
+	notificationSender ReviewNotificationSender
+	referrals          interface{ Check(context.Context, int64) }
+	repo               paymentsrepo.Repository
+	invoices           InvoiceCreator
+	apiExecutor        APIExecutor
+	fileStorage        storage.Storage
+	receiptStorage     storage.Storage
 }
 
+func (s *Service) SetBotMessageText(text interface {
+	Text(context.Context, string, map[string]string) string
+}) { s.botText = text }
+func (s *Service) invoiceText(ctx context.Context, purpose, title, description string, amount int64) (string, string) {
+	if s.botText == nil {
+		return title, description
+	}
+	vars := map[string]string{"title": title, "description": description, "amount": fmt.Sprint(amount)}
+	return s.botText.Text(ctx, "invoice."+purpose+".title", vars), s.botText.Text(ctx, "invoice."+purpose+".description", vars)
+}
 func (s *Service) SetReferralRewards(rewards interface{ Check(context.Context, int64) }) {
 	s.referrals = rewards
 }
@@ -88,7 +103,7 @@ func (s *Service) ListStars(ctx context.Context, params pagination.Params) (*Adm
 	for _, payment := range payments {
 		data = append(data, AdminResponse{Response: toResponse(&payment.Payment), User: payment.User,
 			TargetTitle: payment.TargetTitle, ProductID: payment.ProductID, Quantity: payment.Quantity,
-			CouponCode: payment.CouponCode, DiscountStars: payment.DiscountStars})
+			CouponCode: payment.CouponCode, DiscountStars: payment.DiscountStars, DiscountToman: payment.DiscountToman})
 	}
 
 	return &AdminPaginatedResponse{Response: pagination.NewResponse(data, summary.Total, params), Summary: summary}, nil

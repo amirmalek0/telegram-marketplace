@@ -279,6 +279,11 @@ func (r *postgresRepository) CreateProductStarsCheckout(ctx context.Context, tel
 	if err != nil {
 		return nil, err
 	}
+	if price.Payable > 0 {
+		if err := requirePaymentMethod(ctx, tx, productID, "telegram_stars"); err != nil {
+			return nil, err
+		}
+	}
 	method := "telegram_stars"
 	if price.Payable == 0 {
 		method = "coupon"
@@ -421,6 +426,9 @@ func (r *postgresRepository) CreateStandalonePayment(ctx context.Context, input 
 	var balance int64
 	if err := tx.QueryRow(ctx, queryLockCheckoutUser, input.TelegramID).Scan(&userID, &banned, &balance, &activeVIP); err != nil || banned {
 		return nil, ErrCheckoutUnavailable
+	}
+	if err := requirePaymentMethod(ctx, tx, "", "telegram_stars"); err != nil {
+		return nil, err
 	}
 	var paymentID string
 	if err := tx.QueryRow(ctx, queryCreateStandalonePayment, userID, input.Purpose, input.TargetID, input.Stars, input.CheckoutReference, input.CheckoutData, input.TestMode).Scan(&paymentID); err != nil {

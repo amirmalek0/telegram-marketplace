@@ -57,6 +57,7 @@ func (s *Service) CreateStarsInvoice(ctx context.Context, telegramID int64, prod
 		description = "خرید " + record.ProductTitle
 	}
 	description = truncateRunes(description, 255)
+	title, description = s.invoiceText(ctx, "product", title, description, record.Stars)
 	invoiceURL, err := s.invoices.CreateInvoiceLink(ctx, title, description, record.CheckoutReference, paymentsmodel.StarsCurrency, record.Stars)
 	if err != nil {
 		_ = s.repo.FailCheckout(ctx, record.OrderID, record.PaymentID, "telegram invoice creation failed", false)

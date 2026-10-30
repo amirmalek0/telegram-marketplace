@@ -119,6 +119,7 @@ func (s *Service) createStandaloneStarsInvoice(ctx context.Context, telegramID i
 	}
 	title = truncateRunes(strings.TrimSpace(title), 32)
 	description = truncateRunes(description, 255)
+	title, description = s.invoiceText(ctx, purpose, title, description, stars)
 	invoiceURL, err := s.invoices.CreateInvoiceLink(ctx, title, description, record.CheckoutReference, paymentsmodel.StarsCurrency, stars)
 	if err != nil {
 		_ = s.repo.FailStandalonePayment(ctx, record.PaymentID, "telegram invoice creation failed")

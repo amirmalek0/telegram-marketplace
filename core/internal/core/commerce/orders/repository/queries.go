@@ -6,7 +6,8 @@ const (
 	queryOrdersSummary = `SELECT COUNT(*),
       COUNT(*) FILTER (WHERE o.status='pending'),
       COUNT(*) FILTER (WHERE o.status='paid'),
-      COALESCE(SUM(COALESCE(p.amount_minor,GREATEST(0,o.amount-o.discount_amount)::bigint)) FILTER (WHERE o.status='paid'),0)::bigint
+      COALESCE(SUM(COALESCE(p.amount_minor,GREATEST(0,o.amount-o.discount_amount)::bigint)) FILTER (WHERE o.status='paid' AND o.currency='XTR'),0)::bigint,
+      COALESCE(SUM((o.amount-o.discount_amount)/10) FILTER(WHERE o.status='paid' AND o.currency='IRR'),0)::bigint
     FROM orders o
     LEFT JOIN LATERAL (
       SELECT amount_minor FROM payments WHERE order_id=o.id AND method IN ('telegram_stars','wallet')
@@ -16,7 +17,9 @@ const (
 	// queryGetOrderByID retrieves an order by its UUID.
 	queryGetOrderByID = `
 		SELECT o.id, o.user_id, o.product_id, o.quantity, o.coupon_id, o.coupon_code, o.amount,
-		       o.discount_amount, o.payment_method, COALESCE(p.amount_minor, GREATEST(0, o.amount-o.discount_amount)::bigint) AS stars,
+		       o.discount_amount, o.payment_method, o.currency,
+               COALESCE(p.amount_minor, GREATEST(0, o.amount-o.discount_amount)::bigint) AS amount_minor,
+               CASE WHEN o.currency='XTR' THEN COALESCE(p.amount_minor, GREATEST(0, o.amount-o.discount_amount)::bigint) ELSE 0 END AS stars,
 		       COALESCE(d.product_title, product.title, 'محصول دیجیتال') AS product_title,
 		       COALESCE(d.status, '') AS delivery_status,
 		       COALESCE(items.ready_count, 0)::int AS delivery_item_count,
@@ -38,7 +41,9 @@ const (
 	// queryListOrdersByUserID retrieves a paginated list of orders for a user.
 	queryListOrdersByUserID = `
 		SELECT o.id, o.user_id, o.product_id, o.quantity, o.coupon_id, o.coupon_code, o.amount,
-		       o.discount_amount, o.payment_method, COALESCE(p.amount_minor, GREATEST(0, o.amount-o.discount_amount)::bigint) AS stars,
+		       o.discount_amount, o.payment_method, o.currency,
+               COALESCE(p.amount_minor, GREATEST(0, o.amount-o.discount_amount)::bigint) AS amount_minor,
+               CASE WHEN o.currency='XTR' THEN COALESCE(p.amount_minor, GREATEST(0, o.amount-o.discount_amount)::bigint) ELSE 0 END AS stars,
 		       COALESCE(d.product_title, product.title, 'محصول دیجیتال') AS product_title,
 		       COALESCE(d.status, '') AS delivery_status,
 		       COALESCE(items.ready_count, 0)::int AS delivery_item_count,
@@ -65,7 +70,9 @@ const (
 	// queryListAllOrders retrieves a paginated list of all orders (admin).
 	queryListAllOrders = `
 		SELECT o.id, o.user_id, o.product_id, o.quantity, o.coupon_id, o.coupon_code, o.amount,
-		       o.discount_amount, o.payment_method, COALESCE(p.amount_minor, GREATEST(0, o.amount-o.discount_amount)::bigint) AS stars,
+		       o.discount_amount, o.payment_method, o.currency,
+               COALESCE(p.amount_minor, GREATEST(0, o.amount-o.discount_amount)::bigint) AS amount_minor,
+               CASE WHEN o.currency='XTR' THEN COALESCE(p.amount_minor, GREATEST(0, o.amount-o.discount_amount)::bigint) ELSE 0 END AS stars,
 		       COALESCE(d.product_title, product.title, 'محصول دیجیتال') AS product_title,
 		       COALESCE(d.status, '') AS delivery_status,
 		       COALESCE(items.ready_count, 0)::int AS delivery_item_count,

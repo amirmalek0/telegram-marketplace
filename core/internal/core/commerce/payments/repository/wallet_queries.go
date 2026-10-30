@@ -1,12 +1,12 @@
 package repository
 
-const walletTopupPackColumns = `id, title, stars, status, sort_order, created_at, updated_at`
+const walletTopupPackColumns = `id, title, stars, status, sort_order, created_at, updated_at, toman_price`
 
 const (
 	queryListWalletTopupPacks       = `SELECT ` + walletTopupPackColumns + ` FROM wallet_topup_packs ORDER BY sort_order ASC, stars ASC, created_at ASC`
 	queryListActiveWalletTopupPacks = `SELECT ` + walletTopupPackColumns + ` FROM wallet_topup_packs WHERE status = 'active' ORDER BY sort_order ASC, stars ASC, created_at ASC`
-	queryCreateWalletTopupPack      = `INSERT INTO wallet_topup_packs (title, stars, status, sort_order) VALUES ($1,$2,$3,$4) RETURNING ` + walletTopupPackColumns
-	queryUpdateWalletTopupPack      = `UPDATE wallet_topup_packs SET title=$2, stars=$3, status=$4, sort_order=$5, updated_at=now() WHERE id=$1 RETURNING ` + walletTopupPackColumns
+	queryCreateWalletTopupPack      = `INSERT INTO wallet_topup_packs (title, stars, status, sort_order, toman_price) VALUES ($1,$2,$3,$4,$5) RETURNING ` + walletTopupPackColumns
+	queryUpdateWalletTopupPack      = `UPDATE wallet_topup_packs SET title=$2, stars=$3, status=$4, sort_order=$5, toman_price=$6, updated_at=now() WHERE id=$1 RETURNING ` + walletTopupPackColumns
 	queryDeleteWalletTopupPack      = `DELETE FROM wallet_topup_packs WHERE id=$1`
 	queryGetActiveWalletTopupPack   = `SELECT ` + walletTopupPackColumns + ` FROM wallet_topup_packs WHERE id=$1 AND status='active'`
 	queryListAdminWallets           = `

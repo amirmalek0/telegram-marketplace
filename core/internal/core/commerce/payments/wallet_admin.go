@@ -15,7 +15,7 @@ var ErrWalletWouldBeNegative = paymentsrepo.ErrWalletWouldBeNegative
 var ErrVIPQuoteFailed = errors.New("VIP quote calculation failed")
 
 func topupPackResponse(item paymentsrepo.WalletTopupPack) WalletTopupPackResponse {
-	return WalletTopupPackResponse{ID: item.ID, Title: item.Title, Stars: item.Stars, Status: item.Status, SortOrder: item.SortOrder, CreatedAt: item.CreatedAt, UpdatedAt: item.UpdatedAt}
+	return WalletTopupPackResponse{TomanPrice: item.TomanPrice, ID: item.ID, Title: item.Title, Stars: item.Stars, Status: item.Status, SortOrder: item.SortOrder, CreatedAt: item.CreatedAt, UpdatedAt: item.UpdatedAt}
 }
 func walletTransactionResponse(item paymentsrepo.WalletTransaction) WalletTransactionResponse {
 	return WalletTransactionResponse{ID: item.ID, Type: item.Type, Amount: item.Amount, BalanceBefore: item.BalanceBefore, BalanceAfter: item.BalanceAfter, Description: item.Description, CreatedAt: item.CreatedAt}
@@ -43,7 +43,7 @@ func (s *Service) ListWalletTopupPacks(ctx context.Context, activeOnly bool) ([]
 	return result, nil
 }
 func (s *Service) CreateWalletTopupPack(ctx context.Context, req CreateWalletTopupPackRequest) (*WalletTopupPackResponse, error) {
-	item, err := s.repo.CreateWalletTopupPack(ctx, paymentsrepo.WalletTopupPack{Title: req.Title, Stars: req.Stars, Status: req.Status, SortOrder: req.SortOrder})
+	item, err := s.repo.CreateWalletTopupPack(ctx, paymentsrepo.WalletTopupPack{TomanPrice: req.TomanPrice, Title: req.Title, Stars: req.Stars, Status: req.Status, SortOrder: req.SortOrder})
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (s *Service) CreateWalletTopupPack(ctx context.Context, req CreateWalletTop
 	return &response, nil
 }
 func (s *Service) UpdateWalletTopupPack(ctx context.Context, id string, req UpdateWalletTopupPackRequest) (*WalletTopupPackResponse, error) {
-	item, err := s.repo.UpdateWalletTopupPack(ctx, paymentsrepo.WalletTopupPack{ID: id, Title: req.Title, Stars: req.Stars, Status: req.Status, SortOrder: req.SortOrder})
+	item, err := s.repo.UpdateWalletTopupPack(ctx, paymentsrepo.WalletTopupPack{TomanPrice: req.TomanPrice, ID: id, Title: req.Title, Stars: req.Stars, Status: req.Status, SortOrder: req.SortOrder})
 	if err != nil {
 		return nil, err
 	}

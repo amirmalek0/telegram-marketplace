@@ -96,20 +96,22 @@ type WalletResponse struct {
 }
 
 type WalletTopupPackResponse struct {
-	ID        string    `json:"id"`
-	Title     string    `json:"title"`
-	Stars     int64     `json:"stars"`
-	Status    string    `json:"status"`
-	SortOrder int       `json:"sort_order"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	TomanPrice int64     `json:"toman_price"`
+	ID         string    `json:"id"`
+	Title      string    `json:"title"`
+	Stars      int64     `json:"stars"`
+	Status     string    `json:"status"`
+	SortOrder  int       `json:"sort_order"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
 }
 
 type CreateWalletTopupPackRequest struct {
-	Title     string `json:"title" binding:"required,min=1,max=100"`
-	Stars     int64  `json:"stars" binding:"required,min=1,max=100000"`
-	Status    string `json:"status" binding:"required,oneof=active inactive"`
-	SortOrder int    `json:"sort_order"`
+	TomanPrice int64  `json:"toman_price" binding:"min=0,max=1000000000"`
+	Title      string `json:"title" binding:"required,min=1,max=100"`
+	Stars      int64  `json:"stars" binding:"required,min=1,max=100000"`
+	Status     string `json:"status" binding:"required,oneof=active inactive"`
+	SortOrder  int    `json:"sort_order"`
 }
 
 type UpdateWalletTopupPackRequest = CreateWalletTopupPackRequest
@@ -197,6 +199,7 @@ type AdminResponse struct {
 	Quantity      int          `json:"quantity"`
 	CouponCode    string       `json:"coupon_code,omitempty"`
 	DiscountStars int64        `json:"discount_stars"`
+	DiscountToman int64        `json:"discount_toman"`
 }
 
 type AdminPaginatedResponse struct {

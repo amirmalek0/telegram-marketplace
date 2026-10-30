@@ -104,6 +104,6 @@ func (r *postgresRepository) CountAll(ctx context.Context) (int64, error) {
 
 func (r *postgresRepository) Summary(ctx context.Context) (model.Summary, error) {
 	var summary model.Summary
-	err := r.db.QueryRow(ctx, queryOrdersSummary).Scan(&summary.Total, &summary.Pending, &summary.Paid, &summary.PaidStars)
+	err := r.db.QueryRow(ctx, queryOrdersSummary).Scan(&summary.Total, &summary.Pending, &summary.Paid, &summary.PaidStars, &summary.PaidToman)
 	return summary, err
 }

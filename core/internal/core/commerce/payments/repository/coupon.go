@@ -20,7 +20,11 @@ type productPrice struct {
 // The coupon row remains locked until the order is committed. Pending orders
 // reserve uses; only a successfully settled order increments usage_count.
 func priceProduct(ctx context.Context, tx pgx.Tx, product *CheckoutProduct, code, userID string) (productPrice, error) {
-	price := productPrice{Original: product.StarsPrice, Payable: product.StarsPrice}
+	return priceProductCurrency(ctx, tx, product, code, userID, "stars", product.StarsPrice)
+}
+
+func priceProductCurrency(ctx context.Context, tx pgx.Tx, product *CheckoutProduct, code, userID, currency string, amount int64) (productPrice, error) {
+	price := productPrice{Original: amount, Payable: amount}
 	code = couponmodel.NormalizeCode(code)
 	if code == "" {
 		return price, nil
@@ -46,11 +50,11 @@ func priceProduct(ctx context.Context, tx pgx.Tx, product *CheckoutProduct, code
 	if coupon.UsageLimit > 0 && int64(coupon.UsageCount)+pending >= int64(coupon.UsageLimit) {
 		return price, &CouponError{"ظرفیت این کد تخفیف تمام شده یا در انتظار پرداخت است"}
 	}
-	discount, err := coupon.DiscountStars(product.StarsPrice)
+	discount, err := coupon.DiscountFor(currency, amount)
 	if err != nil {
 		return price, &CouponError{err.Error()}
 	}
 	price.CouponID, price.Code = &coupon.ID, coupon.Code
-	price.Discount, price.Payable = discount, product.StarsPrice-discount
+	price.Discount, price.Payable = discount, amount-discount
 	return price, nil
 }

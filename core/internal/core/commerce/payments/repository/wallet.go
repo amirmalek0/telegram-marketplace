@@ -11,13 +11,14 @@ import (
 )
 
 type WalletTopupPack struct {
-	ID        string
-	Title     string
-	Stars     int64
-	Status    string
-	SortOrder int
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	TomanPrice int64
+	ID         string
+	Title      string
+	Stars      int64
+	Status     string
+	SortOrder  int
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
 }
 type WalletTransaction struct {
 	ID            string
@@ -63,7 +64,7 @@ type VIPQuoteData struct {
 
 func scanPack(row pgx.Row) (*WalletTopupPack, error) {
 	var item WalletTopupPack
-	err := row.Scan(&item.ID, &item.Title, &item.Stars, &item.Status, &item.SortOrder, &item.CreatedAt, &item.UpdatedAt)
+	err := row.Scan(&item.ID, &item.Title, &item.Stars, &item.Status, &item.SortOrder, &item.CreatedAt, &item.UpdatedAt, &item.TomanPrice)
 	return &item, err
 }
 
@@ -89,14 +90,14 @@ func (r *postgresRepository) ListWalletTopupPacks(ctx context.Context, activeOnl
 }
 
 func (r *postgresRepository) CreateWalletTopupPack(ctx context.Context, pack WalletTopupPack) (*WalletTopupPack, error) {
-	item, err := scanPack(r.db.QueryRow(ctx, queryCreateWalletTopupPack, strings.TrimSpace(pack.Title), pack.Stars, pack.Status, pack.SortOrder))
+	item, err := scanPack(r.db.QueryRow(ctx, queryCreateWalletTopupPack, strings.TrimSpace(pack.Title), pack.Stars, pack.Status, pack.SortOrder, pack.TomanPrice))
 	if err != nil {
 		return nil, fmt.Errorf("payments.repository.CreateWalletTopupPack: %w", err)
 	}
 	return item, nil
 }
 func (r *postgresRepository) UpdateWalletTopupPack(ctx context.Context, pack WalletTopupPack) (*WalletTopupPack, error) {
-	item, err := scanPack(r.db.QueryRow(ctx, queryUpdateWalletTopupPack, pack.ID, strings.TrimSpace(pack.Title), pack.Stars, pack.Status, pack.SortOrder))
+	item, err := scanPack(r.db.QueryRow(ctx, queryUpdateWalletTopupPack, pack.ID, strings.TrimSpace(pack.Title), pack.Stars, pack.Status, pack.SortOrder, pack.TomanPrice))
 	if err != nil {
 		return nil, fmt.Errorf("payments.repository.UpdateWalletTopupPack: %w", err)
 	}

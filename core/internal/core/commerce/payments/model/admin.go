@@ -17,6 +17,7 @@ type AdminPayment struct {
 	ProductID     *string `db:"product_id"`
 	Quantity      int     `db:"quantity"`
 	CouponCode    string  `db:"coupon_code"`
+	DiscountToman int64   `db:"discount_toman"`
 	DiscountStars int64   `db:"discount_stars"`
 }
 

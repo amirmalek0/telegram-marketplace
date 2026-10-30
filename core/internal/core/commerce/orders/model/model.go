@@ -21,6 +21,7 @@ type Summary struct {
 	Pending   int64 `json:"pending"`
 	Paid      int64 `json:"paid"`
 	PaidStars int64 `json:"paid_stars"`
+	PaidToman int64 `json:"paid_toman"`
 }
 
 // OrderStatus represents the status of an order.
@@ -68,6 +69,8 @@ type Order struct {
 	DiscountAmount float64     `db:"discount_amount" json:"discount_amount"`
 	PaymentMethod  *string     `db:"payment_method" json:"payment_method,omitempty"`
 	Stars          int64       `db:"stars" json:"stars"`
+	Currency       string      `db:"currency" json:"currency"`
+	AmountMinor    int64       `db:"amount_minor" json:"amount_minor"`
 	ProductTitle   string      `db:"product_title" json:"product_title"`
 	DeliveryStatus string      `db:"delivery_status" json:"delivery_status"`
 	DeliveryItems  int         `db:"delivery_item_count" json:"delivery_item_count"`

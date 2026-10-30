@@ -13,7 +13,8 @@ const queryListAdminPayments = `SELECT
  ELSE 'پرداخت' END AS target_title,
  CASE WHEN p.purpose='product' THEN COALESCE(o.product_id,p.target_id) END AS product_id,
  COALESCE(o.quantity,0)::int AS quantity,COALESCE(o.coupon_code,'') AS coupon_code,
- COALESCE(o.discount_amount,0)::bigint AS discount_stars
+ CASE WHEN p.currency='IRR' THEN 0 ELSE COALESCE(o.discount_amount,0)::bigint END AS discount_stars,
+ CASE WHEN p.currency='IRR' THEN COALESCE(o.discount_amount,0)::bigint/10 ELSE 0 END AS discount_toman
  FROM payments p
  LEFT JOIN users u ON u.id=p.user_id
  LEFT JOIN orders o ON o.id=p.order_id

@@ -100,7 +100,12 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (*model.Product
 		return nil, err
 	}
 
+	starsEnabled := true
+	if req.StarsEnabled != nil {
+		starsEnabled = *req.StarsEnabled
+	}
 	product := &model.Product{
+		TomanPrice: req.TomanPrice, PaymentMethodsOverride: req.PaymentMethodsOverride, StarsEnabled: starsEnabled, CardToCardEnabled: req.CardToCardEnabled,
 		Title:         req.Title,
 		Description:   req.Description,
 		StarsPrice:    req.StarsPrice,
@@ -202,6 +207,18 @@ func (s *Service) Update(ctx context.Context, id string, req UpdateRequest) (*mo
 	}
 	if req.Description != nil {
 		product.Description = *req.Description
+	}
+	if req.TomanPrice != nil {
+		product.TomanPrice = *req.TomanPrice
+	}
+	if req.PaymentMethodsOverride != nil {
+		product.PaymentMethodsOverride = *req.PaymentMethodsOverride
+	}
+	if req.StarsEnabled != nil {
+		product.StarsEnabled = *req.StarsEnabled
+	}
+	if req.CardToCardEnabled != nil {
+		product.CardToCardEnabled = *req.CardToCardEnabled
 	}
 	if req.StarsPrice != nil {
 		product.StarsPrice = *req.StarsPrice

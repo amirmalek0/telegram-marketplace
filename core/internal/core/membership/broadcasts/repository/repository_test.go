@@ -54,6 +54,8 @@ func TestBroadcastInboxPostgres(t *testing.T) {
 		id := pgx.Identifier{table}.Sanitize()
 		exec("CREATE TABLE " + id + " (LIKE public." + id + " INCLUDING DEFAULTS INCLUDING CONSTRAINTS INCLUDING INDEXES)")
 	}
+	exec(`ALTER TABLE broadcasts ADD COLUMN IF NOT EXISTS recipient_user_id UUID`)
+	exec(`ALTER TABLE broadcasts ADD COLUMN IF NOT EXISTS action_path TEXT NOT NULL DEFAULT ''`)
 	exec("INSERT INTO users(id,telegram_id) VALUES($1,42),($2,43)", uuid.NewString(), uuid.NewString())
 	repo := NewPostgresRepository(db)
 	adminID, requestID := uuid.NewString(), uuid.NewString()

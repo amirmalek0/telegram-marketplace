@@ -31,6 +31,7 @@ func (s PlanStatus) IsValid() bool {
 
 // Plan represents a VIP plan in the system.
 type Plan struct {
+	TomanPrice int64      `db:"toman_price" json:"toman_price"`
 	ID         string     `db:"id"         json:"id"`
 	Title      string     `db:"title"      json:"title"`
 	StarsPrice int64      `db:"stars_price" json:"stars_price"`

@@ -16,6 +16,7 @@ func (s *Service) PrepareRefund(ctx context.Context, reference, charge string, t
 // Delivery rows are durable jobs. Atomic claims and expiring processing leases
 // allow this worker to run in multiple API instances without losing work.
 func (s *Service) Run(ctx context.Context) {
+	go s.runReviewNotifications(ctx)
 	ticker := time.NewTicker(15 * time.Second)
 	defer ticker.Stop()
 	for {
@@ -28,6 +29,11 @@ func (s *Service) Run(ctx context.Context) {
 	}
 }
 func (s *Service) recoverDeliveries(ctx context.Context) {
+	if manualRepo, err := s.manualRepository(); err == nil {
+		if err = manualRepo.ExpireManualPayments(ctx); err != nil {
+			log.Printf("manual checkout cleanup: %v", err)
+		}
+	}
 	if err := s.repo.ReleaseExpiredReservations(ctx); err != nil {
 		log.Printf("checkout cleanup: %v", err)
 	}

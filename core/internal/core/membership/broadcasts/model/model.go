@@ -12,6 +12,7 @@ type Broadcast struct {
 }
 
 type Notification struct {
+	ActionPath  string     `db:"action_path" json:"action_path,omitempty"`
 	ID          string     `db:"id" json:"id"`
 	Title       string     `db:"title" json:"title"`
 	Message     string     `db:"message" json:"message"`

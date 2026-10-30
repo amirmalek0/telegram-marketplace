@@ -10,11 +10,16 @@ import (
 
 // Response represents an order in API responses.
 type Response struct {
+	OriginalToman     int64      `json:"original_toman"`
+	DiscountToman     int64      `json:"discount_toman"`
 	ID                string     `json:"id"`
 	UserID            string     `json:"user_id"`
 	ProductID         string     `json:"product_id"`
 	Quantity          int        `json:"quantity"`
 	Stars             int64      `json:"stars"`
+	Currency          string     `json:"currency"`
+	AmountMinor       int64      `json:"amount_minor"`
+	Toman             int64      `json:"toman"`
 	OriginalStars     int64      `json:"original_stars"`
 	DiscountStars     int64      `json:"discount_stars"`
 	CouponCode        string     `json:"coupon_code,omitempty"`
@@ -42,14 +47,27 @@ type AdminPaginatedResponse struct {
 
 // toResponse converts a model.Order to a Response.
 func toResponse(o *model.Order) Response {
+	currency := o.Currency
+	if currency == "" {
+		currency = "XTR"
+	}
+	var originalToman, discountToman int64
+	original, discount, toman := int64(o.Amount), int64(o.DiscountAmount), int64(0)
+	if currency == "IRR" {
+		originalToman, discountToman = original/10, discount/10
+		original, discount = 0, 0
+		toman = o.AmountMinor / 10
+	}
 	return Response{
-		ID:                o.ID,
-		UserID:            o.UserID,
-		ProductID:         o.ProductID,
-		Quantity:          o.Quantity,
-		Stars:             o.Stars,
-		OriginalStars:     int64(o.Amount),
-		DiscountStars:     int64(o.DiscountAmount),
+		OriginalToman: originalToman, DiscountToman: discountToman,
+		ID:        o.ID,
+		UserID:    o.UserID,
+		ProductID: o.ProductID,
+		Quantity:  o.Quantity,
+		Stars:     o.Stars,
+		Currency:  currency, AmountMinor: o.AmountMinor, Toman: toman,
+		OriginalStars:     original,
+		DiscountStars:     discount,
 		CouponCode:        o.CouponCode,
 		ProductTitle:      o.ProductTitle,
 		DeliveryStatus:    o.DeliveryStatus,

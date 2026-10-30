@@ -6,10 +6,12 @@ import "time"
 type PaymentMethod string
 
 const (
-	// MethodTelegramStars is currently the only enabled payment method.
+	// MethodTelegramStars is the Telegram-managed invoice method.
 	MethodTelegramStars PaymentMethod = "telegram_stars"
 	// MethodWallet spends the user's internal Stars-denominated balance.
 	MethodWallet PaymentMethod = "wallet"
+	// MethodCardToCard requires explicit administrative review before settlement.
+	MethodCardToCard PaymentMethod = "card_to_card"
 	// StarsCurrency is Telegram's currency code for Stars payments.
 	StarsCurrency = "XTR"
 )
@@ -18,7 +20,7 @@ const (
 // are currently exposed. Add a method here only after its processor and API
 // adapter are fully implemented.
 func EnabledMethods() []PaymentMethod {
-	return []PaymentMethod{MethodTelegramStars, MethodWallet}
+	return []PaymentMethod{MethodTelegramStars, MethodWallet, MethodCardToCard}
 }
 
 func (m PaymentMethod) IsEnabled() bool {

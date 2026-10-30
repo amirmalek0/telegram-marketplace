@@ -37,6 +37,7 @@ func (s *Service) Create(ctx context.Context, req CreatePlanRequest) (*model.Pla
 	plan := &model.Plan{
 		Title:      req.Title,
 		StarsPrice: req.StarsPrice,
+		TomanPrice: req.TomanPrice,
 		Duration:   req.Duration,
 		Tier:       req.Tier,
 		Status:     status,
@@ -95,6 +96,9 @@ func (s *Service) Update(ctx context.Context, id string, req UpdatePlanRequest) 
 
 	if req.Title != nil {
 		plan.Title = *req.Title
+	}
+	if req.TomanPrice != nil {
+		plan.TomanPrice = *req.TomanPrice
 	}
 	if req.StarsPrice != nil {
 		plan.StarsPrice = *req.StarsPrice
