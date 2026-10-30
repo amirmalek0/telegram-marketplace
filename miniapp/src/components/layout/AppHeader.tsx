@@ -1,8 +1,17 @@
+import { type CSSProperties } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import type { Category, Product } from '../../features/catalog/types'
 import { ProductSearch } from '../catalog/ProductSearch'
 import { Icon, type IconName } from '../ui/Icon'
 import { ThemeToggle } from './ThemeToggle'
+import { HeaderLogo } from './HeaderLogo'
+import { useContent } from '../../features/content/ContentProvider'
+import { visibleHeaderActions } from '../../features/content/headerSettings'
+import '../../styles/header-themes.css'
+import '../../styles/chrome-layout-presets.css'
+import { headerLayoutPresets } from '../../features/content/chromeLayoutPresets'
+import { resolveChrome } from '../../features/content/chromePositioning'
+import '../../styles/chrome-positioning.css'
 import { NotificationBell } from '../notifications/NotificationBell'
 
 interface AppHeaderProps {
@@ -11,6 +20,8 @@ interface AppHeaderProps {
   preview?: boolean
   scenario?: string
   unread?: number
+  loading?: boolean
+  error?: boolean
 }
 
 function resolveHeader(pathname: string, categories: Category[], products: Product[]) {
@@ -44,29 +55,37 @@ function resolveHeader(pathname: string, categories: Category[], products: Produ
   }
 }
 
-export function AppHeader({ categories, products, preview = false, scenario = 'content', unread = 0 }: AppHeaderProps) {
+export function AppHeader({ categories, products, preview = false, scenario = 'content', unread = 0, loading = false, error = false }: AppHeaderProps) {
+  const { headerSettings: settings } = useContent()
   const navigate = useNavigate()
   const location = useLocation()
   const simulateMissing = preview && scenario === 'not-found'
   const header = resolveHeader(location.pathname, simulateMissing ? [] : categories, simulateMissing ? [] : products)
+  const independent = settings.positioning !== undefined || settings.geometry !== undefined
+  const appearance = resolveChrome('header', settings)
+  const preset = independent ? undefined : headerLayoutPresets[settings.theme]
+  const actions = visibleHeaderActions(settings, header.isDetail, header.showSearch)
 
   return (
-    <header className="top-region">
-      <div className={`header-navigation ${header.isDetail ? 'is-detail' : ''}`}>
-        <div className="header-title-group">
-          <span className="header-title-icon"><Icon name={header.icon} size={22} /></span>
-          <div className="header-title-copy"><h1>{header.title}</h1></div>
+    <header className="top-region chrome-host" data-header-theme={independent ? appearance.theme : settings.theme} data-header-layout={independent ? 'preset' : settings.layout} data-position={independent ? appearance.positioning : undefined} data-geometry={independent ? appearance.geometry : undefined} data-header-sticky={settings.sticky} data-structure={preset?.family} data-variant={preset?.variant} data-no-tools={!header.isDetail && actions.length === 0} style={{'--header-tool-count': Math.max(1,actions.length)} as CSSProperties}>
+      <div className={`header-navigation chrome-header ${header.isDetail ? 'is-detail' : ''}`}>
+        <div className="header-title-group chrome-brand">
+          {settings.icons.title && <HeaderLogo src={settings.logo} icon={settings.iconNames?.title ?? header.icon} />}
+          <div className="header-title-copy chrome-brand-copy"><h1 className="chrome-title">{header.title}</h1></div>
         </div>
-        <div className="header-actions">
+        <div className="header-actions chrome-tools">
           {header.isDetail ? (
             <button className="header-back" onClick={() => header.isTicketDetail ? navigate('/tickets') : location.pathname === '/notifications' ? navigate('/') : navigate(-1)} aria-label="بازگشت">
-              <span>بازگشت</span><Icon name="back" size={18} />
+              <span>بازگشت</span><Icon name={settings.iconNames?.back ?? 'back'} size={18} />
             </button>
           ) : (
             <>
-              <ThemeToggle />
-              <NotificationBell unread={preview ? 1 : unread} />
-              {header.showSearch && <ProductSearch products={products} />}
+              {actions.map(action => {
+                const control = action === 'theme' ? <ThemeToggle lightIcon={settings.iconNames?.themeLight} darkIcon={settings.iconNames?.themeDark} caption={independent || !!preset} />
+                  : action === 'notifications' ? <NotificationBell unread={preview ? 1 : unread} icon={settings.iconNames?.notifications} caption={independent || !!preset} />
+                  : <ProductSearch products={products} loading={loading} error={error} icon={settings.iconNames?.search} caption={independent || !!preset} />
+                return independent || preset ? <div className="chrome-tool" key={action}>{control}</div> : <span className="legacy-header-tool" key={action}>{control}</span>
+              })}
             </>
           )}
         </div>

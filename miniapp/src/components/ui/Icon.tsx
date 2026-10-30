@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { catalogIconHref, type CatalogIconName } from '../../features/content/iconCatalog'
 
 export type IconName =
   | 'bell'
@@ -62,7 +63,7 @@ const iconPaths: Record<IconName, ReactNode> = {
 }
 
 interface IconProps {
-  name: IconName
+  name: IconName | CatalogIconName
   size?: number
 }
 
@@ -80,7 +81,7 @@ export function Icon({ name, size = 22 }: IconProps) {
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      {iconPaths[name]}
+      {name.startsWith('lucide:') ? <use href={catalogIconHref(name)} /> : iconPaths[name as IconName]}
     </svg>
   )
 }

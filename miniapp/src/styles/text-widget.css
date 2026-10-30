@@ -1,0 +1,4 @@
+.text-widget-boundary { min-width: 0; max-width: 100%; contain: layout paint; isolation: isolate; }
+.text-widget-boundary.is-editable { cursor: text; outline: 1px dashed var(--accent); outline-offset: 3px; border-radius: 4px; }
+.text-widget-boundary.is-editable:focus-visible { outline-width: 2px; }
+.image-widget-boundary.is-editable { cursor:pointer; }

@@ -28,7 +28,7 @@ export interface SectionEnvironment {
 // stays together. Hidden sources never mount or issue their data requests.
 export function SectionSources({ source, environment: env, render }: { source: SectionSource; environment: SectionEnvironment; render: SectionRenderer }) {
   const common = { preview: env.preview, scenario: env.scenario }
-  const user = { initDataRaw: env.auth.initDataRaw }
+  const user = { initDataRaw: env.preview ? null : env.auth.initDataRaw }
   switch (source) {
     case 'catalog': return <ShopPage {...env.catalog} {...common} sectionRenderer={render} />
     case 'account': return <ProfilePage {...user} {...common} telegramUser={env.auth.user} view={env.page === 'wallet' || env.page === 'vip' ? env.page : 'profile'} sectionRenderer={render} />

@@ -55,7 +55,7 @@ export function editorOrders(products: Product[]): Order[] {
   return [
     {
       id: 'preview-order-paid', product_id: first?.id || 'preview-product-1', quantity: 1,
-      stars: first?.stars_price || 85, product_title: first?.title || 'محصول دیجیتال نمونه',
+      stars: 0, currency: 'IRR', amount_minor: 1500000, toman: 150000, product_title: first?.title || 'محصول دیجیتال نمونه',
       delivery_status: 'delivered', delivery_item_count: 1, status: 'paid', paid_at: ago(2),
       created_at: ago(2), updated_at: ago(2),
     },
@@ -98,7 +98,13 @@ export function editorDeliveries(products: Product[]): Delivery[] {
       order_id: 'preview-order-paid', product_id: first?.id || 'preview-product-1',
       product_title: first?.title || 'محصول دیجیتال نمونه', status: 'delivered',
       created_at: ago(2), delivered_at: ago(2),
-      items: [{ kind: 'file', label: 'فایل اصلی محصول', file_name: 'product.zip', mime_type: 'application/zip', size: 8_400_000 }],
+      items: [
+        { kind: 'file', label: 'فایل اصلی محصول', file_name: 'product.zip', download_url: '#preview-download', mime_type: 'application/zip', size: 8_400_000 },
+        { kind: 'file', label: 'راهنمای محصول', file_name: 'guide.pdf', download_url: '#preview-download', mime_type: 'application/pdf', size: 1000 },
+        { kind: 'inventory', label: 'موجودی خریداری‌شده', content: 'PREVIEW-ACCOUNT — اطلاعات نمونه، قابل استفاده نیست.' },
+        { kind: 'message', label: 'پیام محصول', content: 'محتوای پیام خریداری‌شده در این قسمت نمایش داده می‌شود.' },
+        { kind: 'api', label: 'نتیجه سرویس', content: 'نمونه پاسخ سرویس — بدون فراخوانی واقعی' },
+      ],
     },
     {
       order_id: 'preview-order-processing', product_id: second?.id || 'preview-product-2',

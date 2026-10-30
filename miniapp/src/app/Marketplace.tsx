@@ -10,6 +10,8 @@ import { useTelegramAuth, type UseTelegramAuthResult } from '../hooks/useTelegra
 import { usePhoneAccess } from '../features/auth/usePhoneAccess'
 import { PhoneVerificationGate } from '../components/feedback/PhoneVerificationGate'
 import { useContent } from '../features/content/ContentProvider'
+import { navigationFootprint } from '../features/content/navigationFootprint'
+import { ManualPaymentPreview } from '../components/editor/ManualPaymentPreview'
 import { PageComposer } from '../components/editor/PageComposer'
 import { pageForPath, pageIds, type PageId } from '../features/content/pageLayouts'
 
@@ -38,7 +40,7 @@ function MarketplaceContent({ auth }: { auth: UseTelegramAuthResult }) {
   const navigate = useNavigate()
   const notificationSectionVisible = content.layoutForPage(pageForPath(location.pathname)).sections.some(section => section.type === 'notifications.feed' && section.visible)
   const notifications = useNotifications(auth.initDataRaw, notificationSectionVisible, content.editorMode)
-  const catalog = useCatalog(auth.user, auth.initDataRaw, content.adminToken)
+  const catalog = useCatalog(content.editorMode ? null : auth.user, content.editorMode ? null : auth.initDataRaw, content.adminToken)
   useEffect(() => {
     if (!content.editorMode) return
     const host = window.opener && !window.opener.closed ? window.opener : window.parent
@@ -65,15 +67,16 @@ function MarketplaceContent({ auth }: { auth: UseTelegramAuthResult }) {
   if (content.editorMode && content.editorScenario.startsWith('phone-')) return <PhoneVerificationGate key={content.editorScenario} loading={content.editorScenario === 'phone-loading'} error={content.editorScenario === 'phone-error' ? 'بررسی دسترسی ممکن نشد. اتصال خود را بررسی و دوباره تلاش کنید.' : null} preview={content.editorScenario} onRefresh={() => {}} />
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" style={{paddingBottom:`calc(${navigationFootprint(content.navigationSettings)}px + env(safe-area-inset-bottom))`}}>
       <ScrollToTop />
-      <AppHeader categories={catalog.categories} products={catalog.products} preview={content.editorMode} scenario={content.editorScenario} unread={notifications.unread} />
+      <AppHeader categories={catalog.categories} products={catalog.products} loading={catalog.loading} error={!!catalog.error} preview={content.editorMode} scenario={content.editorScenario} unread={notifications.unread} />
       <main className="app-content">
         <Routes>
           {routes.map(route => <Route key={route.path} path={route.path} element={<PageComposer key={location.pathname} environment={{ catalog, auth, notifications, page: route.page, preview: content.editorMode, scenario: content.editorScenario }} />} />)}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
+      {content.editorMode && <ManualPaymentPreview key={location.pathname + content.editorScenario} scenario={content.editorScenario} />}
       <BottomNavigation />
     </div>
   )

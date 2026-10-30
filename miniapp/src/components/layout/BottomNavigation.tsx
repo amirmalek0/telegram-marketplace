@@ -1,16 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { Icon, type IconName } from '../ui/Icon'
-
-const navItems: { path: string; label: string; icon: IconName }[] = [
-  { path: '/', label: 'فروشگاه', icon: 'shop' },
-  { path: '/wallet', label: 'کیف پول', icon: 'wallet' },
-  { path: '/vip', label: 'VIP', icon: 'crown' },
-  { path: '/tickets', label: 'تیکت‌ها', icon: 'tickets' },
-  { path: '/profile', label: 'پروفایل', icon: 'profile' },
-]
+import { Icon } from '../ui/Icon'
+import { useContent } from '../../features/content/ContentProvider'
+import { navigationRoutes } from '../../features/content/navigationSettings'
+import '../../styles/navigation-themes.css'
+import '../../styles/chrome-layout-presets.css'
+import { navigationLayoutPresets } from '../../features/content/chromeLayoutPresets'
+import { resolveChrome } from '../../features/content/chromePositioning'
+import '../../styles/chrome-positioning.css'
 
 export function BottomNavigation() {
+  const { navigationSettings: settings } = useContent()
   const location = useLocation()
   const [compact, setCompact] = useState(false)
   const shopActive = location.pathname === '/'
@@ -18,10 +18,12 @@ export function BottomNavigation() {
     || location.pathname.startsWith('/categories/')
 
   useEffect(() => {
+    if (!settings.autoCompact) { setCompact(false); return }
     setCompact(false)
-  }, [location.pathname])
+  }, [location.pathname, settings.autoCompact])
 
   useEffect(() => {
+    if (!settings.autoCompact) return
     let lastScrollY = Math.max(window.scrollY, 0)
     let animationFrame = 0
 
@@ -52,19 +54,32 @@ export function BottomNavigation() {
       window.removeEventListener('scroll', updateNavigation)
       if (animationFrame) window.cancelAnimationFrame(animationFrame)
     }
-  }, [])
+  }, [settings.autoCompact])
+
+  const items = settings.items.filter(item => item.visible)
+  const independent = settings.positioning !== undefined || settings.geometry !== undefined
+  const appearance = resolveChrome('navigation', settings)
+  const preset = independent ? undefined : navigationLayoutPresets[settings.theme]
+  const style: Record<string,string|number> = { '--nav-count': items.length, '--nav-height': settings.height+'px', '--nav-radius': settings.borderRadius+'px', '--nav-item-radius': settings.itemRadius+'px', '--nav-label-size': settings.labelSize+'px' }
+  for (const mode of ['light','dark'] as const) for (const [key,value] of Object.entries(settings.colors[mode])) if (value) style['--nav-'+mode+'-'+key] = value
+  style['--nav-grid-columns'] = Math.min(3,items.length)
+  style['--nav-rows'] = Math.ceil(items.length / 3)
 
   return (
-    <nav className={`bottom-nav ${compact ? 'is-compact' : ''}`} aria-label="ناوبری اصلی">
-      {navItems.map((item) => (
+    <nav className={`bottom-nav chrome-nav ${compact || !settings.labels ? 'is-compact' : ''}`} data-nav-theme={independent ? appearance.theme : settings.theme} data-position={independent ? appearance.positioning : undefined} data-geometry={independent ? appearance.geometry : undefined} data-structure={preset?.family} data-variant={preset?.variant} data-many={items.length > 3} data-crowded={items.length === 6} style={style as CSSProperties} aria-label="ناوبری اصلی">
+      {items.map((item,index) => (
         <NavLink
-          key={item.path}
-          to={item.path}
-          end={item.path === '/'}
-          className={({ isActive }) => `nav-item ${(item.path === '/' ? shopActive : isActive) ? 'active' : ''}`}
+          key={item.page}
+          data-group-start={items.length > 1 && index === Math.ceil(items.length / 2)}
+          data-group-end={items.length > 1 && index === Math.ceil(items.length / 2)-1}
+          to={navigationRoutes[item.page]}
+          end={item.page === 'shop'}
+          aria-label={item.label}
+          style={{ ...(item.color ? { '--nav-item-color': item.color } : {}), ...(item.activeColor ? { '--nav-item-active-color': item.activeColor } : {}) } as CSSProperties}
+          className={({ isActive }) => `nav-item ${(item.page === 'shop' ? shopActive : isActive) ? 'active' : ''}`}
         >
-          <span className="nav-icon"><Icon name={item.icon} size={21} /></span>
-          <span>{item.label}</span>
+          <span className="nav-icon"><Icon name={item.icon} size={settings.iconSize} /></span>
+          <span data-nav-label>{item.label}</span>
         </NavLink>
       ))}
     </nav>

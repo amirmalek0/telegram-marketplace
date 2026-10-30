@@ -17,6 +17,7 @@ export class ApiClient {
   }
 
   private responseError(error: { error?: string; code?: string }, status: number): Error {
+    if (this.bearerToken && status === 401) window.dispatchEvent(new Event('miniapp-editor-auth-required'))
     if (this.initDataRaw && !this.bearerToken && (error.code === 'PHONE_VERIFICATION_REQUIRED' || error.code === 'PHONE_VERIFICATION_UNAVAILABLE')) {
       window.dispatchEvent(new CustomEvent(PHONE_ACCESS_EVENT, { detail: error.code }))
     }
@@ -76,6 +77,17 @@ export class ApiClient {
       throw this.responseError(error, response.status)
     }
 
+    return response.status === 204 ? undefined as T : response.json()
+  }
+
+  async upload<T>(path: string, body: FormData): Promise<T> {
+    const headers = new Headers(this.getHeaders())
+    headers.delete('Content-Type')
+    const response = await fetch(`${API_BASE_URL}${path}`, { method: 'POST', headers, body })
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ error: 'بارگذاری ناموفق بود' }))
+      throw this.responseError(error, response.status)
+    }
     return response.json()
   }
 

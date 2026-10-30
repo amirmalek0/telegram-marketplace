@@ -1,3 +1,5 @@
+import { manualScenarios, methodScenarios, manualHistoryScenarios } from './manualPreview'
+
 export interface EditorScenarioOption {
   value: string
   label: string
@@ -28,8 +30,11 @@ const category: EditorScenarioOption[] = [
 
 const product: EditorScenarioOption[] = [
   { value: 'content', label: 'محصول — حالت عادی' },
+  ...methodScenarios, ...manualScenarios('product'),
   { value: 'coupon-empty', label: 'محصول — ورود کد تخفیف' },
   { value: 'coupon-applied', label: 'محصول — کد اعمال‌شده' },
+  { value: 'coupon-both', label: 'محصول — یک کد برای هر دو قیمت' },
+  { value: 'coupon-toman', label: 'محصول — کد مخصوص قیمت تومان' },
   { value: 'coupon-free', label: 'محصول — تخفیف کامل' },
   { value: 'coupon-error', label: 'محصول — کد نامعتبر' },
   { value: 'coupon-checking', label: 'محصول — بررسی کد تخفیف' },
@@ -39,6 +44,8 @@ const product: EditorScenarioOption[] = [
   { value: 'payment-test', label: 'محصول — پرداخت آزمایشی' },
   { value: 'success', label: 'محصول — پیام موفقیت' },
   { value: 'purchase-error', label: 'محصول — خطای پرداخت' },
+  { value: 'payment-cancelled', label: 'محصول — پرداخت لغوشده' },
+  { value: 'payment-pending', label: 'محصول — نتیجه پرداخت در انتظار' },
   { value: 'access-error', label: 'محصول — خطای دسترسی' },
   { value: 'loading', label: 'محصول — در حال بارگذاری' },
   { value: 'not-found', label: 'محصول — پیدا نشد' },
@@ -97,6 +104,7 @@ const profile: EditorScenarioOption[] = [
   { value: 'success', label: 'پروفایل — پیام موفقیت' },
   { value: 'payment-failed', label: 'پروفایل — پرداخت ناموفق' },
   { value: 'payment-cancelled', label: 'پروفایل — پرداخت لغوشده' },
+  { value: 'payment-pending', label: 'پروفایل — نتیجه پرداخت در انتظار' },
   { value: 'error-message', label: 'پروفایل — پیام خطا' },
   { value: 'loading', label: 'پروفایل — در حال بارگذاری' },
   { value: 'unavailable', label: 'پروفایل — در دسترس نیست' },
@@ -106,19 +114,22 @@ export function editorScenariosForPath(pathname: string): EditorScenarioOption[]
   if (pathname === '/notifications') return [
     { value: 'content', label: 'اعلان‌ها — خوانده‌شده و جدید' },
     { value: 'empty', label: 'اعلان‌ها — صندوق خالی' },
+    { value: 'payment-notification', label: 'اعلان‌ها — نتیجه کارت‌به‌کارت و پیوند جزئیات' },
+    { value: 'action-error', label: 'اعلان‌ها — خطای ثبت خواندن' },
+    { value: 'pages', label: 'اعلان‌ها — صفحه‌بندی' },
     { value: 'loading', label: 'اعلان‌ها — در حال دریافت' },
     { value: 'error', label: 'اعلان‌ها — خطای دریافت' },
   ]
   if (pathname === '/') return shop
   if (/^\/categories\//.test(pathname)) return category
   if (/^\/products\//.test(pathname)) return product
-  if (pathname === '/orders') return orders
+  if (pathname === '/orders') return [...orders, ...manualHistoryScenarios, ...manualScenarios('product')]
   if (pathname === '/downloads') return downloads
-  if (pathname === '/vip') return [...profile.filter(item => !item.value.startsWith('referral-')).map((item) => ({ ...item, label: item.label.replace('پروفایل', 'VIP') })), { value: 'no-plans', label: 'VIP — بدون پلن' }]
-  if (pathname === '/wallet') return [...profile.filter(item => !item.value.startsWith('referral-')).map((item) => ({ ...item, label: item.label.replace('پروفایل', 'کیف پول') })), { value: 'no-packs', label: 'کیف پول — بدون بسته شارژ' }]
+  if (pathname === '/vip') return [...profile.filter(item => !item.value.startsWith('referral-')).map((item) => ({ ...item, label: item.label.replace('پروفایل', 'VIP') })), { value: 'no-plans', label: 'VIP — بدون پلن' }, ...methodScenarios, ...manualScenarios('vip_plan')]
+  if (pathname === '/wallet') return [...profile.filter(item => !item.value.startsWith('referral-')).map((item) => ({ ...item, label: item.label.replace('پروفایل', 'کیف پول') })), { value: 'no-packs', label: 'کیف پول — بدون بسته شارژ' }, ...methodScenarios, ...manualScenarios('wallet_topup')]
   if (pathname === '/tickets/new') return newTicket
   if (/^\/tickets\/[^/]+/.test(pathname)) return ticketThread
   if (pathname === '/tickets') return tickets
-  if (pathname === '/profile') return profile
+  if (pathname === '/profile') return [...profile, ...manualHistoryScenarios, ...manualScenarios('product')]
   return [{ value: 'content', label: 'حالت پیش‌فرض' }]
 }

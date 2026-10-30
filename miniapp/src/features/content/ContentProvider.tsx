@@ -10,10 +10,21 @@ import { defaultShopSections, defaultShopArrangement, parseShopArrangement, pars
 import { defaultPageLayout, pageForPath, pageIds, pageLayoutPrefix, parsePageLayout, type PageId, type PageLayout } from './pageLayouts'
 import { defaultShopDesigns, parseShopDesigns, shopDesignsKey, type ShopDesigns } from './shopDesigns'
 
+import { defaultHeader, headerKey, parseHeaderSettings, type HeaderSettings } from './headerSettings'
+import { readGlobalWidgets, parseGlobalWidget, resolveGlobalWidgets, type GlobalWidgets } from './globalWidgets'
+import { widgetIdPattern } from './textWidgets'
+import { defaultNavigation, navigationKey, parseNavigationSettings, type NavigationSettings } from './navigationSettings'
+
 interface ContentResponse { data: Record<string, string> }
 interface ContentEntry { key: string; value: string }
 
+import { checkoutPresentationKey, defaultCheckoutPresentation, parseCheckoutPresentation, type CheckoutPresentation } from '../commerce/checkoutPresentation'
+
 interface ContentContextValue {
+  checkoutPresentation: CheckoutPresentation
+  navigationSettings: NavigationSettings
+  globalWidgets: GlobalWidgets
+  headerSettings: HeaderSettings
   layoutForPage: (page: PageId) => PageLayout
   shopDesigns: ShopDesigns
   shopSections: ShopSection[]
@@ -25,6 +36,10 @@ interface ContentContextValue {
 }
 
 const ContentContext = createContext<ContentContextValue>({
+  checkoutPresentation: defaultCheckoutPresentation,
+  navigationSettings: defaultNavigation,
+  globalWidgets: {},
+  headerSettings: defaultHeader,
   layoutForPage: defaultPageLayout,
   shopDesigns: defaultShopDesigns,
   shopSections: defaultShopSections,
@@ -68,6 +83,12 @@ export function ContentProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate()
   const editorMode = useMemo(() => new URLSearchParams(window.location.search).get('content-editor') === '1', [])
   const [overrides, setOverrides] = useState<Record<string, string>>({})
+  const [previewNavigation, setPreviewNavigation] = useState<NavigationSettings | null>(null)
+  const navigationSettings = useMemo(() => previewNavigation ?? parseNavigationSettings(overrides[navigationKey]) ?? defaultNavigation, [previewNavigation,overrides])
+  const [previewGlobals, setPreviewGlobals] = useState<GlobalWidgets | null>(null)
+  const globalWidgets = useMemo(() => previewGlobals ?? readGlobalWidgets(overrides), [previewGlobals, overrides])
+  const [previewHeader, setPreviewHeader] = useState<HeaderSettings | null>(null)
+  const headerSettings = useMemo(() => previewHeader ?? parseHeaderSettings(overrides[headerKey]) ?? defaultHeader, [previewHeader, overrides])
   const [previewLayouts, setPreviewLayouts] = useState<Partial<Record<PageId, PageLayout>>>({})
   const layoutForPage = useCallback((page: PageId): PageLayout => {
     const configured = previewLayouts[page] ?? parsePageLayout(overrides[pageLayoutPrefix + page], page)
@@ -89,7 +110,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
   const [draft, setDraft] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
-  const addedScenarioPaths = [...new Set(layoutForPage(pageForPath(location.pathname)).sections.filter(section => section.visible).map(section => {
+  const addedScenarioPaths = [...new Set(resolveGlobalWidgets(layoutForPage(pageForPath(location.pathname)), globalWidgets).map(entry => entry.item).filter(section => section.visible).map(section => {
     const group = section.type.split('.')[0]
     return group === 'catalog' ? '/' : group === 'account' ? '/profile' : ['wallet', 'vip', 'orders', 'downloads', 'tickets', 'notifications'].includes(group) ? '/' + group : location.pathname
   }))].sort().join('|')
@@ -97,12 +118,13 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     const options = [location.pathname, ...addedScenarioPaths.split('|')].flatMap(editorScenariosForPath)
     return options.filter((option, index) => options.findIndex(item => item.value === option.value) === index)
   }, [location.pathname, addedScenarioPaths])
+  const scenarioSignature = scenarioOptions.map(option => option.value).join('|')
   const [editorScenario, setEditorScenario] = useState(scenarioOptions[0].value)
   const rootRef = useRef<HTMLDivElement>(null)
   const editableTextsRef = useRef<EditableText[]>([])
   const renderedTextsRef = useRef(new WeakMap<Text, { key: ContentKey; value: string; parameters: string[] }>())
 
-  useEffect(() => { setEditorScenario(scenarioOptions[0].value) }, [location.pathname, scenarioOptions])
+  useEffect(() => { setEditorScenario(scenarioSignature.split('|')[0]) }, [location.pathname, scenarioSignature])
 
   const loadContent = useCallback(async () => {
     try {
@@ -113,7 +135,12 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  useEffect(() => { void loadContent() }, [loadContent])
+  useEffect(() => {
+    void loadContent()
+    const refresh = () => { if (document.visibilityState !== 'hidden') void loadContent() }
+    window.addEventListener('focus', refresh)
+    return () => window.removeEventListener('focus', refresh)
+  }, [loadContent])
 
   useEffect(() => {
     if (!editorMode) return
@@ -140,6 +167,22 @@ export function ContentProvider({ children }: { children: ReactNode }) {
         }
         setPreviewLayouts(current => JSON.stringify(current) === JSON.stringify(valid) ? current : valid)
       }
+      if (event.data?.type === 'miniapp-editor-header') {
+        const settings = parseHeaderSettings(event.data.settings)
+        if (settings) setPreviewHeader(settings)
+      }
+      if (event.data?.type === 'miniapp-editor-navigation') {
+        const settings = parseNavigationSettings(event.data.settings)
+        if (settings) setPreviewNavigation(settings)
+      }
+      if (event.data?.type === 'miniapp-editor-global-widgets' && event.data.widgets && typeof event.data.widgets === 'object') {
+        const valid: GlobalWidgets = {}
+        for (const [id, raw] of Object.entries(event.data.widgets).slice(0, 100)) {
+          const widget = parseGlobalWidget(raw)
+          if (widgetIdPattern.test(id) && widget) valid[id] = widget
+        }
+        setPreviewGlobals(current => JSON.stringify(current) === JSON.stringify(valid) ? current : valid)
+      }
       if (event.data?.type === 'miniapp-editor-palette') previewPalette(event.data.palette, event.data.mode)
       if (event.data?.type === 'miniapp-editor-shop-arrangement') {
         const sections = parseShopSections(event.data.arrangement ?? event.data.sections)
@@ -155,9 +198,11 @@ export function ContentProvider({ children }: { children: ReactNode }) {
         if (designs) setPreviewShopDesigns(designs)
       }
     }
+    const requestAuth = () => hostWindow.postMessage({ type: 'miniapp-editor-auth-required' }, trustedOrigin || '*')
+    window.addEventListener('miniapp-editor-auth-required', requestAuth)
     window.addEventListener('message', receiveToken)
     hostWindow.postMessage({ type: 'miniapp-editor-ready' }, trustedOrigin || '*')
-    return () => window.removeEventListener('message', receiveToken)
+    return () => { window.removeEventListener('message', receiveToken); window.removeEventListener('miniapp-editor-auth-required', requestAuth) }
   }, [editorMode, scenarioOptions, previewPalette, navigate])
 
   useEffect(() => {
@@ -197,7 +242,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
         const raw = node.nodeValue || ''
         const value = raw.trim()
         const parent = node.parentElement
-        if (!value || !parent || parent.closest('svg, script, style, textarea, option, [aria-hidden="true"], .content-editor-panel')) {
+        if (!value || !parent || parent.closest('svg, script, style, textarea, option, [aria-hidden="true"], .content-editor-panel, [data-content-static], [data-custom-widget], [data-nav-theme]')) {
           node = walker.nextNode() as Text | null
           continue
         }
@@ -220,6 +265,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
         node = walker.nextNode() as Text | null
       }
       for (const element of root.querySelectorAll<HTMLElement>('[placeholder],[aria-label],[title]')) {
+        if (element.closest('[data-nav-theme], [data-content-static]')) continue
         for (const attribute of ['placeholder', 'aria-label', 'title']) {
           const value = element.getAttribute(attribute)
           if (!value) continue
@@ -246,8 +292,15 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     const selectText = (event: MouseEvent) => {
       const clickedElement = event.target instanceof Element ? event.target : null
       if (!clickedElement || !rootRef.current?.contains(clickedElement)) return
+      const widget = clickedElement.closest<HTMLElement>('[data-custom-widget]')
+      if (widget) {
+        event.preventDefault()
+        event.stopPropagation()
+        editorHostWindow().postMessage({ type: 'miniapp-editor-widget-selected', id: widget.dataset.customWidget, page: pageForPath(location.pathname) }, editorOrigin() || '*')
+        return
+      }
       const placeholder = clickedElement.closest<HTMLInputElement | HTMLTextAreaElement>('input[data-content-key], textarea[data-content-key]')
-      const selectedKey = placeholder && !placeholder.value ? placeholder.dataset.contentKey : editableTextAtPoint(editableTextsRef.current, clickedElement, event.clientX, event.clientY)
+      const selectedKey = placeholder && !placeholder.value ? placeholder.dataset.contentKey : editableTextAtPoint(editableTextsRef.current, clickedElement.matches('input[type="file"]') ? clickedElement.closest('label') || clickedElement : clickedElement, event.clientX, event.clientY)
       if (!selectedKey) return
       // Navigation and controls must remain usable while previewing the real
       // Mini App. Their copy is still editable with Alt+Click or from the full
@@ -266,11 +319,20 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     // Keep click interception too so Alt+Click cannot navigate afterward.
     document.addEventListener('pointerdown', selectText, true)
     document.addEventListener('click', selectText, true)
+    const selectWidgetByKey = (event: KeyboardEvent) => {
+      if ((event.key === 'Enter' || event.key === ' ') && event.target instanceof Element && event.target.matches('[data-custom-widget]')) {
+        event.preventDefault()
+        const element = event.target as HTMLElement
+        editorHostWindow().postMessage({ type: 'miniapp-editor-widget-selected', id: element.dataset.customWidget, page: pageForPath(location.pathname) }, editorOrigin() || '*')
+      }
+    }
+    document.addEventListener('keydown', selectWidgetByKey)
     return () => {
       document.removeEventListener('pointerdown', selectText, true)
       document.removeEventListener('click', selectText, true)
+      document.removeEventListener('keydown', selectWidgetByKey)
     }
-  }, [editorMode, text])
+  }, [editorMode, text, location.pathname])
 
   const save = async () => {
     if (!activeKey || !adminToken || saving) return
@@ -312,7 +374,11 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const checkoutPresentation = useMemo(() => parseCheckoutPresentation(overrides[checkoutPresentationKey]), [overrides])
   const value = useMemo<ContentContextValue>(() => ({
+    checkoutPresentation,
+    navigationSettings,
+    headerSettings,
     layoutForPage,
     shopDesigns,
     shopSections,
@@ -321,7 +387,8 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     editorReady: !editorMode || Boolean(adminToken),
     editorScenario,
     text,
-  }), [adminToken, editorMode, editorScenario, text, shopSections, shopDesigns, layoutForPage])
+    globalWidgets,
+  }), [checkoutPresentation, adminToken, editorMode, editorScenario, text, shopSections, shopDesigns, layoutForPage, headerSettings, globalWidgets, navigationSettings])
 
   const visibleCatalog = useMemo(() => {
     const query = catalogQuery.trim().toLocaleLowerCase('fa')
@@ -339,7 +406,7 @@ export function ContentProvider({ children }: { children: ReactNode }) {
 
   return (
     <ContentContext.Provider value={value}>
-      <div ref={rootRef} className={editorMode ? 'content-editor-mode' : undefined}>{children}</div>
+      <div ref={rootRef} className={editorMode ? 'content-editor-mode' : undefined}>{children}<div id="miniapp-dialog-root" /></div>
       {editorMode && catalogOpen && (
         <div className="content-editor-backdrop content-catalog-backdrop" onMouseDown={() => setCatalogOpen(false)}>
           <section className="content-editor-panel content-catalog-panel" dir="rtl" onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => { if (event.key === 'Escape') setCatalogOpen(false) }}>

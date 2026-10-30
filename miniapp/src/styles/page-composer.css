@@ -1,4 +1,7 @@
 .composed-page { display: grid; gap: 24px; animation: none; }
+.global-widget-group { display:grid; gap:24px; min-width:0; }
+.widget-appearance-boundary { min-width:0; max-width:100%; }
+.widget-appearance-boundary.has-local-css { contain:layout paint; isolation:isolate; }
 .composed-page-shop { gap: 26px; padding-top: 16px; }
 .composed-page-profile { padding-top: 16px; }
 .composed-page-product { gap: 20px; padding-top: 16px; }
