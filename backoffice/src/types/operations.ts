@@ -29,6 +29,9 @@ export type UsersPaginatedResponse = PaginatedResponse<UserResponse>;
 
 export type DiscountType = 'static' | 'percentage';
 export interface CouponResponse {
+ currency_scope: 'stars' | 'toman' | 'both';
+ toman_discount_type: DiscountType;
+ toman_discount_value: number;
   id: string;
   code: string;
   discount_type: DiscountType;
@@ -43,6 +46,9 @@ export interface CouponResponse {
   updated_at: string;
 }
 export interface CreateCouponRequest {
+ currency_scope: 'stars' | 'toman' | 'both';
+ toman_discount_type: DiscountType;
+ toman_discount_value: number;
   code: string;
   discount_type: DiscountType;
   discount_value: number;
@@ -61,6 +67,9 @@ export type CouponsPaginatedResponse = PaginatedResponse<CouponResponse> & { sum
 
 export type OrderStatus = 'pending' | 'paid' | 'failed' | 'refunded' | 'cancelled';
 export interface OrderResponse {
+  currency?: string;
+  amount_minor?: number;
+  toman?: number;
   id: string;
   user_id: string;
   product_id: string;
@@ -68,6 +77,8 @@ export interface OrderResponse {
   stars: number;
   original_stars: number;
   discount_stars: number;
+  discount_toman: number;
+  original_toman?: number;
   coupon_code?: string;
   user?: Pick<UserResponse, 'id' | 'first_name' | 'last_name' | 'username' | 'telegram_id'> | null;
   product_title: string;
@@ -78,7 +89,7 @@ export interface OrderResponse {
   created_at: string;
   updated_at: string;
 }
-export interface OrdersSummary { total: number; pending: number; paid: number; paid_stars: number; }
+export interface OrdersSummary { total: number; pending: number; paid: number; paid_stars: number; paid_toman?: number; }
 export type OrdersPaginatedResponse = PaginatedResponse<OrderResponse> & { summary: OrdersSummary };
 
 export interface TelegramStarsPaymentResponse {
@@ -103,6 +114,8 @@ export interface TelegramStarsPaymentResponse {
   quantity: number;
   coupon_code?: string;
   discount_stars: number;
+  discount_toman: number;
+  original_toman?: number;
 }
 export interface PaymentsSummary { total: number; succeeded: number; pending: number; failed: number; refunded: number; test_total: number; paid_stars: number; }
 export type TelegramStarsPaymentsPaginatedResponse = PaginatedResponse<TelegramStarsPaymentResponse> & { summary: PaymentsSummary };
@@ -113,6 +126,7 @@ export interface PaymentConfigResponse {
 }
 
 export interface VipPlanResponse {
+  toman_price: number;
   id: string;
   title: string;
   stars_price: number;
@@ -122,6 +136,7 @@ export interface VipPlanResponse {
   created_at: string;
 }
 export interface CreateVipPlanRequest {
+  toman_price: number;
   title: string;
   stars_price: number;
   duration: number;
@@ -132,6 +147,7 @@ export type UpdateVipPlanRequest = Partial<CreateVipPlanRequest>;
 export type VipPlansPaginatedResponse = PaginatedResponse<VipPlanResponse>;
 
 export interface WalletTopupPackResponse {
+  toman_price: number;
   id: string;
   title: string;
   stars: number;

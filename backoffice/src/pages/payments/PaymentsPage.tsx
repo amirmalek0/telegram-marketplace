@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { ArrowLeft, CheckCheck, Clock3, CreditCard, Star } from 'lucide-react';
 import { paymentsApi } from '@/api';
 import type { PaymentsSummary, TelegramStarsPaymentResponse } from '@/types';
@@ -46,6 +47,7 @@ export default function PaymentsPage() {
     { key: 'actions', title: 'جزئیات', render: (_, row) => <Button size="sm" variant="ghost" onClick={() => setSelected(row)} aria-label={`جزئیات پرداخت ${row.id}`}>مشاهده <ArrowLeft size={14} /></Button> },
   ];
   return <div className="finance-page">
+    <Link to="/payments/manual" className="surface-card flex items-center gap-3 p-4"><CreditCard size={20} /><strong>کارت‌به‌کارت</strong><span className="text-xs">بررسی واریزها، کارت‌های مقصد و قیمت‌های تومانی</span><ArrowLeft size={17} /></Link>
     <CatalogHeader title="پرداخت‌ها" icon={CreditCard} total={total} loading={loading} actions={<Badge variant="amber"><Star size={13} fill="currentColor" />Telegram Stars</Badge>} />
     <FinanceSummary label="آمار همه پرداخت‌ها" loading={loading} items={[
       { label: 'کل تراکنش‌ها', value: summary?.total, icon: CreditCard, tone: 'blue' },

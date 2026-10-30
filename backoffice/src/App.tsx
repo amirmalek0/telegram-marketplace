@@ -19,13 +19,16 @@ import AdminsPage from '@/pages/admins/AdminsPage';
 import DashboardPage from '@/pages/dashboard/DashboardPage';
 import OrdersPage from '@/pages/orders/OrdersPage';
 import PaymentsPage from '@/pages/payments/PaymentsPage';
+import ManualPaymentsPage from '@/pages/payments/manual/ManualPaymentsPage';
 import CouponsPage from '@/pages/coupons/CouponsPage';
 import UsersPage from '@/pages/users/UsersPage';
 import VipPage from '@/pages/vip/VipPage';
+import CheckoutSettingsPage from '@/pages/payments/CheckoutSettingsPage';
 import TicketsPage from '@/pages/tickets/TicketsPage';
 import TicketDetailPage from '@/pages/tickets/TicketDetailPage';
 import UserTicketsPage from '@/pages/tickets/UserTicketsPage';
 import SettingsPage from '@/pages/settings/SettingsPage';
+import BotMessagesPage from '@/pages/bot-messages/BotMessagesPage';
 import MiniappContentPage from '@/pages/miniapp-content/MiniappContentPage';
 import WalletsPage from '@/pages/wallets/WalletsPage';
 import BroadcastsPage from '@/pages/broadcasts/BroadcastsPage';
@@ -81,16 +84,19 @@ function App() {
             <Route path="admins" element={<AdminsPage />} />
             <Route path="orders" element={<OrdersPage />} />
             <Route path="payments" element={<PaymentsPage />} />
+            <Route path="payments/manual" element={<ManualPaymentsPage />} />
             <Route path="coupons" element={<CouponsPage />} />
             <Route path="users" element={<UsersPage />} />
             <Route path="users/:userId/tickets" element={<UserTicketsPage />} />
             <Route path="vip" element={<VipPage />} />
+            <Route path="payments/checkout-settings" element={<CheckoutSettingsPage />} />
             <Route path="wallets" element={<WalletsPage />} />
             <Route path="messages" element={<MessagesPage />} />
             <Route path="tickets" element={<TicketsPage />} />
             <Route path="broadcasts" element={<BroadcastsPage />} />
             <Route path="tickets/:ticketId" element={<TicketDetailPage />} />
             <Route path="settings" element={<SettingsPage />} />
+            <Route path="bot-messages" element={<BotMessagesPage />} />
             <Route path="miniapp-content" element={<MiniappContentPage />} />
             {/* Catch-all */}
             <Route path="*" element={<Navigate to="/" replace />} />

@@ -7,13 +7,13 @@ import { Badge, Button, ConfirmationModal } from '@/components/ui';
 import type { Column } from '@/components/ui';
 import { CatalogHeader } from '@/components/catalog/CatalogHeader';
 import { CatalogTable } from '@/components/catalog/CatalogTable';
-import { StarsAmount } from '@/components/ui/StarsAmount';
+import { CatalogPrices } from '@/components/catalog/CatalogPrices';
 import { formatDate } from '@/utils/format';
 import { VipPlanModal } from './VipPlanModal';
 import '@/components/customers/customers.css';
 import '@/components/finance/finance.css';
 
-const initial: CreateVipPlanRequest = { title: '', stars_price: 0, duration: 30, tier: 1, status: 'active' };
+const initial: CreateVipPlanRequest = { toman_price: 0, title: '', stars_price: 0, duration: 30, tier: 1, status: 'active' };
 export default function VipPage() {
   const [rows, setRows] = useState<VipPlanResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,7 +33,7 @@ export default function VipPage() {
   }, [page]);
   useEffect(() => { void load(); return () => { request.current++; }; }, [load]);
   const begin = (row?: VipPlanResponse) => {
-    setEditing(row || null); setForm(row ? { title: row.title, stars_price: row.stars_price, duration: row.duration, tier: row.tier, status: row.status } : initial); setOpen(true);
+    setEditing(row || null); setForm(row ? { toman_price: row.toman_price ?? 0, title: row.title, stars_price: row.stars_price, duration: row.duration, tier: row.tier, status: row.status } : initial); setOpen(true);
   };
   const submit = async (event: FormEvent) => {
     event.preventDefault(); if (saving) return;
@@ -49,7 +49,7 @@ export default function VipPage() {
   };
   const columns: Column<VipPlanResponse>[] = [
     { key: 'title', title: 'اشتراک', render: (_, row) => <button type="button" className="customer-offer-title" onClick={() => begin(row)}><span className="customer-offer-icon"><Crown size={22} /></span><b>{row.title}</b></button> },
-    { key: 'stars_price', title: 'قیمت', render: value => <span className="finance-amount"><StarsAmount value={Number(value)} /></span> },
+    { key: 'stars_price', title: 'قیمت', render: (_, row) => <CatalogPrices stars={row.stars_price} toman={row.toman_price} /> },
     { key: 'duration', title: 'مدت اعتبار', render: value => <span className="inline-flex items-center gap-2 text-xs"><CalendarDays size={15} className="text-[rgb(var(--color-text-secondary))]" />{Number(value).toLocaleString('fa-IR')} روز</span> },
     { key: 'tier', title: 'سطح دسترسی', render: value => <Badge variant="purple">سطح {Number(value).toLocaleString('fa-IR')}</Badge> },
     { key: 'status', title: 'وضعیت', render: value => <Badge variant={value === 'active' ? 'success' : 'default'} dot>{value === 'active' ? 'فعال' : 'غیرفعال'}</Badge> },

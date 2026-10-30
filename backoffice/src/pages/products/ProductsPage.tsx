@@ -7,7 +7,7 @@ import { Badge, Button, ConfirmationModal } from '@/components/ui';
 import { CatalogHeader } from '@/components/catalog/CatalogHeader';
 import { CatalogIdentity } from '@/components/catalog/CatalogIdentity';
 import { CatalogTable } from '@/components/catalog/CatalogTable';
-import { StarsAmount } from '@/components/ui/StarsAmount';
+import { CatalogPrices } from '@/components/catalog/CatalogPrices';
 import type { Column } from '@/components/ui';
 import type { CategoryResponse } from '@/types/categories';
 import type { ProductResponse, ProductStatus } from '@/types/products';
@@ -54,7 +54,7 @@ export default function ProductsPage() {
 
   const columns: Column<ProductResponse>[] = [
     { key: 'title', title: 'محصول', render: (_, row) => <CatalogIdentity title={row.title} subtitle={categoryNames.get(row.category_id) || 'دسته‌بندی نامشخص'} image={row.image_url} icon={Package} onClick={() => navigate(`/products/${row.id}/edit`)} /> },
-    { key: 'stars_price', title: 'قیمت', render: (_, row) => <StarsAmount value={row.stars_price} className="catalog-price" /> },
+    { key: 'stars_price', title: 'قیمت', render: (_, row) => <CatalogPrices stars={row.stars_price} toman={row.toman_price} /> },
     { key: 'delivery_type', title: 'تحویل', render: (_, row) => <Badge variant="purple">{deliveryTypeLabels[row.delivery_type]}</Badge> },
     { key: 'vip_only', title: 'قوانین خرید', render: (_, row) => <div className="catalog-badges"><Badge variant={row.vip_only ? 'amber' : 'default'}>{row.vip_only ? 'VIP' : 'عمومی'}</Badge><Badge variant="default">{row.repurchasable ? 'خرید مجدد' : 'یک‌بار خرید'}</Badge></div> },
     { key: 'status', title: 'وضعیت', render: (_, row) => <Badge variant={statusVariants[row.status]} dot>{statusLabels[row.status]}</Badge> },

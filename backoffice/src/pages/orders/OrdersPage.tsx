@@ -47,12 +47,13 @@ export default function OrdersPage() {
       <span className="mt-1 block text-[10px] text-[rgb(var(--color-text-secondary))]">تعداد: {order.quantity.toLocaleString('fa-IR')}</span>
     </div> },
     { key: 'stars', title: 'مبلغ نهایی', render: (_, order) => <div className="flex flex-col items-start gap-1.5">
-      <span className="finance-amount"><StarsAmount value={order.stars} /></span>
+      <span className="finance-amount">{order.currency === 'IRR' ? `${(order.toman || 0).toLocaleString('fa-IR')} تومان` : <StarsAmount value={order.stars} />}</span>
+      {order.discount_toman > 0 && <del className="finance-muted">{order.original_toman?.toLocaleString('fa-IR')} تومان</del>}
       {order.discount_stars > 0 && <del className="text-[10px] text-[rgb(var(--color-text-secondary))]" title="مبلغ پیش از تخفیف"><StarsAmount value={order.original_stars} /></del>}
     </div> },
     { key: 'coupon_code', title: 'کد تخفیف', render: (_, order) => order.coupon_code ? <div className="flex flex-col items-start gap-1.5">
       <span className="order-coupon"><TicketPercent size={14} aria-hidden="true" /><code dir="ltr">{order.coupon_code}</code></span>
-      <span className="inline-flex items-center gap-1 text-[10px] text-[rgb(var(--color-text-secondary))]"><StarsAmount value={order.discount_stars} /> تخفیف</span>
+      <span className="inline-flex items-center gap-1 text-[10px] text-[rgb(var(--color-text-secondary))]">{order.currency === 'IRR' ? `${order.discount_toman.toLocaleString('fa-IR')} تومان` : <StarsAmount value={order.discount_stars} />} تخفیف</span>
     </div> : <span className="text-xs text-[rgb(var(--color-text-secondary))]">بدون کد</span> },
     { key: 'status', title: 'وضعیت', render: value => {
       const status = statusMap[value as OrderStatus] || { label: String(value), variant: 'default' as const };

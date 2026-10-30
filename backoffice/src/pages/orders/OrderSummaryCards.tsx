@@ -8,5 +8,6 @@ export function OrderSummaryCards({ summary, loading }: { summary: OrdersSummary
     { label: 'در انتظار پرداخت', value: summary?.pending, icon: Clock3, tone: 'amber' },
     { label: 'پرداخت‌شده', value: summary?.paid, icon: CheckCheck, tone: 'green' },
     { label: 'مبلغ پرداخت‌شده', value: summary?.paid_stars, icon: WalletCards, tone: 'violet', stars: true },
+    { label: 'پرداخت‌شده (تومان)', value: summary?.paid_toman, icon: WalletCards, tone: 'green' },
   ]} />;
 }

@@ -1,0 +1,12 @@
+.manual-notification-settings{border-top:1px solid rgb(var(--color-border));padding-top:24px;display:grid;gap:16px}
+.manual-notification-settings h2,.manual-message-editor label span{display:flex;align-items:center;gap:9px}
+.manual-message-editor{min-width:0;display:grid;align-content:start;gap:12px;border:1px solid rgb(var(--color-border));padding:18px;border-radius:16px}
+.manual-message-editor textarea{resize:vertical;line-height:1.9}
+.manual-message-variables{display:flex;flex-wrap:wrap;gap:6px}
+.manual-message-variables button{display:grid;gap:4px;text-align:right;padding:7px 10px;background:rgb(var(--color-primary)/.06);border:1px solid rgb(var(--color-border));border-radius:9px;font-size:11px}
+.manual-message-variables button:hover{border-color:rgb(var(--color-primary))}
+.manual-message-variables code{font-size:10px;direction:ltr;color:rgb(var(--color-text-secondary))}
+.manual-message-preview{border-top:1px solid rgb(var(--color-border));padding-top:12px;font-size:12px;line-height:1.9}
+.manual-message-preview summary{cursor:pointer;color:rgb(var(--color-text-secondary))}
+.manual-message-preview strong{display:block;margin-top:10px}
+.manual-message-preview p{white-space:pre-wrap;overflow-wrap:anywhere}

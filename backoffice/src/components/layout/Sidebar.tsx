@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import {
-  BarChart3, Bot, Boxes, ChevronLeft, CircleDollarSign, Code2, Crown, FileText,
+  BarChart3, Bot, Boxes, CreditCard, ChevronLeft, CircleDollarSign, Code2, Crown, FileText,
   FolderTree, Layers3, LogOut, MessageSquareText, Package, ReceiptText,
   Settings, ShieldCheck, ShoppingBag, Ticket, Users, X,
   Smartphone,
@@ -27,7 +27,7 @@ const groups: { label: string; items: SidebarItem[] }[] = [
   ]},
   { label: 'مالی', items: [
     { label: 'سفارش‌ها', to: '/orders', icon: ShoppingBag },
-    { label: 'پرداخت‌ها', to: '/payments', icon: ReceiptText },
+    { label: 'پرداخت‌ها', to: '/payments', icon: ReceiptText, children: [{ label: 'کارت‌به‌کارت', to: '/payments/manual', icon: CreditCard }, { label: 'تنظیمات پرداخت', to: '/payments/checkout-settings', icon: Settings }] },
     { label: 'کدهای تخفیف', to: '/coupons', icon: CircleDollarSign },
   ]},
   { label: 'مشتریان', items: [
@@ -39,6 +39,7 @@ const groups: { label: string; items: SidebarItem[] }[] = [
     { label: 'تیکت‌ها', to: '/tickets', icon: Ticket },
     { label: 'اعلان‌های همگانی', to: '/broadcasts', icon: Megaphone },
     { label: 'ویرایش مینی‌اپ', to: '/miniapp-content', icon: Smartphone },
+    { label: 'پیام‌های ربات', to: '/bot-messages', icon: Bot },
     { label: 'مدیران', to: '/admins', icon: ShieldCheck },
     { label: 'تنظیمات عمومی', to: '/settings', icon: Settings },
   ]},

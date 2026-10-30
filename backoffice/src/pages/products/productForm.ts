@@ -19,6 +19,10 @@ export const productSchema = z.object({
   title: z.string().min(1, 'نام محصول الزامی است'),
   description: z.string(),
   stars_price: z.number({ message: 'قیمت استار باید عدد باشد' }).int('قیمت باید عدد صحیح باشد').positive('قیمت باید بیشتر از صفر باشد'),
+  toman_price: z.number().int('قیمت باید عدد صحیح باشد').min(0).max(1_000_000_000),
+  payment_methods_override: z.boolean(),
+  stars_enabled: z.boolean(),
+  card_to_card_enabled: z.boolean(),
   category_id: z.string().min(1, 'دسته‌بندی الزامی است'),
   delivery_type: z.enum(['file', 'message', 'inventory', 'bundle', 'api'] as const),
   file_ids: z.array(z.string()).max(100, 'حداکثر ۱۰۰ فایل انتخاب کنید'),
@@ -39,7 +43,7 @@ export const productSchema = z.object({
 export type ProductFormValues = z.infer<typeof productSchema>;
 
 export const productDefaultValues: ProductFormValues = {
-  title: '', description: '', stars_price: 1, category_id: '', delivery_type: 'file',
+  title: '', description: '', stars_price: 1, toman_price: 0, payment_methods_override: false, stars_enabled: true, card_to_card_enabled: false, category_id: '', delivery_type: 'file',
   file_ids: [], message_id: '', inventory_id: '', bundle_id: '', api_id: '', demo_url: '',
   vip_only: false, repurchasable: true, status: 'active',
 };
@@ -49,6 +53,7 @@ export function productPayload(data: ProductFormValues): CreateProductRequest & 
     title: data.title,
     description: data.description,
     stars_price: data.stars_price,
+    toman_price: data.toman_price, payment_methods_override: data.payment_methods_override, stars_enabled: data.stars_enabled, card_to_card_enabled: data.card_to_card_enabled,
     category_id: data.category_id,
     delivery_type: data.delivery_type,
     demo_url: data.demo_url || undefined,

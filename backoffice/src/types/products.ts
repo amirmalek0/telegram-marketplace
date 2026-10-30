@@ -7,6 +7,10 @@ export interface CreateProductRequest {
   title: string;
   description: string;
   stars_price: number;
+  toman_price: number;
+  payment_methods_override: boolean;
+  stars_enabled: boolean;
+  card_to_card_enabled: boolean;
   category_id: string;
   delivery_type: DeliveryType;
   file_id?: string;
@@ -24,6 +28,10 @@ export interface UpdateProductRequest {
   title?: string;
   description?: string;
   stars_price?: number;
+  toman_price?: number;
+  payment_methods_override?: boolean;
+  stars_enabled?: boolean;
+  card_to_card_enabled?: boolean;
   category_id?: string;
   delivery_type?: DeliveryType;
   file_id?: string;
@@ -43,6 +51,10 @@ export interface ProductResponse {
   title: string;
   description: string;
   stars_price: number;
+  toman_price: number;
+  payment_methods_override: boolean;
+  stars_enabled: boolean;
+  card_to_card_enabled: boolean;
   category_id: string;
   image_url: string;
   delivery_type: DeliveryType;

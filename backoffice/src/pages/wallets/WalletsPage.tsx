@@ -12,13 +12,14 @@ import { FinanceSummary } from '@/components/finance/FinanceSummary';
 import { CustomerIdentity, customerName } from '@/components/customers/CustomerIdentity';
 import { CustomerPhone } from '@/components/customers/CustomerPhone';
 import { StarsAmount } from '@/components/ui/StarsAmount';
+import { CatalogPrices } from '@/components/catalog/CatalogPrices';
 import { formatDate } from '@/utils/format';
 import { WalletAdjustmentPanel, type WalletAdjustmentMode } from './WalletAdjustmentPanel';
 import { WalletHistoryModal } from './WalletHistoryModal';
 import { WalletPackModal } from './WalletPackModal';
 
 type Tab = 'wallets' | 'packs';
-const emptyPack: CreateWalletTopupPackRequest = { title: '', stars: 50, status: 'active', sort_order: 0 };
+const emptyPack: CreateWalletTopupPackRequest = { toman_price: 0, title: '', stars: 50, status: 'active', sort_order: 0 };
 
 export default function WalletsPage() {
   const [tab, setTab] = useState<Tab>('wallets');
@@ -63,7 +64,7 @@ export default function WalletsPage() {
   };
   const beginPack = (pack?: WalletTopupPackResponse) => {
     setEditingPack(pack || 'new');
-    setPackForm(pack ? { title: pack.title, stars: pack.stars, status: pack.status, sort_order: pack.sort_order } : emptyPack);
+    setPackForm(pack ? { toman_price: pack.toman_price ?? 0, title: pack.title, stars: pack.stars, status: pack.status, sort_order: pack.sort_order } : emptyPack);
   };
   const submitPack = async (event: FormEvent) => {
     event.preventDefault(); if (!editingPack || saving) return;
@@ -90,7 +91,8 @@ export default function WalletsPage() {
   ];
   const packColumns: Column<WalletTopupPackResponse>[] = [
     { key: 'title', title: 'بسته شارژ', render: (_, row) => <button type="button" className="customer-offer-title" onClick={() => beginPack(row)}><span className="customer-offer-icon"><Coins size={21} /></span><b>{row.title}</b></button> },
-    { key: 'stars', title: 'مقدار شارژ', render: value => <span className="finance-amount"><StarsAmount value={Number(value)} /></span> },
+    { key: 'stars', title: 'اعتبار دریافتی', render: value => <span className="finance-amount"><StarsAmount value={Number(value)} /></span> },
+    { key: 'toman_price', title: 'قیمت خرید', render: (_, row) => <CatalogPrices stars={row.stars} toman={row.toman_price} /> },
     { key: 'sort_order', title: 'ترتیب نمایش', render: value => <span className="finance-muted">{Number(value).toLocaleString('fa-IR')}</span> },
     { key: 'status', title: 'وضعیت', render: value => <Badge variant={value === 'active' ? 'success' : 'default'} dot>{value === 'active' ? 'فعال' : 'غیرفعال'}</Badge> },
     { key: 'actions', title: 'عملیات', render: (_, row) => <div className="flex gap-1"><Button variant="ghost" size="sm" icon={<Pencil size={14} />} onClick={() => beginPack(row)}>ویرایش</Button><Button variant="ghost" size="sm" className="text-rose-500" icon={<Trash2 size={14} />} aria-label={`حذف بسته ${row.title}`} onClick={() => setDeletingPack(row)} /></div> },

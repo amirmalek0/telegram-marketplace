@@ -43,7 +43,7 @@ export function DashboardActivity({ orders, tickets, loading, ordersError, ticke
           <time dateTime={order.created_at} className="dashboard-activity-meta">{formatDateTime(order.created_at)}</time>
         </div>
         <div className="dashboard-activity-detail">
-          <StarsAmount value={order.stars} className="dashboard-activity-price" />
+          {order.currency === 'IRR' ? <span className="dashboard-activity-price">{(order.toman || 0).toLocaleString('fa-IR')} تومان</span> : <StarsAmount value={order.stars} className="dashboard-activity-price" />}
           <OrderBadge status={order.status} />
         </div>
       </Link>)}

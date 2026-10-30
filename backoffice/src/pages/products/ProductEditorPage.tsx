@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowRight, BadgeCheck, Star, Crown, ExternalLink, Image as ImageIcon, Package, PackagePlus, RefreshCw, Save, ShoppingBag, Tag, Truck } from 'lucide-react';
+import { ArrowRight, BadgeCheck, Crown, ExternalLink, Image as ImageIcon, Package, PackagePlus, RefreshCw, Save, ShoppingBag, Tag, Truck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { categoriesApi, productsApi } from '@/api';
 import { Button, FileUpload, Input, Select, Textarea, Toggle } from '@/components/ui';
@@ -11,6 +11,7 @@ import type { DeliveryType, ProductResponse } from '@/types/products';
 import { publicAssetURL } from '@/utils/assets';
 import { ProductDeliveryField } from './ProductDeliveryField';
 import { deliveryTypeLabels, productDefaultValues, productPayload, productSchema, statusLabels, type ProductFormValues } from './productForm';
+import { ProductPaymentSettings } from './ProductPaymentSettings';
 import '@/components/catalog/catalog.css';
 
 function SectionTitle({ icon, title }: { icon: ReactNode; title: string; description?: string }) {
@@ -45,6 +46,7 @@ export default function ProductEditorPage() {
         setProduct(current);
         form.reset({
           title: current.title, description: current.description, stars_price: current.stars_price,
+          toman_price: current.toman_price ?? 0, payment_methods_override: current.payment_methods_override ?? false, stars_enabled: current.stars_enabled ?? true, card_to_card_enabled: current.card_to_card_enabled ?? false,
           category_id: current.category_id, delivery_type: current.delivery_type,
           file_ids: current.file_ids ?? (current.file_id ? [current.file_id] : []), message_id: current.message_id ?? '', inventory_id: current.inventory_id ?? '', bundle_id: current.bundle_id ?? '', api_id: current.api_id ?? '',
           demo_url: current.demo_url ?? '', vip_only: current.vip_only, repurchasable: current.repurchasable, status: current.status,
@@ -101,15 +103,16 @@ export default function ProductEditorPage() {
           <div className="space-y-5">
             <Input label="عنوان محصول" placeholder="یک عنوان روشن و کوتاه بنویسید" rightIcon={<Tag size={18}/>} error={form.formState.errors.title?.message} className="py-3.5 text-base font-semibold" {...form.register('title')} />
             <Textarea label="توضیحات محصول" placeholder="ویژگی‌ها، کاربرد و جزئیات مهم محصول را توضیح دهید…" rows={7} error={form.formState.errors.description?.message} className="min-h-48 py-4 text-sm leading-7" {...form.register('description')} />
-            <div className="grid gap-4 md:grid-cols-2">
+            <div>
               <Controller name="category_id" control={form.control} render={({ field }) => <Select label="دسته‌بندی" placeholder="انتخاب دسته‌بندی" options={categoryOptions} error={form.formState.errors.category_id?.message} value={field.value} onChange={field.onChange} className="py-3.5 text-base"/>}/>
-              <Input label="قیمت با Telegram Stars" type="number" min="1" step="1" rightIcon={<Star size={18} fill="currentColor" className="text-amber-500"/>} hint="مبلغ بدون اعشار است" error={form.formState.errors.stars_price?.message} className="py-3.5 text-base font-bold" {...form.register('stars_price', { valueAsNumber: true })}/>
             </div>
           </div>
         </section>
 
         <div className="mx-5 border-t border-[rgb(var(--color-border))] sm:mx-7" />
 
+        <ProductPaymentSettings form={form} />
+        <div className="mx-5 border-t border-[rgb(var(--color-border))] sm:mx-7" />
         <section className="p-5 sm:p-7">
           <SectionTitle icon={<Truck size={19}/>} title="تحویل محصول" description="نوع محتوایی که بعد از پرداخت در اختیار کاربر قرار می‌گیرد." />
           <div className="space-y-4">
