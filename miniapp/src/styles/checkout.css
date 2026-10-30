@@ -1,0 +1,49 @@
+/* A single visual language for Stars, wallet and card-to-card entry points. */
+.membership-checkout.membership-checkout { display:flex;flex-direction:column;padding:0;overflow:hidden;max-height:min(90dvh,760px); }
+.membership-checkout .membership-checkout-header { padding:18px;flex-shrink:0; }
+.membership-checkout-body { display:grid;gap:16px;padding:18px;overflow-y:auto;overscroll-behavior:contain;min-height:0; }
+.membership-checkout .membership-checkout-body > p { margin:0;font-size:12px;line-height:1.9;color:var(--secondary); }
+.membership-checkout .membership-checkout-body .vip-quote-lines { margin:0; }
+.membership-checkout-footer { padding:14px 18px max(18px,env(safe-area-inset-bottom));border-top:1px solid var(--line);background:var(--surface-solid);flex-shrink:0; }
+.membership-checkout-footer .membership-confirm { margin:0; }
+.membership-review-method { display:flex;align-items:center;gap:10px;padding:14px;border:1px solid var(--line);border-radius:14px; }
+.membership-review-method > svg { color:var(--accent);flex-shrink:0; }
+.membership-review-method > span { flex:1;display:grid;gap:4px; }
+.membership-review-method small { color:var(--secondary);font-size:10px; }
+.membership-review-method b { font-size:12px; }
+.membership-review-method button { background:none;border:0;color:var(--accent);font-size:11px;font-weight:700;min-height:40px;padding:4px; }
+.product-checkout-heading { padding: 20px; background: linear-gradient(125deg,color-mix(in srgb,var(--accent) 6%,var(--surface-solid)),var(--surface-solid)); }
+.product-price-copy { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.product-price-copy small { font-size: 12px; color: var(--secondary); }
+.product-price-copy strong { font-size: 24px; line-height: 1.6; letter-spacing: 0; }
+.product-checkout-options { gap: 10px; padding: 14px; }
+.product-checkout-options > button { border-radius: 18px; min-height: 70px; }
+.product-checkout-options .stars-payment-button { color: var(--on-accent,#fff); background: var(--accent); border-color: transparent; }
+.stars-payment-button .checkout-option-icon { background: #ffffff20; color: #fff; border-radius: 12px; width: 38px; height: 42px; }
+.product-purchase-panel .wallet-payment-button { background: var(--surface-solid); border-color: var(--line); color: var(--text); min-height: 70px; }
+.wallet-payment-button .checkout-option-icon { color: var(--accent); background: var(--accent-soft); width: 38px; height: 42px; border-radius: 12px; }
+.checkout-option-copy b { font-size: 13px; }
+.checkout-option-copy > span { font-size: 11px; }
+.checkout-insufficient { font-size: 10px; }
+.vip-quote-backdrop,.payment-result-backdrop { z-index: 1400; direction: rtl; }
+.membership-checkout { padding: 22px; border-color: var(--line); box-shadow: 0 28px 90px #0004; border-radius: 27px; background: var(--surface-solid); }
+.membership-checkout-header { padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+.membership-checkout .vip-quote-lines { padding: 16px; border: 1px solid var(--line); border-radius: 18px; background: linear-gradient(130deg,var(--accent-soft),var(--surface-solid)); }
+.membership-checkout .vip-quote-lines .quote-total { padding-top: 12px; border-top: 1px dashed var(--line); }
+.membership-checkout .quote-total strong { font-size: 24px; letter-spacing: 0; }
+.membership-methods label { border-radius: 16px; min-height: 70px; }
+.membership-methods label.is-selected { background: var(--accent-soft); border-color: color-mix(in srgb,var(--accent) 50%,var(--line)); }
+.membership-confirm { border-radius: 15px; min-height: 50px; margin-top: 16px; }
+.payment-result-modal { display: grid; justify-items: center; gap: 14px; padding: 28px 22px 20px; border: 1px solid var(--line); border-radius: 28px; background: var(--surface-solid); box-shadow: 0 28px 90px #0004; }
+.payment-result-modal .payment-result-icon { width: 76px; height: 76px; border: 6px solid var(--surface-soft); border-radius: 27px; margin: 0 0 4px; }
+.payment-result-modal h3 { font-size: 18px; line-height: 1.8; }
+.payment-result-modal p { margin: 0; font-size: 13px; line-height: 2; max-width: 34ch; }
+.payment-result-modal button { margin: 8px 0 0; min-height: 50px; border-radius: 15px; font-size: 13px; font-weight: 700; color: var(--on-accent,#fff); }
+.payment-result-modal.is-success .payment-result-icon { color: #21a568; background: #21a56818; }
+.payment-result-modal.is-error .payment-result-icon { color: #e05b64; background: #e05b6418; }
+.payment-result-modal.is-cancelled .payment-result-icon { color: var(--secondary); background: var(--surface-soft); }
+.payment-result-modal.is-pending .payment-result-icon { color: var(--accent); background: var(--accent-soft); }
+@media (max-width: 480px) {
+  .vip-quote-backdrop { padding: max(12px,env(safe-area-inset-top)) 0 0; }
+  .membership-checkout { border-radius: 26px 26px 0 0; max-height: 96dvh; padding: 20px 18px max(20px,env(safe-area-inset-bottom)); }
+}

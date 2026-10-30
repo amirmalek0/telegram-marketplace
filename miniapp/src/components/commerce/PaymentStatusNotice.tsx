@@ -11,11 +11,11 @@ interface PaymentStatusNoticeProps {
 /** Persistent feedback after the payment dialog closes. */
 export function PaymentStatusNotice({ kind, message, onDismiss }: PaymentStatusNoticeProps) {
   const { text } = useContent()
-  const title = text(kind === 'success' ? 'payment.success_title' : kind === 'cancelled' ? 'payment.cancelled_title' : 'payment.failed_title')
+  const title = text(kind === 'pending' ? 'payment.pending_title' : kind === 'success' ? 'payment.success_title' : kind === 'cancelled' ? 'payment.cancelled_title' : 'payment.failed_title')
 
   return <section className={`payment-status-notice is-${kind}`} dir="rtl">
     <span className="payment-status-notice-icon">
-      <Icon name={kind === 'success' ? 'check' : kind === 'cancelled' ? 'info' : 'alert'} size={23} />
+      <Icon name={kind === 'pending' ? 'clock' : kind === 'success' ? 'check' : kind === 'cancelled' ? 'info' : 'alert'} size={23} />
     </span>
     <div className="payment-status-notice-copy" role={kind === 'error' ? 'alert' : 'status'} aria-atomic="true">
       <strong>{title}</strong>

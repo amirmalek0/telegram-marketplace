@@ -83,6 +83,9 @@ export interface UserAccount {
 }
 
 export interface Order {
+  currency?: string
+  amount_minor?: number
+  toman?: number
   id: string
   product_id: string
   quantity: number

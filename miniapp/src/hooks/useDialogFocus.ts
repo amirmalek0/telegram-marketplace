@@ -6,7 +6,7 @@ export function useDialogFocus(onClose: () => void) {
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null
     const overflow = document.body.style.overflow
-    const focusable = () => Array.from(ref.current?.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], input:not(:disabled), [tabindex="0"]') || [])
+    const focusable = () => Array.from(ref.current?.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], input:not(:disabled), textarea:not(:disabled), select:not(:disabled), summary, [tabindex="0"]') || []).filter(element => element.getClientRects().length > 0)
     document.body.style.overflow = 'hidden'
     const frame = requestAnimationFrame(() => (focusable()[0] || ref.current)?.focus())
     const handleKey = (event: KeyboardEvent) => {

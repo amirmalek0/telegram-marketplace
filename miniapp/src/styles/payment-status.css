@@ -17,6 +17,7 @@
 }
 .payment-status-notice.is-error { --payment-status-color: #ba3939; }
 .payment-status-notice.is-cancelled { --payment-status-color: #8c641c; }
+.payment-status-notice.is-pending { --payment-status-color: var(--accent); }
 .payment-status-notice-icon {
   display: grid;
   place-items: center;

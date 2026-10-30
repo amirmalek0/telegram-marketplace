@@ -1,3 +1,4 @@
+import { useContent } from '../../features/content/ContentProvider'
 import type { Delivery, DeliveryItem } from '../../features/commerce/types'
 import { publicAssetURL } from '../../utils/assets'
 import { formatDate } from '../../utils/format'
@@ -22,6 +23,7 @@ function itemIcon(kind: DeliveryItem['kind']): IconName {
 }
 
 export function DeliveryCard({ delivery, showProductTitle = true }: DeliveryCardProps) {
+  const { editorMode } = useContent()
   return (
     <article className={`delivery-card${showProductTitle ? '' : ' delivery-card-compact'}`}>
       <header>
@@ -42,7 +44,7 @@ export function DeliveryCard({ delivery, showProductTitle = true }: DeliveryCard
                 <small>{item.kind === 'file' ? 'فایل' : item.kind === 'message' ? 'پیام' : item.kind === 'inventory' ? 'کد آماده' : 'تحویل API'}</small>
                 {item.content && <pre>{item.content}</pre>}
               </div>
-              {item.download_url && <a href={publicAssetURL(item.download_url)} target="_blank" rel="noreferrer"><Icon name="download" size={14} /> دریافت فایل</a>}
+              {item.download_url && <a onClick={event => { if (editorMode) event.preventDefault() }} href={publicAssetURL(item.download_url)} target="_blank" rel="noreferrer"><Icon name="download" size={14} /> دریافت فایل</a>}
             </div>
           ))}
         </div>

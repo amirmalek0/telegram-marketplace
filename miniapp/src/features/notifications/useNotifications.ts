@@ -6,6 +6,7 @@ export interface Notification {
   title: string
   message: string
   published_at: string
+  action_path?: string
   read_at?: string
 }
 interface Inbox { data: Notification[]; total_pages: number; unread_count: number }

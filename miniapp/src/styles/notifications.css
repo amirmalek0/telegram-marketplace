@@ -4,7 +4,9 @@
 .notification-toolbar { display: flex; align-items: center; gap: 10px; font-size: var(--font-caption); color: var(--secondary); }
 .notification-toolbar > span { margin-inline-end: auto; }
 .notification-page button { font: inherit; cursor: pointer; }
-.notification-toolbar button, .notification-pagination button, .notification-state button, .notification-body button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-soft); color: var(--accent); }
+.notification-toolbar button, .notification-pagination button, .notification-state button, .notification-action { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--accent-soft); color: var(--accent); text-decoration: none; font-size: var(--font-caption); font-weight: 600; }
+.notification-action:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.notification-body button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 40px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-soft); color: var(--accent); }
 .notification-page button:disabled { opacity: .45; cursor: default; }
 .notification-page button:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .notification-list { display: grid; gap: 10px; }
@@ -20,6 +22,8 @@
 .notification-summary[aria-expanded="true"] > svg { transform: rotate(90deg); }
 .notification-body { border-top: 1px solid var(--line); margin: 0 14px; padding: 14px 0; }
 .notification-body p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: var(--font-support); line-height: 2; color: var(--text); }
+.notification-action { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--accent-soft); color: var(--accent); text-decoration: none; font-size: var(--font-caption); font-weight: 600; }
+.notification-action:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .notification-body button { margin-top: 12px; font-size: var(--font-caption); }
 .notification-state { padding: 48px 16px; text-align: center; color: var(--secondary); border: 1px solid var(--line); border-radius: 20px; background: var(--surface-soft); }
 .notification-empty-icon { margin: 0 auto 20px; width: 64px; height: 64px; border-radius: 22px; }

@@ -24,3 +24,5 @@
 .coupon-breakdown .coupon-discount dd { color: var(--accent); }
 .coupon-total { border-top: 1px solid var(--line); padding-top: 6px; margin-top: 2px; }
 .coupon-clear { text-decoration: underline; }
+.coupon-currency-result { margin-top:12px; padding:12px; border:1px solid var(--line); border-radius:12px; background:var(--surface-soft); }
+.coupon-currency-result > strong { font-size:var(--font-caption); }

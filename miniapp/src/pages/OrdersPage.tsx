@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { ApiClient } from '../api/client'
 import { OrderCard } from '../components/commerce/OrderCard'
+import { ManualHistory } from '../components/commerce/manual/ManualHistory'
 import { Icon } from '../components/ui/Icon'
 import type { Product, PaginatedResponse } from '../features/catalog/types'
 import type { Order } from '../features/commerce/types'
@@ -60,7 +61,7 @@ export function OrdersPage({ initDataRaw, products, preview = false, scenario = 
 
   if (visibleLoading) return renderSectionStatus(sectionRenderer, <div className="page order-page"><div className="order-skeleton skeleton" /><div className="order-skeleton skeleton" /></div>)
   if (visibleError) return renderSectionStatus(sectionRenderer, <div className="page"><section className="commerce-empty"><Icon name="orders" size={30} /><h2>دریافت سفارش‌ها ناموفق بود</h2><p>{visibleError}</p><button onClick={() => void loadOrders()}>تلاش دوباره</button></section></div>)
-  if (visibleOrders.length === 0) return renderSectionStatus(sectionRenderer, <section className="commerce-empty"><Icon name="orders" size={30} /><h2>هنوز سفارشی ندارید</h2><p>محصول دلخواهتان را از فروشگاه انتخاب کنید.</p><NavLink to="/">رفتن به فروشگاه</NavLink></section>)
+  if (visibleOrders.length === 0) return renderSectionStatus(sectionRenderer, <><ManualHistory initDataRaw={initDataRaw} preview={preview} scenario={scenario} /><section className="commerce-empty"><Icon name="orders" size={30} /><h2>هنوز سفارشی ندارید</h2><p>محصول دلخواهتان را از فروشگاه انتخاب کنید.</p><NavLink to="/">رفتن به فروشگاه</NavLink></section></>)
   const summary = (
           <section className="commerce-dashboard orders-dashboard">
             <div className="commerce-dashboard-head">
@@ -76,6 +77,7 @@ export function OrdersPage({ initDataRaw, products, preview = false, scenario = 
           </section>
   )
   const list = <>
+          <ManualHistory initDataRaw={initDataRaw} preview={preview} scenario={scenario} />
           <div className="commerce-filters" role="group" aria-label="فیلتر سفارش‌ها">
             <button type="button" aria-pressed={filter === 'all'} className={filter === 'all' ? 'active' : ''} onClick={() => setFilter('all')}>همه</button>
             <button type="button" aria-pressed={filter === 'paid'} className={filter === 'paid' ? 'active' : ''} onClick={() => setFilter('paid')}>پرداخت‌شده</button>

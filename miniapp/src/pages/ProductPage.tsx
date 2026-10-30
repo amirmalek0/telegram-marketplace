@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { openInvoice } from '@telegram-apps/sdk'
 import { ApiClient } from '../api/client'
+import { useManualPriceState } from '../features/commerce/useManualPrice'
+import { usePaymentMethods } from '../features/commerce/usePaymentMethods'
 import { ProductPurchasePanel } from '../components/catalog/ProductPurchasePanel'
 import { ProductCoupon } from '../components/commerce/ProductCoupon'
 import { useProductCoupon, type CouponQuote } from '../features/commerce/useProductCoupon'
@@ -11,11 +13,14 @@ import { ProductAccessSection } from '../components/commerce/ProductAccessSectio
 import { PurchaseNotice } from '../components/commerce/PurchaseNotice'
 import { PaymentResultModal, type PaymentResult } from '../components/commerce/PaymentResultModal'
 import { ProductSkeleton, StateCard } from '../components/feedback/CatalogStates'
+import type { CatalogIconName } from '../features/content/iconCatalog'
 import { Icon, type IconName } from '../components/ui/Icon'
 import { deliveryLabels } from '../features/catalog/constants'
 import type { CatalogState, Product } from '../features/catalog/types'
 import type { Delivery, SimulatedPayment, StarsInvoice, UserAccount, Wallet } from '../features/commerce/types'
 import { editorAccount, editorDeliveries, editorWallet } from '../features/content/editorFixtures'
+import { useContent } from '../features/content/ContentProvider'
+import { showProductFact } from '../features/content/productFacts'
 import { formatDate } from '../utils/format'
 
 import { renderSectionStatus, type SectionSourceProps } from '../features/content/sectionRendering'
@@ -27,7 +32,7 @@ interface ProductPageProps extends CatalogState, SectionSourceProps {
 }
 
 interface ProductFactProps {
-  icon: IconName
+  icon: IconName | CatalogIconName
   label: string
   value: string
 }
@@ -43,10 +48,17 @@ function ProductFact({ icon, label, value }: ProductFactProps) {
 
 export function ProductPage({ products, categoryById, initDataRaw, preview = false, scenario = 'content', sectionRenderer }: ProductPageProps) {
   const { productId = '' } = useParams()
+  const { layoutForPage, text } = useContent()
+  const factsSection = layoutForPage('product').sections.find(section => section.type === 'product.facts')
+  const factsVisibility = factsSection?.facts
+  const factIcon = (field: Parameters<typeof showProductFact>[1], fallback: IconName): IconName | CatalogIconName => factsSection?.factIcons?.[field] ?? fallback
+  const showFact = (field: Parameters<typeof showProductFact>[1]) => showProductFact(factsVisibility, field)
+  const paymentMethods = usePaymentMethods(initDataRaw, productId, preview)
   const [product, setProduct] = useState<Product | undefined>(() => products.find((item) => item.id === productId))
   const [loading, setLoading] = useState(!product)
   const [error, setError] = useState<string | null>(null)
   const [purchasing, setPurchasing] = useState(false)
+  const [manualBusy, setManualBusy] = useState(false)
   const [purchaseError, setPurchaseError] = useState<string | null>(null)
   const [testInvoice, setTestInvoice] = useState<StarsInvoice | null>(null)
   const [simulating, setSimulating] = useState<'succeeded' | 'failed' | 'cancelled' | null>(null)
@@ -56,9 +68,12 @@ export function ProductPage({ products, categoryById, initDataRaw, preview = fal
   const [purchaseNotice, setPurchaseNotice] = useState<string | null>(null)
   const [account, setAccount] = useState<UserAccount | null>(null)
   const [wallet, setWallet] = useState<Wallet | null>(null)
+  const [dismissedResultScenario, setDismissedResultScenario] = useState('')
   const [paymentResult, setPaymentResult] = useState<PaymentResult | null>(null)
   const accessRef = useRef<HTMLDetailsElement>(null)
-  const coupon = useProductCoupon(productId, product?.id === productId ? product.stars_price : 0, initDataRaw, preview)
+  const manualPriceState = useManualPriceState('product', productId, paymentMethods.card_to_card, initDataRaw, preview)
+  const manualPrice = manualPriceState.price
+  const coupon = useProductCoupon(productId, product?.id === productId ? product.stars_price : 0, initDataRaw, preview, manualPrice)
 
   const fetchProductDeliveries = useCallback(async (): Promise<Delivery[]> => {
     if (!initDataRaw || !productId) return []
@@ -155,12 +170,13 @@ export function ProductPage({ products, categoryById, initDataRaw, preview = fal
   const purchaseLocked = displayProduct.repurchasable === false && visibleDeliveries.length > 0
   const vipFree = Boolean(displayProduct.vip_only && visibleAccount?.has_active_plan)
   const previewDiscount = scenario === 'coupon-free' ? displayProduct.stars_price : Math.max(1, Math.floor(displayProduct.stars_price * .2))
-  const quote: CouponQuote | null = preview && ['coupon-applied', 'coupon-free'].includes(scenario) ? { valid: true, code: 'WELCOME', product_id: productId, original_stars: displayProduct.stars_price, discount_stars: previewDiscount, payable_stars: displayProduct.stars_price - previewDiscount } : coupon.quote
+  const quote: CouponQuote | null = preview && ['coupon-applied', 'coupon-free', 'coupon-both'].includes(scenario) ? { valid: true, code: 'WELCOME', product_id: productId, original_stars: displayProduct.stars_price, discount_stars: previewDiscount, payable_stars: displayProduct.stars_price - previewDiscount } : coupon.quote
+  const tomanQuote: CouponQuote | null = preview && ['coupon-both', 'coupon-toman'].includes(scenario) ? { valid: true, code: 'WELCOME', product_id: productId, currency: 'toman', original_stars: 150000, discount_stars: 30000, payable_stars: 120000, original_toman: 150000, discount_toman: 30000, payable_toman: 120000 } : coupon.tomanQuote
   const appliedCoupon = !vipFree && !purchaseLocked ? quote : null
   const couponBlocked = !vipFree && (coupon.checking || coupon.needsApply)
 
   const buyProduct = async (method: 'telegram_stars' | 'wallet') => {
-    if (preview || !initDataRaw || purchasing || couponBlocked || purchaseLocked || product.id !== productId) return
+    if (preview || !initDataRaw || purchasing || manualBusy || couponBlocked || purchaseLocked || product.id !== productId) return
     setPurchasing(true)
     setPurchaseError(null)
     setPurchaseNotice(null)
@@ -193,7 +209,8 @@ export function ProductPage({ products, categoryById, initDataRaw, preview = fal
         await Promise.all([refreshProductAccess(invoice.order_id || ''), fetchAccount()])
       }
       else if (status === 'failed') { const message = 'پرداخت ناموفق بود. دوباره تلاش کنید.'; setPurchaseError(message); setPaymentResult({ kind: 'error', title: 'پرداخت انجام نشد', message }) }
-      else { const message = 'پرداخت توسط شما لغو شد و مبلغی کسر نشد.'; setPaymentResult({ kind: 'cancelled', title: 'پرداخت لغو شد', message }) }
+      else if (status === 'cancelled') { const message = text('payment.cancelled_message'); setPaymentResult({ kind: 'cancelled', title: text('payment.cancelled_title'), message }) }
+      else { setPaymentResult({ kind: 'pending', title: text('payment.pending_title'), message: text('payment.pending_message') }) }
     } catch (reason) {
       const message = reason instanceof Error ? reason.message : 'ایجاد پرداخت ناموفق بود'
       setPurchaseError(message)
@@ -243,14 +260,25 @@ export function ProductPage({ products, categoryById, initDataRaw, preview = fal
   )
   const checkout = <>
       <ProductPurchasePanel
+        key={productId}
+        targetID={productId}
+        initDataRaw={initDataRaw}
+        cardEnabled={paymentMethods.card_to_card}
+        manualPrice={manualPrice}
+        manualPriceState={manualPriceState}
+        manualCoupon={tomanQuote}
+        onManualBusyChange={setManualBusy}
+        onChanged={() => void refreshProductAccess('')}
+        starsEnabled={paymentMethods.telegram_stars}
         stars={appliedCoupon?.payable_stars ?? displayProduct.stars_price}
         couponFree={appliedCoupon?.payable_stars === 0}
         checkoutBlocked={couponBlocked || Boolean(simulating) || Boolean(testInvoice)}
-        coupon={!vipFree && !purchaseLocked ? <ProductCoupon key={productId + (preview ? scenario : '')} code={preview && scenario.startsWith('coupon-') && scenario !== 'coupon-empty' ? 'WELCOME' : coupon.code} quote={appliedCoupon} checking={coupon.checking || (preview && scenario === 'coupon-checking')} error={preview && scenario === 'coupon-error' ? 'کد تخفیف معتبر نیست.' : coupon.error} disabled={purchasing || Boolean(simulating) || Boolean(testInvoice)} onChange={coupon.change} onApply={() => void coupon.apply()} onClear={coupon.clear} /> : undefined}
+        cardBlocked={coupon.checking || coupon.tomanNeedsApply || Boolean(simulating) || Boolean(testInvoice)}
+        coupon={!vipFree && !purchaseLocked ? <ProductCoupon key={productId + (preview ? scenario : '')} code={preview && scenario.startsWith('coupon-') && scenario !== 'coupon-empty' ? 'WELCOME' : coupon.code} quote={appliedCoupon} tomanQuote={tomanQuote} errors={preview && scenario === 'coupon-toman' ? { stars: 'این کد فقط برای قیمت (تومان) معتبر است.' } : coupon.errors} checking={coupon.checking || (preview && scenario === 'coupon-checking')} error={preview && scenario === 'coupon-error' ? 'کد تخفیف معتبر نیست.' : coupon.error} disabled={purchasing || manualBusy || Boolean(simulating) || Boolean(testInvoice)} onChange={coupon.change} onApply={() => void coupon.apply()} onClear={coupon.clear} /> : undefined}
         walletBalance={visibleWallet?.balance}
         vipFree={vipFree}
         purchaseLocked={purchaseLocked}
-        purchasing={purchasing}
+        purchasing={purchasing || manualBusy}
         onPurchase={(method) => void buyProduct(method)}
         onOpenAccess={() => { if (accessRef.current) accessRef.current.open = true }}
       />
@@ -284,27 +312,32 @@ export function ProductPage({ products, categoryById, initDataRaw, preview = fal
         <h3>درباره محصول</h3>
         <p>{displayProduct.description || 'توضیحی برای این محصول ثبت نشده است.'}</p>
       </section>
-  const facts = <section className="product-facts-card">
+  const hasFacts = (['category', 'delivery', 'views', 'access', 'repurchasable', 'published'] as const).some(showFact)
+  const hasDemo = showFact('demo') && Boolean(displayProduct.demo_url)
+  const facts = (hasFacts || hasDemo) ? <section className="product-facts-card">
         <div className="product-section-title">
           <span><Icon name="sparkles" size={17} /></span>
           <h3>اطلاعات محصول</h3>
         </div>
-        <div className="product-facts-grid">
-          <ProductFact icon="box" label="دسته‌بندی" value={category?.title || 'بدون دسته'} />
-          <ProductFact icon={deliveryIcon} label="روش تحویل" value={deliveryLabels[displayProduct.delivery_type]} />
-          <ProductFact icon="eye" label="بازدید" value={`${displayProduct.views_count.toLocaleString('fa-IR')} بار`} />
-          <ProductFact icon={displayProduct.vip_only ? 'crown' : 'profile'} label="دسترسی" value={displayProduct.vip_only ? 'کاربران VIP' : 'همه کاربران'} />
-          <ProductFact icon="orders" label="دفعات خرید" value={displayProduct.repurchasable === false ? 'فقط یک‌بار' : 'بدون محدودیت'} />
-          <ProductFact icon="sparkles" label="تاریخ انتشار" value={formatDate(displayProduct.created_at)} />
-        </div>
-        {displayProduct.demo_url && (
+        {hasFacts && <div className="product-facts-grid">
+          {showFact('category') && <ProductFact icon={factIcon('category', 'box')} label="دسته‌بندی" value={category?.title || 'بدون دسته'} />}
+          {showFact('delivery') && <ProductFact icon={factIcon('delivery', deliveryIcon)} label="روش تحویل" value={deliveryLabels[displayProduct.delivery_type]} />}
+          {showFact('views') && <ProductFact icon={factIcon('views', 'eye')} label="بازدید" value={`${displayProduct.views_count.toLocaleString('fa-IR')} بار`} />}
+          {showFact('access') && <ProductFact icon={factIcon('access', displayProduct.vip_only ? 'crown' : 'profile')} label="دسترسی" value={displayProduct.vip_only ? 'کاربران VIP' : 'همه کاربران'} />}
+          {showFact('repurchasable') && <ProductFact icon={factIcon('repurchasable', 'orders')} label="دفعات خرید" value={displayProduct.repurchasable === false ? 'فقط یک‌بار' : 'بدون محدودیت'} />}
+          {showFact('published') && <ProductFact icon={factIcon('published', 'sparkles')} label="تاریخ انتشار" value={formatDate(displayProduct.created_at)} />}
+        </div>}
+        {hasDemo && (
           <a className="product-demo-link" href={displayProduct.demo_url} target="_blank" rel="noreferrer">
-            <span>مشاهده نسخه نمایشی</span><Icon name="arrow" size={16} />
+            <span>مشاهده نسخه نمایشی</span><Icon name={factIcon('demo', 'arrow')} size={16} />
           </a>
         )}
-      </section>
+      </section> : null
   const related = <RelatedProducts currentProduct={displayProduct} products={products} category={category} />
-  const chrome = <PaymentResultModal result={paymentResult} onClose={() => setPaymentResult(null)} />
+  const previewResult: PaymentResult | null = preview && dismissedResultScenario !== scenario && ['success', 'purchase-error', 'payment-cancelled', 'payment-pending'].includes(scenario)
+    ? { kind: scenario === 'payment-pending' ? 'pending' : scenario === 'success' ? 'success' : scenario === 'payment-cancelled' ? 'cancelled' : 'error', title: scenario === 'payment-pending' ? text('payment.pending_title') : scenario === 'success' ? 'پرداخت موفق' : scenario === 'payment-cancelled' ? 'پرداخت لغو شد' : 'پرداخت ناموفق', message: scenario === 'payment-pending' ? text('payment.pending_message') : scenario === 'payment-cancelled' ? 'پرداخت توسط شما لغو شد و مبلغی کسر نشد.' : visiblePurchaseNotice || visiblePurchaseError || '' }
+    : null
+  const chrome = <PaymentResultModal result={previewResult || paymentResult} onClose={() => { setPaymentResult(null); setDismissedResultScenario(scenario) }} />
   return sectionRenderer ? sectionRenderer({ slots: {
     'product.overview': overview, 'product.checkout': checkout, 'product.description': description, 'product.facts': facts, 'product.related': related,
   }, chrome }) : <div className="page detail-page product-detail">{overview}{checkout}{description}{facts}{related}{chrome}</div>

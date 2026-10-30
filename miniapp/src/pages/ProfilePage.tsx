@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { openInvoice } from '@telegram-apps/sdk'
 import { ApiClient } from '../api/client'
+import { ManualHistory } from '../components/commerce/manual/ManualHistory'
 import { PaymentResultModal, type PaymentResult } from '../components/commerce/PaymentResultModal'
 import { PaymentStatusNotice } from '../components/commerce/PaymentStatusNotice'
 import { StateCard } from '../components/feedback/CatalogStates'
@@ -10,6 +11,7 @@ import { ProfileActivity } from '../components/profile/ProfileActivity'
 import { ProfileSkeleton } from '../components/profile/ProfileSkeleton'
 import { AccountPageSkeleton } from '../components/profile/AccountPageSkeleton'
 import { ProfileReferrals } from '../components/profile/ProfileReferrals'
+import { usePaymentMethods } from '../features/commerce/usePaymentMethods'
 import { WalletSections } from '../components/profile/WalletSections'
 import { VipPlans } from '../components/profile/VipPlans'
 import { VipCheckoutModal, type VipCheckout } from '../components/profile/VipCheckoutModal'
@@ -26,6 +28,7 @@ type PaymentMethod = 'telegram_stars' | 'wallet'
 
 export function ProfilePage({ initDataRaw, telegramUser, preview = false, scenario = 'vip', view = 'profile', sectionRenderer }: ProfilePageProps) {
   const { text } = useContent()
+  const paymentMethods = usePaymentMethods(initDataRaw, '', preview)
   const [account, setAccount] = useState<UserAccount | null>(null)
   const [wallet, setWallet] = useState<Wallet | null>(null)
   const [plans, setPlans] = useState<VipPlan[]>([])
@@ -37,7 +40,10 @@ export function ProfilePage({ initDataRaw, telegramUser, preview = false, scenar
   const [noticeKind, setNoticeKind] = useState<PaymentResult['kind']>('success')
   const [testInvoice, setTestInvoice] = useState<StarsInvoice | null>(null)
   const [checkout, setCheckout] = useState<VipCheckout | null>(null)
+  const [dismissedResultScenario, setDismissedResultScenario] = useState('')
   const [paymentResult, setPaymentResult] = useState<PaymentResult | null>(null)
+
+  useEffect(() => { if (preview) { setCheckout(null); setPaymentResult(null); setDismissedResultScenario('') } }, [preview, scenario])
 
   const load = useCallback(async () => {
     if (preview) {
@@ -66,8 +72,8 @@ export function ProfilePage({ initDataRaw, telegramUser, preview = false, scenar
   const visibleLoading = preview ? scenario === 'loading' : loading
   const unavailable = preview && scenario === 'unavailable'
   const visibleError = preview && scenario === 'error-message' ? 'اطلاعات پروفایل دریافت نشد' : error
-  const visibleNotice = preview && scenario === 'success' ? 'کیف پول شما با موفقیت شارژ شد.' : preview && scenario === 'payment-cancelled' ? text('payment.cancelled_message') : preview && scenario === 'payment-failed' ? 'پرداخت ناموفق بود. دوباره تلاش کنید.' : notice
-  const visibleNoticeKind = preview && scenario === 'payment-cancelled' ? 'cancelled' : preview && scenario === 'payment-failed' ? 'error' : preview && scenario === 'success' ? 'success' : noticeKind
+  const visibleNotice = preview && scenario === 'payment-pending' ? text('payment.pending_message') : preview && scenario === 'success' ? 'کیف پول شما با موفقیت شارژ شد.' : preview && scenario === 'payment-cancelled' ? text('payment.cancelled_message') : preview && scenario === 'payment-failed' ? 'پرداخت ناموفق بود. دوباره تلاش کنید.' : notice
+  const visibleNoticeKind = preview && scenario === 'payment-pending' ? 'pending' : preview && scenario === 'payment-cancelled' ? 'cancelled' : preview && scenario === 'payment-failed' ? 'error' : preview && scenario === 'success' ? 'success' : noticeKind
   const visibleTestInvoice: StarsInvoice | null = preview && scenario === 'payment-test' ? { payment_id: 'preview-payment', stars: 50, simulation_enabled: true, completed: false, purpose: 'wallet_topup' } : testInvoice
   const displayName = useMemo(() => [visibleAccount?.first_name || telegramUser?.firstName, visibleAccount?.last_name || telegramUser?.lastName].filter(Boolean).join(' ') || 'کاربر تلگرام', [telegramUser, visibleAccount])
   const activePlan = plans.find((plan) => plan.id === visibleAccount?.active_plan_id)
@@ -75,7 +81,7 @@ export function ProfilePage({ initDataRaw, telegramUser, preview = false, scenar
   const showResult = (kind: PaymentResult['kind'], message: string) => {
     setNotice(message)
     setNoticeKind(kind)
-    setPaymentResult({ kind, title: text(kind === 'success' ? 'payment.success_title' : kind === 'cancelled' ? 'payment.cancelled_title' : 'payment.failed_title'), message })
+    setPaymentResult({ kind, title: text(kind === 'pending' ? 'payment.pending_title' : kind === 'success' ? 'payment.success_title' : kind === 'cancelled' ? 'payment.cancelled_title' : 'payment.failed_title'), message })
   }
   const handleInvoice = async (invoice: StarsInvoice, successText: string) => {
     if (invoice.completed) { setNotice(successText); showResult('success', successText); await load(); return }
@@ -84,7 +90,8 @@ export function ProfilePage({ initDataRaw, telegramUser, preview = false, scenar
     const status = await openInvoice(invoice.invoice_url, 'url')
     if (status === 'paid') { setNotice(successText); showResult('success', successText); await load() }
     else if (status === 'failed') { const message = 'پرداخت ناموفق بود. دوباره تلاش کنید.'; showResult('error', message); throw new Error(message) }
-    else { const message = 'پرداخت توسط شما لغو شد و مبلغی کسر نشد.'; showResult('cancelled', message) }
+    else if (status === 'cancelled') { const message = text('payment.cancelled_message'); showResult('cancelled', message) }
+    else { showResult('pending', text('payment.pending_message')); await load() }
   }
 
   const preparePlan = async (plan: VipPlan, method: PaymentMethod) => {
@@ -138,6 +145,11 @@ export function ProfilePage({ initDataRaw, telegramUser, preview = false, scenar
   if (visibleLoading) return renderSectionStatus(sectionRenderer, view === 'profile' ? <ProfileSkeleton /> : <AccountPageSkeleton />)
   if (unavailable || !visibleAccount || !visibleWallet) return renderSectionStatus(sectionRenderer, <div className="profile-unavailable"><StateCard title={view === 'vip' ? 'پلن‌های VIP در دسترس نیست' : view === 'wallet' ? 'کیف پول در دسترس نیست' : 'پروفایل در دسترس نیست'} body={visibleError || 'دوباره تلاش کنید.'} /><button className="profile-retry" onClick={() => { if (!preview) { setLoading(true); void load() } }}><Icon name="refresh" size={17} />{text('common.retry')}</button></div>)
   const identity = <ProfileAccountCard account={visibleAccount} balance={visibleWallet.balance} displayName={displayName} username={visibleAccount.username || telegramUser?.username} photoUrl={visibleAccount.photo_url ?? telegramUser?.photoUrl} initDataRaw={initDataRaw} activePlan={activePlan} />
+  const previewResult: PaymentResult | null = preview && dismissedResultScenario !== scenario && ['success', 'payment-failed', 'payment-cancelled', 'payment-pending'].includes(scenario) ? {
+    kind: visibleNoticeKind,
+    title: text(visibleNoticeKind === 'pending' ? 'payment.pending_title' : visibleNoticeKind === 'success' ? 'payment.success_title' : visibleNoticeKind === 'cancelled' ? 'payment.cancelled_title' : 'payment.failed_title'),
+    message: visibleNotice || '',
+  } : null
   const chrome = <>
     {(visibleNotice || visibleError) && <PaymentStatusNotice
       kind={visibleNotice ? visibleNoticeKind : 'error'}
@@ -146,13 +158,13 @@ export function ProfilePage({ initDataRaw, telegramUser, preview = false, scenar
     />}
     {visibleTestInvoice && <section className="payment-simulator"><div><strong>شبیه‌ساز پرداخت سراسری</strong><span>این شبیه‌سازی موجودی کیف پول یا اشتراک واقعی ایجاد نمی‌کند.</span></div><div className="payment-simulator-actions"><button disabled={Boolean(busyKey)} onClick={() => void simulate('succeeded')}>موفق</button><button disabled={Boolean(busyKey)} onClick={() => void simulate('failed')}>ناموفق</button><button disabled={Boolean(busyKey)} onClick={() => void simulate('cancelled')}>لغو</button></div></section>}
 
-    {checkout && <VipCheckoutModal checkout={checkout} balance={visibleWallet.balance} preview={preview} onMethod={method => setCheckout(current => current ? { ...current, method } : null)} onClose={() => setCheckout(null)} onConfirm={() => void buyPlan()} />}
-    <PaymentResultModal result={paymentResult} onClose={() => setPaymentResult(null)} />
+    {checkout && <VipCheckoutModal starsEnabled={paymentMethods.telegram_stars} checkout={checkout} balance={visibleWallet.balance} preview={preview} onMethod={method => setCheckout(current => current ? { ...current, method } : null)} onClose={() => setCheckout(null)} onConfirm={() => void buyPlan()} />}
+    <PaymentResultModal result={previewResult || paymentResult} onClose={() => { setPaymentResult(null); setDismissedResultScenario(scenario) }} />
   </>
-  const walletProps = { wallet: visibleWallet, packs: preview && scenario === 'no-packs' ? [] : packs, busyKey, onTopup: (pack: WalletTopupPack) => void topup(pack), preview }
-  const vipProps = { account: visibleAccount, plans: preview && scenario === 'no-plans' ? [] : plans, busyKey, onChoose: (plan: VipPlan, method: PaymentMethod) => void preparePlan(plan, method) }
+  const walletProps = { starsEnabled: paymentMethods.telegram_stars, cardEnabled: paymentMethods.card_to_card, wallet: visibleWallet, packs: preview && scenario === 'no-packs' ? [] : packs, busyKey, onTopup: (pack: WalletTopupPack) => void topup(pack), preview, initDataRaw: preview ? null : initDataRaw, onChanged: () => void load() }
+  const vipProps = { walletBalance: visibleWallet.balance, starsEnabled: paymentMethods.telegram_stars, cardEnabled: paymentMethods.card_to_card, account: visibleAccount, plans: preview && scenario === 'no-plans' ? [] : plans, busyKey, onChoose: (plan: VipPlan, method: PaymentMethod) => void preparePlan(plan, method), initDataRaw: preview ? null : initDataRaw, onChanged: () => void load() }
   const shortcuts = <ProfileQuickLinks />
-  const activity = <ProfileActivity transactions={visibleWallet.transactions} />
+  const activity = <><ProfileActivity transactions={visibleWallet.transactions} /><ManualHistory initDataRaw={initDataRaw} preview={preview} scenario={scenario} /></>
   const referrals = <ProfileReferrals initDataRaw={initDataRaw} preview={preview} scenario={scenario} onAccountRefresh={load} />
   if (sectionRenderer) return sectionRenderer({ slots: {
     'account.identity': identity, 'account.shortcuts': shortcuts, 'account.activity': activity, 'account.referrals': referrals,

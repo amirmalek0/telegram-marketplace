@@ -70,7 +70,7 @@ export function OrderCard({ order, product }: OrderCardProps) {
       <p className="order-status-detail">{status.detail}</p>
 
       <div className="order-facts">
-        <div><small>مبلغ سفارش</small><strong>{formatStars(order.stars)}</strong></div>
+        <div><small>مبلغ سفارش</small><strong>{order.currency === 'IRR' ? `${(order.toman || 0).toLocaleString('fa-IR')} تومان` : formatStars(order.stars)}</strong></div>
         <div><small>تعداد</small><strong>{Math.max(1, Number(order.quantity) || 1).toLocaleString('fa-IR')}</strong></div>
         <div>
           <small>تحویل</small>
