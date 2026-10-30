@@ -23,7 +23,7 @@ telegram-marketplace/
 | **Bot** | 8081 | Telegram Bot webhook/polling service |
 | **Mini App** | 3000 | Telegram Mini App frontend |
 | **Backoffice** | 3001 | Admin panel frontend |
-| **PostgreSQL** | 5432 | Database |
+| **PostgreSQL** | `${POSTGRES_PORT:-5432}` | Database (host port; containers use 5432) |
 | **MinIO** | 9000/9001 | Object storage (S3-compatible) |
 | **pgAdmin** | 5050 | Database admin UI |
 

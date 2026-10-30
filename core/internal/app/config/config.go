@@ -40,6 +40,8 @@ type Config struct {
 	ProductImagesBucket     string // e.g. "product-images"
 	ProductImagesPublicURL  string // e.g. "/storage/product-images"
 	UserProfilePhotosBucket string // Private: served only by authenticated API endpoints.
+	ShopLogosBucket         string // Public branding assets served through the API.
+	MiniappImagesBucket     string
 }
 
 // Load reads configuration from environment variables and returns a Config.
@@ -77,6 +79,8 @@ func Load() Config {
 
 		ProductImagesBucket:     getEnv("PRODUCT_IMAGES_BUCKET", "product-images"),
 		UserProfilePhotosBucket: getEnv("USER_PROFILE_PHOTOS_BUCKET", "user-profile-photos"),
+		ShopLogosBucket:         getEnv("SHOP_LOGOS_BUCKET", "shop-logos"),
+		MiniappImagesBucket:     getEnv("MINIAPP_IMAGES_BUCKET", "miniapp-images"),
 		ProductImagesPublicURL:  mustEnv("PRODUCT_IMAGES_PUBLIC_URL"),
 	}
 }

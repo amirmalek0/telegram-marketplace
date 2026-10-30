@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: tgmp
       POSTGRES_DB: telegram_marketplace
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -82,6 +82,8 @@ services:
       PRODUCT_FILES_PUBLIC_URL: ${PRODUCT_FILES_PUBLIC_URL:-/storage/product-files}
       PRODUCT_IMAGES_BUCKET: ${PRODUCT_IMAGES_BUCKET:-product-images}
       USER_PROFILE_PHOTOS_BUCKET: ${USER_PROFILE_PHOTOS_BUCKET:-user-profile-photos}
+      SHOP_LOGOS_BUCKET: ${SHOP_LOGOS_BUCKET:-shop-logos}
+      MINIAPP_IMAGES_BUCKET: ${MINIAPP_IMAGES_BUCKET:-miniapp-images}
       PRODUCT_IMAGES_PUBLIC_URL: ${PRODUCT_IMAGES_PUBLIC_URL:-/storage/product-images}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001}
       ADDR: ":8080"
