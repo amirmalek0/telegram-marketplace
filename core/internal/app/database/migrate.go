@@ -29,7 +29,13 @@ func Migrate(ctx context.Context, db *pgxpool.Pool) {
 		}
 	}()
 
-	for i, stmt := range append(append(append(migrations, referralMigrations...), userPhotoMigrations...), securityMigrations...) {
+	allMigrations := append(append(append(append(migrations, referralMigrations...), userPhotoMigrations...), securityMigrations...), miniappWidgetMigrations...)
+	allMigrations = append(allMigrations, manualPaymentMigrations...)
+	allMigrations = append(allMigrations, couponCurrencyMigrations...)
+	allMigrations = append(allMigrations, paymentMethodMigrations...)
+	allMigrations = append(allMigrations, paymentNotificationMigrations...)
+	allMigrations = append(allMigrations, botMessageMigrations...)
+	for i, stmt := range allMigrations {
 		if _, err := conn.Exec(ctx, stmt); err != nil {
 			log.Fatalf("migration %d failed: %v", i+1, err)
 		}

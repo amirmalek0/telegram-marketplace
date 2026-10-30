@@ -14,11 +14,21 @@ type notificationSender interface {
 	SendMessage(context.Context, int64, string) error
 }
 
+type templatedSender interface {
+	SendNotification(context.Context, int64, string, string, map[string]string) error
+}
+
+func (s *Service) SetNotificationSender(sender notificationSender) { s.notificationSender = sender }
+
 // Only the bot worker dispatches committed credits. No Telegram call is made
 // while a wallet transaction is open. Multiple workers claim exclusive leases.
 func (s *Service) DispatchNotifications(ctx context.Context) error {
 	repo, ok := s.repo.(repository.NotificationRepository)
 	sender, hasSender := s.bot.(notificationSender)
+	if s.notificationSender != nil {
+		sender = s.notificationSender
+		hasSender = true
+	}
 	if !ok || !hasSender {
 		return nil
 	}
@@ -31,7 +41,12 @@ func (s *Service) DispatchNotifications(ctx context.Context) error {
 			return err
 		}
 		sendCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
-		sendErr := sender.SendMessage(sendCtx, n.ChatID, n.Message)
+		var sendErr error
+		if rich, ok := sender.(templatedSender); ok {
+			sendErr = rich.SendNotification(sendCtx, n.ChatID, "referral."+n.Role, n.Message, n.Vars)
+		} else {
+			sendErr = sender.SendMessage(sendCtx, n.ChatID, n.Message)
+		}
 		cancel()
 		outcome, delay := "sent", 0
 		if sendErr != nil {

@@ -8,7 +8,10 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
+	"telegram-marketplace/internal/core/botmessages"
+	botmessagemodel "telegram-marketplace/internal/core/botmessages/model"
 	"time"
 
 	"telegram-marketplace/internal/app/config"
@@ -120,7 +123,31 @@ func (h *Handler) StartWebhook(addr, webhookURL string) error {
 	return http.ListenAndServe(addr, mux)
 }
 
+func (h *Handler) messages() *botmessages.Service {
+	if h.services.BotMessagesService != nil {
+		return h.services.BotMessagesService
+	}
+	return botmessages.NewService(nil, h.telegram)
+}
 func (h *Handler) processUpdate(ctx context.Context, update telegramclient.Update) error {
+	if q := update.CallbackQuery; q != nil {
+		// An expired callback acknowledgement must not prevent a queued message
+		// retry or trap a harmless menu click in the recovery queue forever.
+		_ = h.telegram.AnswerCallback(ctx, q.ID)
+		if q.Message == nil || q.Message.Chat.Type != "private" || q.Message.Chat.ID != q.From.ID {
+			return nil
+		}
+		key := strings.TrimPrefix(q.Data, "bm:")
+		if !strings.HasPrefix(q.Data, "bm:") {
+			return nil
+		}
+		if key == "verify" {
+			key = "phone.request"
+		} else if !botmessagemodel.IsCustom(key) {
+			return nil
+		}
+		return h.messages().Send(ctx, q.From.ID, key, botmessages.Identity(&q.From))
+	}
 	if message := update.Message; message != nil && message.From != nil && message.Chat.Type == "private" && message.Chat.ID == message.From.ID {
 		parts := strings.Fields(message.Text)
 		if len(parts) > 0 && parts[0] == "/start" && (len(message.ForwardOrigin) == 0 || string(message.ForwardOrigin) == "null") {
@@ -131,7 +158,7 @@ func (h *Handler) processUpdate(ctx context.Context, update telegramclient.Updat
 		return h.processContact(ctx, message)
 	}
 	if message := update.Message; message != nil && message.Text == "/verify" && message.From != nil && message.Chat.Type == "private" && message.Chat.ID == message.From.ID {
-		return h.telegram.RequestContact(ctx, message.Chat.ID)
+		return h.messages().Send(ctx, message.Chat.ID, "phone.request", botmessages.Identity(message.From))
 	}
 	if h.services.PaymentsService == nil {
 		return errors.New("payment service is not configured")
@@ -151,14 +178,14 @@ func (h *Handler) processUpdate(ctx context.Context, update telegramclient.Updat
 				return err
 			}
 			if !verified {
-				return h.telegram.AnswerPreCheckoutQuery(ctx, query.ID, false, "ابتدا شماره تلفن خود را در مینی‌اپ تأیید کنید.")
+				return h.telegram.AnswerPreCheckoutQuery(ctx, query.ID, false, h.messages().Text(ctx, "checkout.phone_required", nil))
 			}
 		}
 		err = h.services.PaymentsService.ValidatePreCheckout(
 			ctx, query.From.ID, query.InvoicePayload, query.Currency, query.TotalAmount,
 		)
 		if err != nil {
-			return h.telegram.AnswerPreCheckoutQuery(ctx, query.ID, false, "این پرداخت معتبر نیست یا منقضی شده است.")
+			return h.telegram.AnswerPreCheckoutQuery(ctx, query.ID, false, h.messages().Text(ctx, "checkout.invalid", nil))
 		}
 		return h.telegram.AnswerPreCheckoutQuery(ctx, query.ID, true, "")
 	}
@@ -196,12 +223,14 @@ func (h *Handler) processUpdate(ctx context.Context, update telegramclient.Updat
 			if recordErr := h.services.PaymentsService.RecordRefund(ctx, paid.InvoicePayload, paid.TelegramPaymentChargeID, telegramID); recordErr != nil {
 				return recordErr
 			}
-			_ = h.telegram.SendMessage(ctx, message.Chat.ID, "این سفارش قابل تکمیل نبود؛ مبلغ پرداخت به حساب تلگرام شما بازگردانده شد.")
+			_ = h.messages().Send(ctx, message.Chat.ID, "payment.refunded", botmessages.Identity(message.From))
 			return nil
 		}
 		return err
 	}
-	if err := h.telegram.SendMessage(ctx, message.Chat.ID, "پرداخت شما با موفقیت انجام شد ✅\nحساب شما در مینی‌اپ به‌روزرسانی شده است."); err != nil {
+	vars := botmessages.Identity(message.From)
+	vars["amount"] = strconv.FormatInt(paid.TotalAmount, 10)
+	if err := h.messages().Send(ctx, message.Chat.ID, "payment.succeeded", vars); err != nil {
 		log.Printf("telegram payment confirmation message: %v", err)
 	}
 	return nil
@@ -221,7 +250,7 @@ func (h *Handler) processStart(ctx context.Context, message *telegramclient.Mess
 		return err
 	}
 	// Failure to send a welcome must not replay financial side effects.
-	if err = h.telegram.SendMiniAppWelcome(ctx, u.ID); err != nil {
+	if err = h.messages().Send(ctx, u.ID, "start", botmessages.Identity(u)); err != nil {
 		log.Printf("bot welcome could not be sent")
 	}
 	return nil
@@ -247,7 +276,7 @@ func (h *Handler) processContact(ctx context.Context, message *telegramclient.Me
 		return err
 	}
 	// Do not retry an already-verified contact just because confirmation failed.
-	if err := h.telegram.SendMessage(ctx, message.Chat.ID, "شماره تلفن شما تأیید شد ✅\nاکنون می‌توانید به مینی‌اپ برگردید."); err != nil {
+	if err := h.messages().Send(ctx, message.Chat.ID, "phone.verified", botmessages.Identity(message.From)); err != nil {
 		log.Printf("telegram contact confirmation failed")
 	}
 	return nil

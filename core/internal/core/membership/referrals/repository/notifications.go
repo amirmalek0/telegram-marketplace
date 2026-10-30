@@ -14,7 +14,7 @@ type NotificationRepository interface {
 
 func (r *postgresRepository) ClaimNotification(ctx context.Context) (*model.Notification, error) {
 	var n model.Notification
-	err := r.db.QueryRow(ctx, queryClaimNotification).Scan(&n.ID, &n.ChatID, &n.Message, &n.Attempts, &n.LeaseToken)
+	err := r.db.QueryRow(ctx, queryClaimNotification).Scan(&n.ID, &n.ChatID, &n.Message, &n.Attempts, &n.LeaseToken, &n.Role, &n.Vars)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil
 	}

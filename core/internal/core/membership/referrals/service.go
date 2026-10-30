@@ -16,10 +16,11 @@ type BotIdentity interface {
 	BotUsername(context.Context) (string, error)
 }
 type Service struct {
-	repo     repository.Repository
-	bot      BotIdentity
-	mu       sync.Mutex
-	username string
+	notificationSender notificationSender
+	repo               repository.Repository
+	bot                BotIdentity
+	mu                 sync.Mutex
+	username           string
 }
 
 func NewService(repo repository.Repository, bot BotIdentity) *Service {

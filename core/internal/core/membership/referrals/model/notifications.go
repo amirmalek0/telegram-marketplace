@@ -68,6 +68,8 @@ func DisplayName(first, last, username string) string {
 }
 
 type Notification struct {
+	Role       string
+	Vars       map[string]string
 	ID         string
 	ChatID     int64
 	Message    string

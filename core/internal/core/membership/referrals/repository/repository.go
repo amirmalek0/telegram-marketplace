@@ -2,8 +2,10 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"math"
+	"strconv"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -170,7 +172,8 @@ func (r *postgresRepository) Reward(ctx context.Context, tg int64) error {
 			role, template = "invitee", s.InviteeMessage
 		}
 		message := model.RenderMessage(template, amount, inviterName, inviteeName)
-		if _, err = tx.Exec(ctx, queryQueueNotification, id, w.ID, role, w.TelegramID, message); err != nil {
+		vars, _ := json.Marshal(map[string]string{"amount": strconv.FormatInt(amount, 10), "inviter_name": inviterName, "invitee_name": inviteeName})
+		if _, err = tx.Exec(ctx, queryQueueNotification, id, w.ID, role, w.TelegramID, message, vars); err != nil {
 			return err
 		}
 	}

@@ -167,6 +167,7 @@ type Chat struct {
 }
 
 type Update struct {
+	CallbackQuery    *CallbackQuery    `json:"callback_query"`
 	UpdateID         int64             `json:"update_id"`
 	PreCheckoutQuery *PreCheckoutQuery `json:"pre_checkout_query"`
 	Message          *Message          `json:"message"`
@@ -176,7 +177,7 @@ func (c *Client) GetUpdates(ctx context.Context, offset int64, timeout int) ([]U
 	return call[[]Update](ctx, c, "getUpdates", map[string]any{
 		"offset":          offset,
 		"timeout":         timeout,
-		"allowed_updates": []string{"pre_checkout_query", "message"},
+		"allowed_updates": []string{"pre_checkout_query", "message", "callback_query"},
 	})
 }
 
@@ -200,7 +201,7 @@ func (c *Client) DeleteWebhook(ctx context.Context, dropPending bool) error {
 func (c *Client) SetWebhook(ctx context.Context, url, secret string) error {
 	input := map[string]any{
 		"url":             url,
-		"allowed_updates": []string{"pre_checkout_query", "message"},
+		"allowed_updates": []string{"pre_checkout_query", "message", "callback_query"},
 	}
 	if secret != "" {
 		input["secret_token"] = secret

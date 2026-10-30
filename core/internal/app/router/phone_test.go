@@ -65,7 +65,7 @@ func TestAllDomainRoutesBlockedAndBootstrapRemainsAvailable(t *testing.T) {
 	identity := users.NewService(usersRepo)
 	r := New("test-token", nil, Handlers{SettingsService: policy, UsersService: identity, Users: users.NewHandler(identity, policy)})
 	for _, route := range r.Routes() {
-		if route.Path == "/health" || strings.HasPrefix(route.Path, "/api/v1/auth/") || route.Path == "/api/v1/miniapp-content" || route.Path == "/api/v1/user/phone-verification" || (route.Path == "/api/v1/user" && route.Method == "POST") {
+		if route.Path == "/health" || strings.HasPrefix(route.Path, "/api/v1/auth/") || route.Path == "/api/v1/miniapp-content" || (route.Method == "GET" && (route.Path == "/api/v1/miniapp-logo/:key" || route.Path == "/api/v1/miniapp-images/:key")) || route.Path == "/api/v1/user/phone-verification" || (route.Path == "/api/v1/user" && route.Method == "POST") {
 			continue
 		}
 		path := strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(route.Path, ":id", "sample"), ":user_id", "sample"), ":key", "sample")

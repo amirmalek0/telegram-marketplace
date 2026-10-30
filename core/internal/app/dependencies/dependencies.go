@@ -7,6 +7,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"telegram-marketplace/internal/app/config"
 	"telegram-marketplace/internal/app/router"
+	"telegram-marketplace/internal/core/botmessages"
+	botmessagerepo "telegram-marketplace/internal/core/botmessages/repository"
 	"telegram-marketplace/internal/core/catalog/apis"
 	apirepo "telegram-marketplace/internal/core/catalog/apis/repository"
 	"telegram-marketplace/internal/core/catalog/bundles"
@@ -101,15 +103,25 @@ func Wire(ctx context.Context, db *pgxpool.Pool, cfg config.Config) router.Handl
 	productFilesStore := storageClient.Bucket(cfg.ProductFilesBucket, cfg.ProductFilesPublicURL)
 	productImagesStore := storageClient.Bucket(cfg.ProductImagesBucket, cfg.ProductImagesPublicURL)
 
+	botMessageService := botmessages.NewService(botmessagerepo.New(db), telegramclient.NewClient(cfg.BotToken))
 	// --- membership/users ---
 	settingsRepo := settingsrepo.NewPostgresRepository(db)
 	settingsService := settings.NewService(settingsRepo)
+	if err := storageClient.EnsureBucket(ctx, cfg.ShopLogosBucket); err != nil {
+		log.Fatalf("storage: %v", err)
+	}
+	settingsService.SetLogoStorage(storageClient.Bucket(cfg.ShopLogosBucket, ""))
+	if err := storageClient.EnsureBucket(ctx, cfg.MiniappImagesBucket); err != nil {
+		log.Fatalf("storage: %v", err)
+	}
+	settingsService.SetImageStorage(storageClient.Bucket(cfg.MiniappImagesBucket, ""))
 	settingsHandler := settings.NewHandler(settingsService)
 	userRepo := userrepo.NewPostgresRepository(db)
 	userService := users.NewService(userRepo)
 	userService.SetPhotoArchive(photoService)
 	referralService := referrals.NewService(referralrepo.NewPostgresRepository(db), telegramclient.NewClient(cfg.BotToken))
 	userService.SetReferralRewards(referralService)
+	referralService.SetNotificationSender(botMessageService)
 	userHandler := users.NewHandler(userService, settingsService)
 
 	// --- catalog/categories ---
@@ -173,6 +185,13 @@ func Wire(ctx context.Context, db *pgxpool.Pool, cfg config.Config) router.Handl
 	paymentsService := payments.NewService(
 		paymentsRepo, telegramAPI, apiService, productFilesStore,
 	)
+	// Payment proof is never public; serve it only through owner/admin-authenticated routes.
+	if err := storageClient.EnsureBucket(ctx, "payment-receipts"); err != nil {
+		log.Fatalf("ensure payment receipt bucket: %v", err)
+	}
+	paymentsService.SetReviewNotificationSender(botMessageService)
+	paymentsService.SetBotMessageText(botMessageService)
+	paymentsService.SetReceiptStorage(storageClient.Bucket("payment-receipts", ""))
 	paymentsHandler := payments.NewHandler(paymentsService)
 	paymentsService.SetReferralRewards(referralService)
 
@@ -192,31 +211,33 @@ func Wire(ctx context.Context, db *pgxpool.Pool, cfg config.Config) router.Handl
 	ticketHandler := tickets.NewHandler(ticketService)
 
 	return router.Handlers{
-		UserPhotos:        userphotos.NewHandler(photoService),
-		UserPhotosService: photoService,
-		Referrals:         referrals.NewHandler(referralService),
-		ReferralsService:  referralService,
-		Broadcasts:        broadcasts.NewHandler(broadcasts.NewService(broadcastrepo.NewPostgresRepository(db))),
-		Auth:              authHandler,
-		AuthService:       authService,
-		Users:             userHandler,
-		UsersService:      userService,
-		Categories:        categoryHandler,
-		Files:             fileHandler,
-		Messages:          msgHandler,
-		Inventory:         invHandler,
-		APIs:              apiHandler,
-		Bundles:           bundleHandler,
-		Products:          productHandler,
-		Admins:            adminHandler,
-		Coupons:           couponsHandler,
-		Orders:            ordersHandler,
-		Payments:          paymentsHandler,
-		PaymentsService:   paymentsService,
-		Tickets:           ticketHandler,
-		TicketCategories:  ticketCategoryHandler,
-		VIP:               vipHandler,
-		Settings:          settingsHandler,
-		SettingsService:   settingsService,
+		BotMessages:        botmessages.NewHandler(botMessageService),
+		BotMessagesService: botMessageService,
+		UserPhotos:         userphotos.NewHandler(photoService),
+		UserPhotosService:  photoService,
+		Referrals:          referrals.NewHandler(referralService),
+		ReferralsService:   referralService,
+		Broadcasts:         broadcasts.NewHandler(broadcasts.NewService(broadcastrepo.NewPostgresRepository(db))),
+		Auth:               authHandler,
+		AuthService:        authService,
+		Users:              userHandler,
+		UsersService:       userService,
+		Categories:         categoryHandler,
+		Files:              fileHandler,
+		Messages:           msgHandler,
+		Inventory:          invHandler,
+		APIs:               apiHandler,
+		Bundles:            bundleHandler,
+		Products:           productHandler,
+		Admins:             adminHandler,
+		Coupons:            couponsHandler,
+		Orders:             ordersHandler,
+		Payments:           paymentsHandler,
+		PaymentsService:    paymentsService,
+		Tickets:            ticketHandler,
+		TicketCategories:   ticketCategoryHandler,
+		VIP:                vipHandler,
+		Settings:           settingsHandler,
+		SettingsService:    settingsService,
 	}
 }
