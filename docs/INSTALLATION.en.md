@@ -1,15 +1,44 @@
-# Installation and architecture
+<a name="guide-top"></a>
 
-[راهنمای فارسی](INSTALLATION.fa.md) · [Project overview and screenshots](../README.md)
+<h1 align="center">📘 Installation and architecture</h1>
+
+<p align="center">
+  <a href="../README.md"><img src="https://img.shields.io/badge/Project%20overview-334155?style=for-the-badge&amp;logo=github&amp;logoColor=white" alt="Project overview"></a>
+  <a href="INSTALLATION.fa.md"><img src="https://img.shields.io/badge/%D8%B1%D8%A7%D9%87%D9%86%D9%85%D8%A7%DB%8C%20%D9%81%D8%A7%D8%B1%D8%B3%DB%8C-2563EB?style=for-the-badge&amp;logo=docker&amp;logoColor=white" alt="راهنمای فارسی"></a>
+</p>
 
 This guide installs **one marketplace with one Telegram bot** using the included Docker services. Complete steps 1–6 to run it locally; complete steps 7–9 to use it from Telegram and prepare your first product.
 
 Run commands from the repository directory unless a step says otherwise. On a server, run them in your SSH session. On Windows, use a WSL 2 Linux terminal with Docker Desktop integration enabled.
 
-[Requirements](#step-1) · [Environment settings](#step-4) · [HTTPS](#step-7) · [Telegram](#step-8) · [Troubleshooting](#troubleshooting) · [Architecture](#architecture)
+| What do you want to do? | Follow this path |
+|---|---|
+| Inspect the admin panel on your computer | Steps 1–6; public DNS is not required. |
+| Use the store from Telegram | Steps 1–9; provide a reachable HTTPS URL in step 7. |
 
-<a id="step-1"></a>
-## 1. Prepare your computer or server
+<details>
+<summary><strong>🧭 Installation map — jump to a step</strong></summary>
+
+<table>
+<tr><td align="center">1</td><td><a href="#step-1">🧰 Prepare your computer or server</a></td></tr>
+<tr><td align="center">2</td><td><a href="#step-2">🤖 Create your Telegram bot</a></td></tr>
+<tr><td align="center">3</td><td><a href="#step-3">📥 Download the source</a></td></tr>
+<tr><td align="center">4</td><td><a href="#step-4">🔐 Set credentials</a></td></tr>
+<tr><td align="center">5</td><td><a href="#step-5">🚀 Build and start</a></td></tr>
+<tr><td align="center">6</td><td><a href="#step-6">🖥️ Open the admin panel</a></td></tr>
+<tr><td align="center">7</td><td><a href="#step-7">🌐 Add domains and HTTPS</a></td></tr>
+<tr><td align="center">8</td><td><a href="#step-8">✈️ Connect Telegram</a></td></tr>
+<tr><td align="center">9</td><td><a href="#step-9">✅ Test a complete purchase</a></td></tr>
+</table>
+</details>
+
+<p align="center"><a href="#operations">🗃️ Maintenance</a> · <a href="#troubleshooting">🛠️ Troubleshooting</a> · <a href="#architecture">🏗️ Architecture</a></p>
+
+---
+
+<a name="step-1"></a>
+
+## 1. 🧰 Prepare your computer or server
 
 You need:
 
@@ -32,10 +61,12 @@ docker compose version
 docker info
 ```
 
-**Expected result:** the version commands succeed and `docker info` can reach the Docker engine. If it cannot, start Docker or fix Docker access before continuing.
+> [!TIP]
+> **Expected result:** the version commands succeed and `docker info` can reach the Docker engine. If it cannot, start Docker or fix Docker access before continuing.
 
-<a id="step-2"></a>
-## 2. Create your Telegram bot
+<a name="step-2"></a>
+
+## 2. 🤖 Create your Telegram bot
 
 1. Open the official [@BotFather](https://t.me/BotFather).
 2. Send `/newbot`, choose a display name, and choose the username BotFather requests.
@@ -43,8 +74,9 @@ docker info
 
 You can also use an existing bot. Stop any other installation/process that consumes updates for the same token before starting this one. The default setup uses **polling**: the bot contacts Telegram itself, so it does not need a public webhook endpoint.
 
-<a id="step-3"></a>
-## 3. Download the source and create `.env`
+<a name="step-3"></a>
+
+## 3. 📥 Download the source and create `.env`
 
 ```sh
 git clone --branch main https://github.com/amirmalek0/telegram-marketplace.git
@@ -54,10 +86,12 @@ cp .env.example .env
 
 The directory should now contain `.env`, `docker-compose.yml`, `core/`, `miniapp/`, and `backoffice/`. `.env` is your private installation configuration; `.env.example` is only a template.
 
-**Copy the template only for a new installation.** Copying it again over an existing `.env` would replace your current credentials and settings. Do not commit `.env` or share its contents.
+> [!IMPORTANT]
+> **Copy the template only for a new installation.** Copying it again over an existing `.env` would replace your current credentials and settings. Do not commit `.env` or share its contents.
 
-<a id="step-4"></a>
-## 4. Set credentials and basic configuration
+<a name="step-4"></a>
+
+## 4. 🔐 Set credentials and basic configuration
 
 Open `.env` in a text editor. Replace the following values before the first startup:
 
@@ -107,10 +141,12 @@ Validate the configuration without printing the resolved secrets:
 docker compose config --quiet
 ```
 
-**Expected result:** no validation error. This checks Compose configuration, not whether your Telegram token is valid.
+> [!TIP]
+> **Expected result:** no validation error. This checks Compose configuration, not whether your Telegram token is valid.
 
-<a id="step-5"></a>
-## 5. Build and start the services
+<a name="step-5"></a>
+
+## 5. 🚀 Build and start the services
 
 ```sh
 docker compose up -d --build
@@ -120,7 +156,8 @@ curl --fail http://localhost:8080/health
 
 The first build downloads dependencies and can take several minutes. `-d` keeps the containers running in the background.
 
-**Expected result:** `postgres`, `minio`, `api`, `bot`, `miniapp`, and `backoffice` are running; infrastructure health checks become healthy; the API returns `{"status":"ok"}`. Database tables, storage buckets, and the initial admin are created automatically. You do not need to import SQL or create buckets manually.
+> [!TIP]
+> **Expected result:** `postgres`, `minio`, `api`, `bot`, `miniapp`, and `backoffice` are running; infrastructure health checks become healthy; the API returns `{"status":"ok"}`. Database tables, storage buckets, and the initial admin are created automatically. You do not need to import SQL or create buckets manually.
 
 If a service exits or keeps restarting, inspect it before continuing:
 
@@ -131,8 +168,9 @@ docker compose logs --tail=100 postgres minio
 
 Do not start another copy of this bot token while these services are running.
 
-<a id="step-6"></a>
-## 6. Open the admin panel
+<a name="step-6"></a>
+
+## 6. 🖥️ Open the admin panel
 
 For an installation on your own computer:
 
@@ -145,7 +183,8 @@ For an installation on your own computer:
 
 Sign in with the `ADMIN_SEED_USERNAME` and `ADMIN_SEED_PASSWORD` you saved in `.env`. These values create the admin **only on the first database initialization**. Editing them later does not reset an existing admin; use the panel's password-change option instead.
 
-**On a remote server, `localhost` means the server, not your laptop.** Continue to step 7 and open the public admin domain afterward. If you need temporary access before DNS is ready, run this on your own computer, replacing the SSH account and IP:
+> [!NOTE]
+> **On a remote server, `localhost` means the server, not your laptop.** Continue to step 7 and open the public admin domain afterward. If you need temporary access before DNS is ready, run this on your own computer, replacing the SSH account and IP:
 
 ```sh
 ssh -N -L 3000:127.0.0.1:3000 -L 3001:127.0.0.1:3001 deploy@YOUR_SERVER_IP
@@ -153,8 +192,9 @@ ssh -N -L 3000:127.0.0.1:3000 -L 3001:127.0.0.1:3001 deploy@YOUR_SERVER_IP
 
 Keep that SSH session open, then visit `http://localhost:3001` on your computer. This forwards the admin and miniapp ports without exposing them publicly.
 
-<a id="step-7"></a>
-## 7. Add domains and HTTPS
+<a name="step-7"></a>
+
+## 7. 🌐 Add domains and HTTPS
 
 Telegram customer access needs a reachable HTTPS miniapp URL. This project includes an optional Caddy gateway that manages certificates for both frontends.
 
@@ -187,20 +227,23 @@ Changing `.env` alone does not update a running container. Repeat the `up -d --b
 
 For local development, an HTTPS tunnel may forward to **miniapp port 3000**. Its public URL must also replace the URL in BotFather and `MINIAPP_PUBLIC_URL`; rebuild the admin frontend afterward. Temporary tunnel URLs must be updated whenever they change. A tunnel is an alternative to this gateway, not a required project dependency.
 
-<a id="step-8"></a>
-## 8. Connect the miniapp to the bot
+<a name="step-8"></a>
+
+## 8. ✈️ Connect the miniapp to the bot
 
 1. In BotFather, send `/setmenubutton` and select your bot.
 2. Set the URL to your miniapp address, for example `https://shop.example.com`, and choose a button label such as «فروشگاه».
 3. You can also configure the bot's **Main Mini App** in BotFather with the same URL to add a launch button to its profile.
 4. Open your bot's private chat, send `/start`, and open the store from its menu button.
 
-**Expected result:** the miniapp opens inside Telegram and customer pages can authenticate. Opening its URL in an ordinary browser does not supply Telegram `initData`; that is not a valid authenticated customer test.
+> [!TIP]
+> **Expected result:** the miniapp opens inside Telegram and customer pages can authenticate. Opening its URL in an ordinary browser does not supply Telegram `initData`; that is not a valid authenticated customer test.
 
 `MINIAPP_PUBLIC_URL` configures the admin preview; it does **not** update BotFather automatically. Configure the menu button even if you also configure a Main Mini App, because the bot uses that menu URL for its store buttons. See [Telegram's Mini App setup guide](https://core.telegram.org/bots/webapps#launching-mini-apps-from-the-menu-button).
 
-<a id="step-9"></a>
-## 9. Configure the store and test one complete purchase
+<a name="step-9"></a>
+
+## 9. ✅ Configure the store and test one complete purchase
 
 In the Persian admin panel:
 
@@ -213,8 +256,23 @@ In the Persian admin panel:
 
 For digital sales inside Telegram, review the [official Stars payment requirements](https://core.telegram.org/bots/payments-stars) before choosing the payment methods you offer.
 
-<a id="operations"></a>
-## Starting, stopping, updating, and keeping data
+<details>
+<summary><strong>✅ Ready-to-launch checklist</strong></summary>
+
+- [ ] Both public domains load with valid HTTPS.
+- [ ] The admin can sign in, and the miniapp opens from the bot's menu.
+- [ ] A test purchase creates the expected order and access to its delivery.
+- [ ] Card-transfer delivery, if enabled, waits for admin approval.
+- [ ] Real payment mode is selected before taking customer payments.
+- [ ] Database, object files and private configuration have a backup plan.
+
+</details>
+
+---
+
+<a name="operations"></a>
+
+## 🗃️ Starting, stopping, updating, and keeping data
 
 | Task | Command / action |
 |---|---|
@@ -247,8 +305,9 @@ docker compose --profile tools up -d pgadmin dbeaver
 
 They are available locally on ports 5050 and 8978. Their example credentials are for local tooling; change them before granting anyone access. Normal store management uses the admin panel instead.
 
-<a id="troubleshooting"></a>
-## Troubleshooting
+<a name="troubleshooting"></a>
+
+## 🛠️ Troubleshooting
 
 | Symptom | Check and next action |
 |---|---|
@@ -265,8 +324,9 @@ They are available locally on ports 5050 and 8978. Their example credentials are
 | HTTPS certificate cannot be issued | Check both domains' A/AAAA records, inbound 80/443, port conflicts and gateway logs. |
 | Image/file requests fail | Check MinIO/API logs and storage credentials; keep `/storage/` URLs rather than exposing an internal `minio:9000` URL to customers. |
 
-<a id="architecture"></a>
-## Architecture and technical map
+<a name="architecture"></a>
+
+## 🏗️ Architecture and technical map
 
 ```text
 Customer in Telegram → miniapp nginx → /api/ → Go API → PostgreSQL
@@ -297,3 +357,7 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 ```
 
 This uses Vite and mounts the frontend `src/` and `public/` directories for hot reload on the same ports. It does not enable Go hot reload. Use this override for development; use the normal/HTTPS Compose files for deployment.
+
+---
+
+<p align="center"><a href="#guide-top">↑ Back to guide navigation</a> · <a href="../README.md">Project overview</a></p>
