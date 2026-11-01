@@ -1,14 +1,36 @@
 <div dir="rtl">
 
-# ربات و مینی‌اپ فروشگاهی تلگرام
+<a name="top"></a>
+
+<p align="center">
+  <a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="https://amirmalek.ir/wp-content/uploads/2026/11/telegram-marketplace-cover.jpg" alt="مینی‌اپ فروشگاهی تلگرام؛ ربات، فروشگاه و پنل مدیریت" width="960"></a>
+</p>
+
+<h1 align="center">ربات و مینی‌اپ فروشگاهی تلگرام</h1>
+<p align="center"><strong>از معرفی محصول و پرداخت تا تحویل و پشتیبانی، در دل تلگرام</strong></p>
+
+<p align="center">
+  <a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="https://img.shields.io/badge/%D8%AF%D9%85%D9%88%DB%8C%20%D8%B2%D9%86%D8%AF%D9%87%20%D9%88%20%D9%85%D8%B9%D8%B1%D9%81%DB%8C%20%DA%A9%D8%A7%D9%85%D9%84-2563EB?style=for-the-badge&amp;logo=telegram&amp;logoColor=white" alt="دموی زنده و معرفی کامل" width="320"></a>
+</p>
+
+<p align="center">
+  <a href="docs/INSTALLATION.fa.md"><img src="https://img.shields.io/badge/%D8%B1%D8%A7%D9%87%D9%86%D9%85%D8%A7%DB%8C%20%D9%86%D8%B5%D8%A8%20%D9%81%D8%A7%D8%B1%D8%B3%DB%8C-334155?style=for-the-badge&amp;logo=docker&amp;logoColor=white" alt="راهنمای نصب فارسی"></a>
+  <a href="docs/INSTALLATION.en.md"><img src="https://img.shields.io/badge/Installation%20%C2%B7%20EN-334155?style=for-the-badge&amp;logo=docker&amp;logoColor=white" alt="Installation · EN"></a>
+</p>
 
 این پروژه یک فروشگاه برای عرضه محصولات دیجیتال داخل تلگرام است. مشتری از ربات وارد مینی‌اپ می‌شود، محصول را انتخاب می‌کند، پرداخت را انجام می‌دهد و به محتوای خرید خود دسترسی پیدا می‌کند. مدیر فروشگاه نیز محصولات، پرداخت‌ها، مشتریان و پشتیبانی را از یک پنل فارسی تحت وب مدیریت می‌کند.
 
-**هر نصب برای یک فروشگاه و یک ربات اختصاصی است.** برای راه‌اندازی فروشگاه دیگری، نصب و پایگاه داده جدا لازم است. این نسخه سامانه چندفروشگاهی یا SaaS نیست.
+> 💡 **هر نصب برای یک فروشگاه و یک ربات اختصاصی است.** برای راه‌اندازی فروشگاه دیگری، نصب و پایگاه داده جدا لازم است. این نسخه سامانه چندفروشگاهی یا SaaS نیست.
 
-**[دموی تعاملی و تصاویر کامل](https://amirmalek.ir/telegram-marketplace-miniapp/)** · **[راهنمای نصب و معماری — فارسی](docs/INSTALLATION.fa.md)** · **[Installation & architecture — English](docs/INSTALLATION.en.md)**
+<p align="center">
+  <a href="#overview">🧭 معرفی</a> · <a href="#miniapp">📱 مینی‌اپ</a> · <a href="#delivery">📦 محصولات</a> · <a href="#payments">💳 پرداخت</a> · <a href="#admin">🖥️ مدیریت</a> · <a href="#customization">🎨 شخصی‌سازی</a> · <a href="#installation">🚀 نصب</a>
+</p>
 
-## این پروژه چه چیزی در اختیار شما می‌گذارد؟
+---
+
+<a name="overview"></a>
+
+## 🧭 این پروژه چه چیزی در اختیار شما می‌گذارد؟
 
 | بخش | کاربرد |
 |---|---|
@@ -18,11 +40,13 @@
 
 این سورس برای فروش فایل آموزشی، کتاب، قالب، افزونه، کد فعال‌سازی، دسترسی اختصاصی و اشتراک مناسب است. اگر ارائه محصول به سرویس دیگری وابسته باشد، می‌توانید از نوع تحویل API استفاده کنید.
 
-## تجربه مشتری در مینی‌اپ
+<a name="miniapp"></a>
+
+## 📱 تجربه مشتری در مینی‌اپ
 
 مشتری دسته‌بندی‌ها را می‌بیند، نام محصول را جست‌وجو می‌کند و در صفحه محصول توضیحات، قیمت و روش‌های پرداخت فعال را بررسی می‌کند. پس از تأیید خرید، محتوا از بخش دسترسی‌های همان محصول یا بخش دریافت خریدها در دسترس است؛ سفارش و وضعیت تحویل نیز قابل پیگیری هستند.
 
-برای دیدن نسخه باکیفیت هر تصویر، روی آن بزنید.
+برای تجربه فروشگاه و مشاهده تصاویر کامل، روی تصاویر یا دکمه زیر آن‌ها بزنید.
 
 <table>
   <tr>
@@ -30,20 +54,26 @@
     <th>کیف پول و بسته‌های شارژ</th>
   </tr>
   <tr>
-    <td align="center"><a href="https://amirmalek.ir/wp-content/uploads/2026/11/shop-mobile-hq.jpg"><img src="https://amirmalek.ir/wp-content/uploads/2026/11/shop-mobile-hq.jpg" alt="فروشگاه مینی‌اپ با دسته‌بندی‌ها و محصولات" width="240"></a></td>
-    <td align="center"><a href="https://amirmalek.ir/wp-content/uploads/2026/11/wallet-mobile-hq.jpg"><img src="https://amirmalek.ir/wp-content/uploads/2026/11/wallet-mobile-hq.jpg" alt="کیف پول مینی‌اپ، بسته‌های شارژ و تاریخچه اعتبار" width="240"></a></td>
+    <td align="center"><a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="https://amirmalek.ir/wp-content/uploads/2026/11/shop-mobile-hq.jpg" alt="فروشگاه مینی‌اپ با دسته‌بندی‌ها و محصولات" width="240"></a></td>
+    <td align="center"><a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="https://amirmalek.ir/wp-content/uploads/2026/11/wallet-mobile-hq.jpg" alt="کیف پول مینی‌اپ، بسته‌های شارژ و تاریخچه اعتبار" width="240"></a></td>
   </tr>
   <tr>
     <th>اشتراک VIP</th>
     <th>گفت‌وگوی تیکت پشتیبانی</th>
   </tr>
   <tr>
-    <td align="center"><a href="https://amirmalek.ir/wp-content/uploads/2026/11/vip-mobile-hq.jpg"><img src="https://amirmalek.ir/wp-content/uploads/2026/11/vip-mobile-hq.jpg" alt="انتخاب پلن VIP و مشاهده وضعیت اشتراک" width="240"></a></td>
-    <td align="center"><a href="https://amirmalek.ir/wp-content/uploads/2026/11/tickets-mobile-hq.jpg"><img src="https://amirmalek.ir/wp-content/uploads/2026/11/tickets-mobile-hq.jpg" alt="گفت‌وگوی کاربر و پشتیبان در مینی‌اپ" width="240"></a></td>
+    <td align="center"><a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="https://amirmalek.ir/wp-content/uploads/2026/11/vip-mobile-hq.jpg" alt="انتخاب پلن VIP و مشاهده وضعیت اشتراک" width="240"></a></td>
+    <td align="center"><a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="https://amirmalek.ir/wp-content/uploads/2026/11/tickets-mobile-hq.jpg" alt="گفت‌وگوی کاربر و پشتیبان در مینی‌اپ" width="240"></a></td>
   </tr>
 </table>
 
-## چه محصولاتی می‌توان فروخت؟
+<p align="center">
+  <a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="https://img.shields.io/badge/%D8%AF%D9%85%D9%88%DB%8C%20%D8%B2%D9%86%D8%AF%D9%87%20%D9%88%20%D9%85%D8%B9%D8%B1%D9%81%DB%8C%20%DA%A9%D8%A7%D9%85%D9%84-2563EB?style=for-the-badge&amp;logo=telegram&amp;logoColor=white" alt="دموی زنده و معرفی کامل" width="320"></a>
+</p>
+
+<a name="delivery"></a>
+
+## 📦 چه محصولاتی می‌توان فروخت؟
 
 برای هر محصول، عنوان، توضیحات، تصویر، دسته‌بندی، قیمت و نوع تحویل تعیین می‌کنید. امکان خرید مجدد و دسترسی رایگان اعضای VIP نیز برای هر محصول قابل تنظیم است.
 
@@ -57,7 +87,9 @@
 
 در صفحه محصولات پنل، راهنمای انواع محصول نیز وجود دارد. برای شروع، یک محصول فایل با قیمت کم بسازید و مسیر خرید تا دریافت فایل را بررسی کنید.
 
-## پرداخت، کیف پول و اشتراک
+<a name="payments"></a>
+
+## 💳 پرداخت، کیف پول و اشتراک
 
 - **پرداخت Stars:** مشتری صورت‌حساب تلگرام را پرداخت می‌کند. نهایی‌شدن خرید به تأیید سمت سرور وابسته است؛ بسته‌شدن پنجره پرداخت به‌تنهایی به معنی خرید موفق نیست.
 - **کارت‌به‌کارت:** مشتری اطلاعات کارت مقصد را می‌بیند و رسید یا شناسه تراکنش ثبت می‌کند. مدیر درخواست را تأیید یا رد می‌کند؛ تحویل پس از تأیید انجام می‌شود و نتیجه به کاربر اعلام می‌شود.
@@ -66,11 +98,17 @@
 - **VIP:** پلن‌ها مدت، قیمت و سطح دارند. اعضا به محصولات مشمول پلن دسترسی رایگان دارند؛ برای ارتقای واجد شرایط، اعتبار مدت باقی‌مانده پیش از پرداخت نمایش داده می‌شود.
 - **کد تخفیف:** محدودیت کاربر، محصول، زمان و تعداد استفاده قابل تعریف است. کوپن می‌تواند برای تومان، Stars یا هر دو، با تخفیف مستقل هر قیمت تنظیم شود.
 
-## مدیریت فروشگاه و ارتباط با مشتری
+<a name="admin"></a>
+
+## 🖥️ مدیریت فروشگاه و ارتباط با مشتری
 
 داشبورد، نمایی از فعالیت فروشگاه می‌دهد. در صفحات سفارش و پرداخت می‌توانید خریدار، محصول، مبلغ، وضعیت و جزئیات تراکنش را بررسی کنید. پنل همچنین اطلاعات کاربران، شماره اشتراک‌گذاشته‌شده، تصاویر پروفایل، موجودی کیف پول و اشتراک‌ها را در اختیار مدیر قرار می‌دهد.
 
-<a href="https://amirmalek.ir/wp-content/uploads/2026/11/admin-dashboard-hq.jpg"><img src="https://amirmalek.ir/wp-content/uploads/2026/11/admin-dashboard-hq.jpg" alt="داشبورد پنل مدیریت فروشگاه" width="880"></a>
+<a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="https://amirmalek.ir/wp-content/uploads/2026/11/admin-dashboard-hq.jpg" alt="داشبورد پنل مدیریت فروشگاه" width="880"></a>
+
+<p align="center">
+  <a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="https://img.shields.io/badge/%D8%AF%D9%85%D9%88%DB%8C%20%D8%B2%D9%86%D8%AF%D9%87%20%D9%88%20%D9%85%D8%B9%D8%B1%D9%81%DB%8C%20%DA%A9%D8%A7%D9%85%D9%84-2563EB?style=for-the-badge&amp;logo=telegram&amp;logoColor=white" alt="دموی زنده و معرفی کامل" width="320"></a>
+</p>
 
 - **پشتیبانی:** کاربر تیکت می‌سازد؛ مدیر در صفحه گفت‌وگو پاسخ می‌دهد و اطلاعات و سابقه کاربر را کنار مکالمه می‌بیند.
 - **اعلان‌ها:** مدیر پیام همگانی منتشر می‌کند و کاربر آن را در صندوق اعلان مینی‌اپ می‌بیند.
@@ -81,23 +119,37 @@
 <details>
 <summary><strong>تصویر ساخت و ویرایش محصول</strong></summary>
 <p>اطلاعات محصول، قیمت‌ها، تصویر، دسترسی VIP، شرایط خرید و منابع تحویل را در صفحه محصول تنظیم می‌کنید.</p>
-<a href="https://amirmalek.ir/wp-content/uploads/2026/11/admin-product-hq.jpg"><img src="https://amirmalek.ir/wp-content/uploads/2026/11/admin-product-hq.jpg" alt="صفحه ویرایش محصول و تنظیم روش تحویل" width="880"></a>
+<a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="https://amirmalek.ir/wp-content/uploads/2026/11/admin-product-hq.jpg" alt="صفحه ویرایش محصول و تنظیم روش تحویل" width="880"></a>
+
+<p align="center">
+  <a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="https://img.shields.io/badge/%D8%AF%D9%85%D9%88%DB%8C%20%D8%B2%D9%86%D8%AF%D9%87%20%D9%88%20%D9%85%D8%B9%D8%B1%D9%81%DB%8C%20%DA%A9%D8%A7%D9%85%D9%84-2563EB?style=for-the-badge&amp;logo=telegram&amp;logoColor=white" alt="دموی زنده و معرفی کامل" width="320"></a>
+</p>
 </details>
 
 <details>
 <summary><strong>تصاویر سفارش‌ها و بررسی کارت‌به‌کارت</strong></summary>
 <p>سفارش را با اطلاعات خریدار پیگیری کنید و رسیدهای کارت‌به‌کارت را پیش از تحویل بررسی کنید.</p>
-<a href="https://amirmalek.ir/wp-content/uploads/2026/11/admin-orders-hq.jpg"><img src="https://amirmalek.ir/wp-content/uploads/2026/11/admin-orders-hq.jpg" alt="مدیریت سفارش‌ها و اطلاعات خریدار" width="880"></a>
-<a href="https://amirmalek.ir/wp-content/uploads/2026/11/admin-manual-reviews-hq.jpg"><img src="https://amirmalek.ir/wp-content/uploads/2026/11/admin-manual-reviews-hq.jpg" alt="بررسی درخواست واریز کارت‌به‌کارت" width="880"></a>
+<a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="https://amirmalek.ir/wp-content/uploads/2026/11/admin-orders-hq.jpg" alt="مدیریت سفارش‌ها و اطلاعات خریدار" width="880"></a>
+<a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="https://amirmalek.ir/wp-content/uploads/2026/11/admin-manual-reviews-hq.jpg" alt="بررسی درخواست واریز کارت‌به‌کارت" width="880"></a>
+
+<p align="center">
+  <a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="https://img.shields.io/badge/%D8%AF%D9%85%D9%88%DB%8C%20%D8%B2%D9%86%D8%AF%D9%87%20%D9%88%20%D9%85%D8%B9%D8%B1%D9%81%DB%8C%20%DA%A9%D8%A7%D9%85%D9%84-2563EB?style=for-the-badge&amp;logo=telegram&amp;logoColor=white" alt="دموی زنده و معرفی کامل" width="320"></a>
+</p>
 </details>
 
 <details>
 <summary><strong>تصویر پشتیبانی و گفت‌وگوی تیکت</strong></summary>
 <p>محتوای تیکت، پاسخ‌ها و اطلاعات مرتبط با کاربر در پنل مدیریت قابل بررسی هستند.</p>
-<a href="https://amirmalek.ir/wp-content/uploads/2026/11/admin-tickets-hq.jpg"><img src="https://amirmalek.ir/wp-content/uploads/2026/11/admin-tickets-hq.jpg" alt="مدیریت تیکت‌های پشتیبانی" width="880"></a>
+<a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="https://amirmalek.ir/wp-content/uploads/2026/11/admin-tickets-hq.jpg" alt="مدیریت تیکت‌های پشتیبانی" width="880"></a>
+
+<p align="center">
+  <a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="https://img.shields.io/badge/%D8%AF%D9%85%D9%88%DB%8C%20%D8%B2%D9%86%D8%AF%D9%87%20%D9%88%20%D9%85%D8%B9%D8%B1%D9%81%DB%8C%20%DA%A9%D8%A7%D9%85%D9%84-2563EB?style=for-the-badge&amp;logo=telegram&amp;logoColor=white" alt="دموی زنده و معرفی کامل" width="320"></a>
+</p>
 </details>
 
-## شخصی‌سازی ظاهر و متن‌ها
+<a name="customization"></a>
+
+## 🎨 شخصی‌سازی ظاهر و متن‌ها
 
 در بخش «ویرایش مینی‌اپ»، پیش‌نمایش فروشگاه را کنار تنظیمات می‌بینید. می‌توانید رنگ‌ها، لوگو، سربرگ، منوی پایین، آیکون‌ها و متن گزینه‌ها را تغییر دهید؛ بخش‌های صفحات را جابه‌جا یا پنهان کنید و ویجت متن، تصویر و جست‌وجو اضافه کنید.
 
@@ -105,10 +157,16 @@
 
 <details>
 <summary><strong>تصویر ویرایشگر مینی‌اپ</strong></summary>
-<a href="https://amirmalek.ir/wp-content/uploads/2026/11/admin-editor-hq.jpg"><img src="https://amirmalek.ir/wp-content/uploads/2026/11/admin-editor-hq.jpg" alt="ویرایش زنده ظاهر، ویجت‌ها و متن‌های مینی‌اپ" width="880"></a>
+<a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="https://amirmalek.ir/wp-content/uploads/2026/11/admin-editor-hq.jpg" alt="ویرایش زنده ظاهر، ویجت‌ها و متن‌های مینی‌اپ" width="880"></a>
+
+<p align="center">
+  <a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="https://img.shields.io/badge/%D8%AF%D9%85%D9%88%DB%8C%20%D8%B2%D9%86%D8%AF%D9%87%20%D9%88%20%D9%85%D8%B9%D8%B1%D9%81%DB%8C%20%DA%A9%D8%A7%D9%85%D9%84-2563EB?style=for-the-badge&amp;logo=telegram&amp;logoColor=white" alt="دموی زنده و معرفی کامل" width="320"></a>
+</p>
 </details>
 
-## از کجا شروع کنم؟
+<a name="installation"></a>
+
+## 🚀 از کجا شروع کنم؟
 
 1. [راهنمای فارسی نصب](docs/INSTALLATION.fa.md) یا [راهنمای انگلیسی](docs/INSTALLATION.en.md) را دنبال کنید؛ سرویس‌ها با Docker Compose اجرا می‌شوند.
 2. توکن ربات و اطلاعات نصب خودتان را در `.env` قرار دهید و پنل مدیریت را باز کنید.
@@ -116,5 +174,13 @@
 4. یک دسته، یک منبع تحویل و یک محصول بسازید؛ سپس خرید، تحویل و پشتیبانی را بررسی کنید.
 
 برای نصب Docker نیازی به نصب جداگانه Go، Node.js، PostgreSQL یا MinIO روی میزبان ندارید. فایل‌ها و داده‌های فروشگاه در volumeهای Docker نگهداری می‌شوند و باید از آن‌ها پشتیبان بگیرید. [معماری و مسیرهای اصلی کد](docs/INSTALLATION.fa.md#architecture) نیز در راهنمای نصب توضیح داده شده‌اند.
+
+---
+
+<p align="center">
+  <a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="https://img.shields.io/badge/%D8%AF%D9%85%D9%88%DB%8C%20%D8%B2%D9%86%D8%AF%D9%87%20%D9%88%20%D9%85%D8%B9%D8%B1%D9%81%DB%8C%20%DA%A9%D8%A7%D9%85%D9%84-2563EB?style=for-the-badge&amp;logo=telegram&amp;logoColor=white" alt="دموی زنده و معرفی کامل" width="320"></a>
+</p>
+
+<p align="center"><a href="#top">↑ بازگشت به ابتدای معرفی</a></p>
 
 </div>
