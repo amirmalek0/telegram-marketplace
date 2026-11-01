@@ -1,0 +1,7 @@
+{$MINIAPP_DOMAIN} {
+	reverse_proxy miniapp:80
+}
+
+{$BACKOFFICE_DOMAIN} {
+	reverse_proxy backoffice:80
+}

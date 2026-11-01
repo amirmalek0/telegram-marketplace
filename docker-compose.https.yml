@@ -1,0 +1,22 @@
+# Optional public HTTPS gateway; see docs/INSTALLATION.en.md or INSTALLATION.fa.md.
+services:
+  gateway:
+    image: caddy:2-alpine
+    depends_on:
+      - miniapp
+      - backoffice
+    environment:
+      MINIAPP_DOMAIN: ${MINIAPP_DOMAIN:?Set MINIAPP_DOMAIN in .env}
+      BACKOFFICE_DOMAIN: ${BACKOFFICE_DOMAIN:?Set BACKOFFICE_DOMAIN in .env}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+
+volumes:
+  caddy_data:
+  caddy_config:
