@@ -8,6 +8,7 @@ import { adminsApi } from '@/api';
 import { Button, Modal } from '@/components/ui';
 
 const titles: Record<string, string> = {
+  '/products/guide': 'راهنمای محصولات',
   '/payments/manual': 'پرداخت کارت‌به‌کارت',
   '/payments/checkout-settings': 'تنظیمات پرداخت',
 	'/wallets': 'کیف پول‌ها',

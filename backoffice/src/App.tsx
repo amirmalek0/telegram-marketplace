@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { useUIStore } from '@/stores/uiStore';
 import { useAuthStore } from '@/stores/authStore';
 import { LoginPage } from '@/pages/auth/LoginPage';
@@ -33,7 +33,7 @@ import MiniappContentPage from '@/pages/miniapp-content/MiniappContentPage';
 import WalletsPage from '@/pages/wallets/WalletsPage';
 import BroadcastsPage from '@/pages/broadcasts/BroadcastsPage';
 
-void PageLoader;
+const ProductGuidePage = lazy(() => import('@/pages/products/guide/ProductGuidePage'));
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore();
@@ -74,6 +74,7 @@ function App() {
           >
             <Route index element={<DashboardPage />} />
             <Route path="products" element={<ProductsPage />} />
+            <Route path="products/guide" element={<Suspense fallback={<PageLoader />}><ProductGuidePage /></Suspense>} />
             <Route path="products/new" element={<ProductEditorPage />} />
             <Route path="products/:productId/edit" element={<ProductEditorPage />} />
             <Route path="categories" element={<CategoriesPage />} />

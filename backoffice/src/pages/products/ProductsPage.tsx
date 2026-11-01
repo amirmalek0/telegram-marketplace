@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Package, Pencil, Plus, Trash2 } from 'lucide-react';
+import { BookOpen, Package, Pencil, Plus, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { categoriesApi, productsApi } from '@/api';
@@ -62,7 +62,7 @@ export default function ProductsPage() {
   ];
 
   return <div className="catalog-page">
-    <CatalogHeader title="محصولات" icon={Package} total={total} loading={loading} actions={<Button icon={<Plus size={16}/>} onClick={() => navigate('/products/new')}>محصول جدید</Button>}/>
+    <CatalogHeader title="محصولات" icon={Package} total={total} loading={loading} actions={<><Button variant="secondary" icon={<BookOpen size={16}/>} onClick={() => navigate('/products/guide')}>راهنمای محصولات</Button><Button icon={<Plus size={16}/>} onClick={() => navigate('/products/new')}>محصول جدید</Button></>}/>
     <CatalogTable columns={columns} data={products} loading={loading} error={loadError} onRefresh={() => void load()} searchText={row => `${row.title} ${categoryNames.get(row.category_id) || ''} ${deliveryTypeLabels[row.delivery_type]}`} filter={{ label: 'همه وضعیت‌ها', options: Object.entries(statusLabels).map(([value, label]) => ({ value, label })), value: row => row.status }} keyExtractor={row => row.id} emptyMessage="هنوز محصولی ثبت نشده است" emptyAction={<Button icon={<Plus size={16} />} onClick={() => navigate('/products/new')}>محصول جدید</Button>} pagination={{ page, perPage: PER_PAGE, total, onPageChange: setPage }}/>
     <ConfirmationModal isOpen={Boolean(selected)} onClose={() => !deleting && setSelected(null)} onConfirm={() => void remove()} title="حذف محصول" message={selected ? `محصول «${selected.title}» حذف شود؟ این عملیات قابل بازگشت نیست.` : ''} confirmText="حذف محصول" cancelText="انصراف" loading={deleting}/>
   </div>;
