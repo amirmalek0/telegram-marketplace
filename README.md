@@ -48,18 +48,18 @@
 
 برای تجربه فروشگاه و مشاهده تصاویر کامل، روی تصاویر یا دکمه زیر آن‌ها بزنید.
 
-<table>
+<table align="center">
   <tr>
-    <th>فروشگاه و دسته‌بندی‌ها</th>
-    <th>کیف پول و بسته‌های شارژ</th>
+    <th align="center">فروشگاه و دسته‌بندی‌ها</th>
+    <th align="center">کیف پول و بسته‌های شارژ</th>
   </tr>
   <tr>
     <td align="center"><a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="https://amirmalek.ir/wp-content/uploads/2026/11/shop-mobile-hq.jpg" alt="فروشگاه مینی‌اپ با دسته‌بندی‌ها و محصولات" width="240"></a></td>
     <td align="center"><a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="https://amirmalek.ir/wp-content/uploads/2026/11/wallet-mobile-hq.jpg" alt="کیف پول مینی‌اپ، بسته‌های شارژ و تاریخچه اعتبار" width="240"></a></td>
   </tr>
   <tr>
-    <th>اشتراک VIP</th>
-    <th>گفت‌وگوی تیکت پشتیبانی</th>
+    <th align="center">اشتراک VIP</th>
+    <th align="center">گفت‌وگوی تیکت پشتیبانی</th>
   </tr>
   <tr>
     <td align="center"><a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="https://amirmalek.ir/wp-content/uploads/2026/11/vip-mobile-hq.jpg" alt="انتخاب پلن VIP و مشاهده وضعیت اشتراک" width="240"></a></td>
