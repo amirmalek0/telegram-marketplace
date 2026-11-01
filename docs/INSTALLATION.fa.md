@@ -4,12 +4,10 @@
 
 <h1 align="center">📘 راهنمای نصب و معماری</h1>
 
-<table align="center">
-  <tr>
-    <td align="center" width="260" dir="rtl"><p><a href="../README.md"><strong>🏠 معرفی و تصاویر</strong></a><br><sub>امکانات فروشگاه و دموی تعاملی</sub></p></td>
-    <td align="center" width="260" dir="ltr"><p><a href="INSTALLATION.en.md"><strong>📗 English guide</strong></a><br><sub>Installation & architecture</sub></p></td>
-  </tr>
-</table>
+<p align="center">
+  <a href="../README.md"><img src="assets/readme-buttons/overview-fa.svg" alt="معرفی و تصاویر" width="264"></a>
+  <a href="INSTALLATION.en.md"><img src="assets/readme-buttons/install-en.svg" alt="English installation guide" width="264"></a>
+</p>
 
 این راهنما **یک فروشگاه مستقل با یک ربات تلگرام** را با سرویس‌های Docker همین پروژه راه‌اندازی می‌کند. با مراحل ۱ تا ۶، پروژه روی سیستم شما اجرا می‌شود؛ برای استفاده داخل تلگرام و ساخت اولین محصول، مراحل ۷ تا ۹ را هم انجام دهید.
 

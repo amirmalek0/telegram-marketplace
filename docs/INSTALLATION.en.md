@@ -2,12 +2,10 @@
 
 <h1 align="center">📘 Installation and architecture</h1>
 
-<table align="center">
-  <tr>
-    <td align="center" width="260" dir="ltr"><p><a href="../README.md"><strong>🏠 Project overview</strong></a><br><sub>Features, screenshots & demo</sub></p></td>
-    <td align="center" width="260" dir="rtl"><p><a href="INSTALLATION.fa.md"><strong>📘 راهنمای فارسی</strong></a><br><sub>نصب و معماری، مرحله‌به‌مرحله</sub></p></td>
-  </tr>
-</table>
+<p align="center">
+  <a href="../README.md"><img src="assets/readme-buttons/overview-en.svg" alt="Project overview" width="264"></a>
+  <a href="INSTALLATION.fa.md"><img src="assets/readme-buttons/install-fa.svg" alt="راهنمای نصب فارسی" width="264"></a>
+</p>
 
 This guide installs **one marketplace with one Telegram bot** using the included Docker services. Complete steps 1–6 to run it locally; complete steps 7–9 to use it from Telegram and prepare your first product.
 

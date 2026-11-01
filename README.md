@@ -9,20 +9,14 @@
 <h1 align="center">ربات و مینی‌اپ فروشگاهی تلگرام</h1>
 <p align="center"><strong>از معرفی محصول و پرداخت تا تحویل و پشتیبانی، در دل تلگرام</strong></p>
 
-<table align="center">
-  <tr>
-    <td align="center" width="560" dir="rtl">
-      <p><a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><strong>✈️ مشاهده دموی زنده و معرفی کامل ↗</strong></a><br><sub>فروشگاه را امتحان کنید و تصاویر بخش‌های پنل مدیریت را ببینید</sub></p>
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="docs/assets/readme-buttons/demo.svg" alt="مشاهده دموی زنده و معرفی کامل" width="352"></a>
+</p>
 
-<table align="center">
-  <tr>
-    <td align="center" width="260" dir="rtl"><p><a href="docs/INSTALLATION.fa.md"><strong>📘 راهنمای نصب فارسی</strong></a><br><sub>از راه‌اندازی تا اولین خرید</sub></p></td>
-    <td align="center" width="260" dir="ltr"><p><a href="docs/INSTALLATION.en.md"><strong>📗 Installation guide</strong></a><br><sub>Step-by-step · English</sub></p></td>
-  </tr>
-</table>
+<p align="center">
+  <a href="docs/INSTALLATION.fa.md"><img src="docs/assets/readme-buttons/install-fa.svg" alt="راهنمای نصب فارسی" width="264"></a>
+  <a href="docs/INSTALLATION.en.md"><img src="docs/assets/readme-buttons/install-en.svg" alt="Installation guide" width="264"></a>
+</p>
 
 این پروژه یک فروشگاه برای عرضه محصولات دیجیتال داخل تلگرام است. مشتری از ربات وارد مینی‌اپ می‌شود، محصول را انتخاب می‌کند، پرداخت را انجام می‌دهد و به محتوای خرید خود دسترسی پیدا می‌کند. مدیر فروشگاه نیز محصولات، پرداخت‌ها، مشتریان و پشتیبانی را از یک پنل فارسی تحت وب مدیریت می‌کند.
 
@@ -73,13 +67,9 @@
   </tr>
 </table>
 
-<table align="center">
-  <tr>
-    <td align="center" width="560" dir="rtl">
-      <p><a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><strong>✈️ مشاهده دموی زنده و معرفی کامل ↗</strong></a><br><sub>فروشگاه را امتحان کنید و تصاویر بخش‌های پنل مدیریت را ببینید</sub></p>
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="docs/assets/readme-buttons/demo.svg" alt="مشاهده دموی زنده و معرفی کامل" width="352"></a>
+</p>
 
 <a name="delivery"></a>
 
@@ -116,13 +106,9 @@
 
 <a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="https://amirmalek.ir/wp-content/uploads/2026/11/admin-dashboard-hq.jpg" alt="داشبورد پنل مدیریت فروشگاه" width="880"></a>
 
-<table align="center">
-  <tr>
-    <td align="center" width="560" dir="rtl">
-      <p><a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><strong>✈️ مشاهده دموی زنده و معرفی کامل ↗</strong></a><br><sub>فروشگاه را امتحان کنید و تصاویر بخش‌های پنل مدیریت را ببینید</sub></p>
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="docs/assets/readme-buttons/demo.svg" alt="مشاهده دموی زنده و معرفی کامل" width="352"></a>
+</p>
 
 - **پشتیبانی:** کاربر تیکت می‌سازد؛ مدیر در صفحه گفت‌وگو پاسخ می‌دهد و اطلاعات و سابقه کاربر را کنار مکالمه می‌بیند.
 - **اعلان‌ها:** مدیر پیام همگانی منتشر می‌کند و کاربر آن را در صندوق اعلان مینی‌اپ می‌بیند.
@@ -135,13 +121,9 @@
 <p>اطلاعات محصول، قیمت‌ها، تصویر، دسترسی VIP، شرایط خرید و منابع تحویل را در صفحه محصول تنظیم می‌کنید.</p>
 <a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="https://amirmalek.ir/wp-content/uploads/2026/11/admin-product-hq.jpg" alt="صفحه ویرایش محصول و تنظیم روش تحویل" width="880"></a>
 
-<table align="center">
-  <tr>
-    <td align="center" width="560" dir="rtl">
-      <p><a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><strong>✈️ مشاهده دموی زنده و معرفی کامل ↗</strong></a><br><sub>فروشگاه را امتحان کنید و تصاویر بخش‌های پنل مدیریت را ببینید</sub></p>
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="docs/assets/readme-buttons/demo.svg" alt="مشاهده دموی زنده و معرفی کامل" width="352"></a>
+</p>
 </details>
 
 <details>
@@ -150,13 +132,9 @@
 <a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="https://amirmalek.ir/wp-content/uploads/2026/11/admin-orders-hq.jpg" alt="مدیریت سفارش‌ها و اطلاعات خریدار" width="880"></a>
 <a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="https://amirmalek.ir/wp-content/uploads/2026/11/admin-manual-reviews-hq.jpg" alt="بررسی درخواست واریز کارت‌به‌کارت" width="880"></a>
 
-<table align="center">
-  <tr>
-    <td align="center" width="560" dir="rtl">
-      <p><a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><strong>✈️ مشاهده دموی زنده و معرفی کامل ↗</strong></a><br><sub>فروشگاه را امتحان کنید و تصاویر بخش‌های پنل مدیریت را ببینید</sub></p>
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="docs/assets/readme-buttons/demo.svg" alt="مشاهده دموی زنده و معرفی کامل" width="352"></a>
+</p>
 </details>
 
 <details>
@@ -164,13 +142,9 @@
 <p>محتوای تیکت، پاسخ‌ها و اطلاعات مرتبط با کاربر در پنل مدیریت قابل بررسی هستند.</p>
 <a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="https://amirmalek.ir/wp-content/uploads/2026/11/admin-tickets-hq.jpg" alt="مدیریت تیکت‌های پشتیبانی" width="880"></a>
 
-<table align="center">
-  <tr>
-    <td align="center" width="560" dir="rtl">
-      <p><a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><strong>✈️ مشاهده دموی زنده و معرفی کامل ↗</strong></a><br><sub>فروشگاه را امتحان کنید و تصاویر بخش‌های پنل مدیریت را ببینید</sub></p>
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="docs/assets/readme-buttons/demo.svg" alt="مشاهده دموی زنده و معرفی کامل" width="352"></a>
+</p>
 </details>
 
 <a name="customization"></a>
@@ -185,13 +159,9 @@
 <summary><strong>تصویر ویرایشگر مینی‌اپ</strong></summary>
 <a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="https://amirmalek.ir/wp-content/uploads/2026/11/admin-editor-hq.jpg" alt="ویرایش زنده ظاهر، ویجت‌ها و متن‌های مینی‌اپ" width="880"></a>
 
-<table align="center">
-  <tr>
-    <td align="center" width="560" dir="rtl">
-      <p><a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><strong>✈️ مشاهده دموی زنده و معرفی کامل ↗</strong></a><br><sub>فروشگاه را امتحان کنید و تصاویر بخش‌های پنل مدیریت را ببینید</sub></p>
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="docs/assets/readme-buttons/demo.svg" alt="مشاهده دموی زنده و معرفی کامل" width="352"></a>
+</p>
 </details>
 
 <a name="installation"></a>
@@ -207,13 +177,9 @@
 
 ---
 
-<table align="center">
-  <tr>
-    <td align="center" width="560" dir="rtl">
-      <p><a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><strong>✈️ مشاهده دموی زنده و معرفی کامل ↗</strong></a><br><sub>فروشگاه را امتحان کنید و تصاویر بخش‌های پنل مدیریت را ببینید</sub></p>
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <a href="https://amirmalek.ir/telegram-marketplace-miniapp/"><img src="docs/assets/readme-buttons/demo.svg" alt="مشاهده دموی زنده و معرفی کامل" width="352"></a>
+</p>
 
 <p align="center"><a href="#top">↑ بازگشت به ابتدای معرفی</a></p>
 
