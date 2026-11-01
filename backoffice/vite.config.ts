@@ -15,7 +15,8 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       host: true,
-      port: 5173,
+      port: 3001,
+      allowedHosts: env.VITE_ALLOWED_HOSTS?.split(',').map(host => host.trim()).filter(Boolean),
       proxy: {
         '/api/': {
           target: env.VITE_API_PROXY_TARGET || 'http://localhost:8080',
@@ -25,7 +26,7 @@ export default defineConfig(({ mode }) => {
         '/storage': {
           target: env.VITE_STORAGE_PROXY_TARGET || 'http://localhost:9000',
           changeOrigin: true,
-          headers: { Host: env.VITE_STORAGE_SIGNING_HOST || 'minio:9000' },
+          headers: { Host: env.VITE_STORAGE_SIGNING_HOST || 'localhost:9000' },
           rewrite: (requestPath) => requestPath.replace(/^\/storage/, ''),
         },
       },

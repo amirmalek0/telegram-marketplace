@@ -59,7 +59,7 @@ func TestAdminPaymentsPostgres(t *testing.T) {
 		t.Fatalf("empty summary: %+v %v", empty, err)
 	}
 	user, product, order, plan, pack := uuid.NewString(), uuid.NewString(), uuid.NewString(), uuid.NewString(), uuid.NewString()
-	exec(`INSERT INTO users(id,telegram_id,first_name,last_name,username) VALUES($1,6740172206,'Amir','Test','amir')`, user)
+	exec(`INSERT INTO users(id,telegram_id,first_name,last_name,username) VALUES($1,1000001,'Test','Customer','test_customer')`, user)
 	exec(`INSERT INTO products(id,title,category_id,stars_price,delivery_type) VALUES($1,'Renamed product',$2,50,'file')`, product, uuid.NewString())
 	exec(`INSERT INTO orders(id,user_id,product_id,quantity,amount,discount_amount,coupon_code) VALUES($1,$2,$3,2,50,10,'SAVE10')`, order, user, product)
 	exec(`INSERT INTO order_deliveries(order_id,user_id,product_id,product_title) VALUES($1,$2,$3,'Original product')`, order, user, product)
@@ -99,7 +99,7 @@ func TestAdminPaymentsPostgres(t *testing.T) {
 		byID[row.ID] = row
 	}
 	paid := byID[productPayment]
-	if paid.User == nil || paid.User.TelegramID != 6740172206 || paid.User.FirstName != "Amir" || paid.TargetTitle != "Original product" || paid.Quantity != 2 || paid.CouponCode != "SAVE10" || paid.DiscountStars != 10 || paid.ProductID == nil || *paid.ProductID != product {
+	if paid.User == nil || paid.User.TelegramID != 1000001 || paid.User.FirstName != "Test" || paid.TargetTitle != "Original product" || paid.Quantity != 2 || paid.CouponCode != "SAVE10" || paid.DiscountStars != 10 || paid.ProductID == nil || *paid.ProductID != product {
 		t.Fatalf("enrichment: %+v", paid)
 	}
 	if paid.ExternalTransactionID == nil || *paid.ExternalTransactionID != "tg:"+productPayment || paid.ProviderTransactionID == nil || *paid.ProviderTransactionID != "provider:"+productPayment {

@@ -3,15 +3,15 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: tgmp
-      POSTGRES_PASSWORD: tgmp
-      POSTGRES_DB: telegram_marketplace
+      POSTGRES_USER: ${POSTGRES_USER:-tgmp}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tgmp}
+      POSTGRES_DB: ${POSTGRES_DB:-telegram_marketplace}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U tgmp"]
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -64,18 +64,16 @@ services:
         condition: service_healthy
     environment:
       SERVICE_NAME: api
-      DATABASE_URL: postgres://tgmp:tgmp@postgres:5432/telegram_marketplace?sslmode=disable
-      BOT_TOKEN: ${BOT_TOKEN}
+      DATABASE_URL: ${DOCKER_DATABASE_URL:-postgres://${POSTGRES_USER:-tgmp}:${POSTGRES_PASSWORD:-tgmp}@postgres:5432/${POSTGRES_DB:-telegram_marketplace}?sslmode=disable}
+      BOT_TOKEN: ${BOT_TOKEN:?Set BOT_TOKEN in .env}
       TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:-}
-      JWT_SECRET: ${JWT_SECRET:-qgGm3V/DGE+dobjQh+hiPO1j/r6CsmLa0TkYAdX+/Z4=}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
       ADMIN_SEED_USERNAME: ${ADMIN_SEED_USERNAME:-admin}
       ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-admin}
       STORAGE_ENDPOINT: http://minio:9000
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
-      STORAGE_BUCKET: ${STORAGE_BUCKET:-marketplace}
       STORAGE_REGION: ${STORAGE_REGION:-us-east-1}
-      STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL:-http://localhost:9000/marketplace}
       CATEGORY_ICONS_BUCKET: ${CATEGORY_ICONS_BUCKET:-categories-icons}
       CATEGORY_ICONS_PUBLIC_URL: ${CATEGORY_ICONS_PUBLIC_URL:-/storage/categories-icons}
       PRODUCT_FILES_BUCKET: ${PRODUCT_FILES_BUCKET:-product-files}
@@ -88,9 +86,7 @@ services:
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001}
       ADDR: ":8080"
     ports:
-      # Port 8080 is already used by another local Docker project. Services in
-      # this Compose stack still reach the API at api:8080.
-      - "${API_PORT:-8082}:8080"
+      - "${API_PORT:-8080}:8080"
     restart: unless-stopped
 
   bot:
@@ -104,19 +100,17 @@ services:
         condition: service_healthy
     environment:
       SERVICE_NAME: bot
-      DATABASE_URL: postgres://tgmp:tgmp@postgres:5432/telegram_marketplace?sslmode=disable
-      BOT_TOKEN: ${BOT_TOKEN}
+      DATABASE_URL: ${DOCKER_DATABASE_URL:-postgres://${POSTGRES_USER:-tgmp}:${POSTGRES_PASSWORD:-tgmp}@postgres:5432/${POSTGRES_DB:-telegram_marketplace}?sslmode=disable}
+      BOT_TOKEN: ${BOT_TOKEN:?Set BOT_TOKEN in .env}
       TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:-}
-      JWT_SECRET: ${JWT_SECRET:-qgGm3V/DGE+dobjQh+hiPO1j/r6CsmLa0TkYAdX+/Z4=}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
       ADMIN_SEED_USERNAME: ${ADMIN_SEED_USERNAME:-admin}
       ADMIN_SEED_PASSWORD: ${ADMIN_SEED_PASSWORD:-admin}
       WEBHOOK_URL: ${WEBHOOK_URL:-}
       STORAGE_ENDPOINT: http://minio:9000
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
-      STORAGE_BUCKET: ${STORAGE_BUCKET:-marketplace}
       STORAGE_REGION: ${STORAGE_REGION:-us-east-1}
-      STORAGE_PUBLIC_URL: ${STORAGE_PUBLIC_URL:-http://localhost:9000/marketplace}
       CATEGORY_ICONS_BUCKET: ${CATEGORY_ICONS_BUCKET:-categories-icons}
       CATEGORY_ICONS_PUBLIC_URL: ${CATEGORY_ICONS_PUBLIC_URL:-/storage/categories-icons}
       PRODUCT_FILES_BUCKET: ${PRODUCT_FILES_BUCKET:-product-files}
@@ -126,7 +120,7 @@ services:
       PRODUCT_IMAGES_PUBLIC_URL: ${PRODUCT_IMAGES_PUBLIC_URL:-/storage/product-images}
       ADDR: ":8081"
     ports:
-      - "${BOT_PORT:-8083}:8081"
+      - "${BOT_PORT:-8081}:8081"
     restart: unless-stopped
 
   # ── Frontend Services ───────────────────────────────
