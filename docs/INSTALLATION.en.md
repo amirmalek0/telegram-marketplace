@@ -2,10 +2,12 @@
 
 <h1 align="center">📘 Installation and architecture</h1>
 
-<p align="center">
-  <a href="../README.md"><img src="https://img.shields.io/badge/Project%20overview-334155?style=for-the-badge&amp;logo=github&amp;logoColor=white" alt="Project overview"></a>
-  <a href="INSTALLATION.fa.md"><img src="https://img.shields.io/badge/%D8%B1%D8%A7%D9%87%D9%86%D9%85%D8%A7%DB%8C%20%D9%81%D8%A7%D8%B1%D8%B3%DB%8C-2563EB?style=for-the-badge&amp;logo=docker&amp;logoColor=white" alt="راهنمای فارسی"></a>
-</p>
+<table align="center">
+  <tr>
+    <td align="center" width="260" dir="ltr"><p><a href="../README.md"><strong>🏠 Project overview</strong></a><br><sub>Features, screenshots & demo</sub></p></td>
+    <td align="center" width="260" dir="rtl"><p><a href="INSTALLATION.fa.md"><strong>📘 راهنمای فارسی</strong></a><br><sub>نصب و معماری، مرحله‌به‌مرحله</sub></p></td>
+  </tr>
+</table>
 
 This guide installs **one marketplace with one Telegram bot** using the included Docker services. Complete steps 1–6 to run it locally; complete steps 7–9 to use it from Telegram and prepare your first product.
 
