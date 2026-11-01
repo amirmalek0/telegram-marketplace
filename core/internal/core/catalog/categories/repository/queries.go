@@ -5,8 +5,8 @@ package repository
 const (
 	// queryCreateCategory inserts a new category and returns the generated UUID.
 	queryCreateCategory = `
-		INSERT INTO categories (title, storage_id, active, sort_order, created_at)
-		VALUES ($1, $2, $3, $4, $5)
+		INSERT INTO categories (title, slug, storage_id, active, sort_order, created_at)
+		VALUES ($1, gen_random_uuid()::text, $2, $3, $4, $5)
 		RETURNING id`
 
 	// queryGetCategoryByID retrieves a category by its UUID.
