@@ -5,6 +5,7 @@ import { formatDate } from '../../utils/format'
 import { Icon } from '../ui/Icon'
 import { PaymentFlow } from '../commerce/PaymentFlow'
 import { CheckoutPrice } from '../commerce/CheckoutPrice'
+import { PaymentArrow } from '../commerce/PaymentArrow'
 
 interface Props { cardEnabled?: boolean; starsEnabled?: boolean; account: UserAccount; plans: VipPlan[]; busyKey: string | null; walletBalance?: number; onChoose: (plan: VipPlan, method: 'telegram_stars' | 'wallet') => void; only?: 'overview' | 'plans'; initDataRaw?: string | null; onChanged?: () => void }
 
@@ -45,8 +46,8 @@ export function VipPlans({ cardEnabled = false, starsEnabled = true, account, pl
         <div className="checkout-stage-heading"><Icon name="lucide:credit-card" size={19} /><h3>{text('checkout.plan_payment')}</h3></div>
         <div className="checkout-selected-item"><span>{text('checkout.selected_plan')}</span><strong>{selected.title}</strong></div>
         <PaymentFlow purpose="vip_plan" targetID={selected.id} stars={selected.stars_price} starsEnabled={starsEnabled} cardEnabled={cardEnabled && (!activePlan || selected.id === activePlan.id || selected.tier > activePlan.tier)} initDataRaw={initDataRaw} disabled={Boolean(busyKey)} onManualBusyChange={setManualBusy} onChanged={onChanged} walletBalance={walletBalance}
-          starsAction={<button type="button" className="account-primary" disabled={locked} aria-busy={Boolean(busyKey)} onClick={() => onChoose(selected, 'telegram_stars')}><Icon name={busyKey ? 'clock' : 'star'} size={19} />{text(busyKey ? 'membership.calculating' : 'checkout.review_plan')}<Icon name="arrow" size={17} /></button>}
-          walletAction={<button type="button" className="account-primary" disabled={locked} onClick={() => onChoose(selected, 'wallet')}><Icon name="wallet" size={19} />{text(busyKey ? 'membership.calculating' : 'checkout.review_plan')}<Icon name="arrow" size={17} /></button>} />
+          starsAction={<button type="button" className="account-primary" disabled={locked} aria-busy={Boolean(busyKey)} onClick={() => onChoose(selected, 'telegram_stars')}><Icon name={busyKey ? 'clock' : 'star'} size={19} />{text(busyKey ? 'membership.calculating' : 'checkout.review_plan')}<PaymentArrow size={17} /></button>}
+          walletAction={<button type="button" className="account-primary" disabled={locked} onClick={() => onChoose(selected, 'wallet')}><Icon name="wallet" size={19} />{text(busyKey ? 'membership.calculating' : 'checkout.review_plan')}<PaymentArrow size={17} /></button>} />
       </section>}
     </>}
   </div>

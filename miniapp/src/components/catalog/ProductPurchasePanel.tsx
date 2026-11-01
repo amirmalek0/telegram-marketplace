@@ -2,6 +2,7 @@ import type { ManualPriceState } from '../../features/commerce/useManualPrice'
 import { useContent } from '../../features/content/ContentProvider'
 import { Icon } from '../ui/Icon'
 import { PaymentFlow } from '../commerce/PaymentFlow'
+import { PaymentArrow } from '../commerce/PaymentArrow'
 import type { CouponQuote } from '../../features/commerce/useProductCoupon'
 import type { ReactNode } from 'react'
 
@@ -34,12 +35,12 @@ export function ProductPurchasePanel({ targetID, initDataRaw, cardEnabled = fals
   const starsAction = <button className="stars-payment-button" type="button" aria-busy={purchasing} disabled={purchasing || checkoutBlocked || (!vipFree && !couponFree && stars <= 0)} onClick={() => onPurchase('telegram_stars')}>
     <span className="checkout-option-icon"><Icon name={vipFree ? 'crown' : 'star'} size={20} /></span>
     <span className="checkout-option-copy"><b>{text(purchasing ? 'checkout.busy' : vipFree ? 'checkout.free_vip' : couponFree ? 'checkout.free_coupon' : 'checkout.continue_stars')}</b></span>
-    <Icon name={purchasing ? 'clock' : 'arrow'} size={18} />
+    {purchasing ? <Icon name="clock" size={18} /> : <PaymentArrow />}
   </button>
   const walletAction = <><button className="wallet-payment-button" type="button" disabled={purchasing || checkoutBlocked || !walletReady} onClick={() => onPurchase('wallet')}>
     <span className="checkout-option-icon"><Icon name="wallet" size={20} /></span>
     <span className="checkout-option-copy"><b>{text('checkout.confirm_wallet')}</b></span>
-    <Icon name="arrow" size={18} />
+    <PaymentArrow />
   </button></>
   return <section className={`product-purchase-panel ${vipFree ? 'is-vip' : ''}`}>
     <div className="product-checkout-heading"><div className="product-price-copy"><small><Icon name={vipFree ? 'crown' : 'lucide:credit-card'} size={19} />{text(vipFree ? 'checkout.product_free' : 'checkout.product_title')}</small></div>{purchaseLocked && <span className="product-owned-status"><Icon name="check" size={14} />{text('checkout.owned')}</span>}</div>

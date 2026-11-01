@@ -9,6 +9,7 @@ import { ManualReceiptField } from './ManualReceiptField'
 import { ManualPaymentResult } from './ManualPaymentResult'
 import { BankCard } from './BankCard'
 import { Icon } from '../../ui/Icon'
+import { PaymentArrow } from '../PaymentArrow'
 import '../../../styles/manual-payment.css'
 
 export function ManualCheckout({ initial, initDataRaw, onClose, onChanged, preview = false, previewState = '' }: { preview?: boolean; previewState?: string; initial: ManualPayment; initDataRaw: string; onClose: (status: string) => void; onChanged?: () => void }) {
@@ -83,7 +84,7 @@ export function ManualCheckout({ initial, initDataRaw, onClose, onChanged, previ
       </div>
       {payment.status === 'awaiting_proof' && <footer className="manual-checkout-footer">
         {leaving ? <div className="manual-cancel-confirm" role="alert"><p>{text('manual.unsent_warning')}</p><div><button type="button" onClick={() => setLeaving(false)}>{text('manual.keep_editing')}</button><button type="button" onClick={() => onClose(payment.status)}>{text('manual.leave_unsent')}</button></div></div> : <>
-        {step === 'transfer' ? <button type="button" className="manual-primary" disabled={busy || !selectedCard} onClick={() => setStep('proof')}><span>{text('manual.continue_proof')}</span><Icon name="arrow" size={18} /></button> : <>
+        {step === 'transfer' ? <button type="button" className="manual-primary" disabled={busy || !selectedCard} onClick={() => setStep('proof')}><span>{text('manual.continue_proof')}</span><PaymentArrow /></button> : <>
         <button className="manual-primary" form="manual-proof-form" type="submit" aria-busy={busy} disabled={busy || !selectedCard || (!transaction.trim() && !file && !sampleReceipt)}><Icon name={busy ? 'clock' : 'send'} size={18} />{busy ? text('manual.submitting') : text('manual.submit')}</button>
         </>}
         <div className="manual-footer-tools">
